@@ -1,5 +1,6 @@
-# Venn Diagram SVG Format Specification
+# Venn Diagram Lab - SVG Format Specification
 
+Created by Zoltan Dul, 2026
 Version: 3.0.0
 
 This document describes the standardized SVG format used by all Venn diagram models in this project. Every SVG file in `models/svg/` follows this structure.
@@ -150,8 +151,8 @@ Most diagrams use `viewBox="0 0 700 700"`. Exceptions:
 Every file includes this XML comment after the XML declaration:
 ```xml
 <!-- Created by Zoltan Dul in 2026 - free to use with MIT license.
-     Part of React Venn Diagram Analyzer -
-     https://github.com/ZoliQua/React-Venn-Diagram-Analyser -
+     Part of React Venn Diagram Lab Module -
+     https://github.com/ZoliQua/React-Venn-Diagram-Lab -
      SVG Version: 3.0.0 -->
 ```
 

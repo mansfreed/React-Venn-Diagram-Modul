@@ -13,6 +13,9 @@ Usage:
   python3 normalize_after_illustrator.py models/venn-7-set.svg
   python3 normalize_after_illustrator.py models/*.svg
   python3 normalize_after_illustrator.py  # processes all models/*.svg
+
+Created by Zoltan Dul in 2026 - free to use with MIT license. 
+Part of React Venn Diagram Lab Module - https://github.com/ZoliQua/React-Venn-Diagram-Lab
 """
 
 import re

@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { APP_NAME, APP_VERSION } from '../version.ts';
 import type { AppMode } from '../App.tsx';
 
@@ -8,7 +9,60 @@ interface WelcomeDialogProps {
 }
 
 export function WelcomeDialog({ isOpen, onSelectMode, onSummary }: WelcomeDialogProps) {
+  const [showCredits, setShowCredits] = useState(false);
+
   if (!isOpen) return null;
+
+  if (showCredits) {
+    return (
+      <div className="dialog-overlay">
+        <div className="welcome-dialog credits-dialog">
+          <h1 className="welcome-title">Credits</h1>
+
+          <div className="credits-content">
+            <div className="credits-section">
+              <h3 className="credits-section-title">Authors</h3>
+
+              <div className="credits-person">
+                <div className="credits-name">Dr. Zoltan Dul, PhD</div>
+                <div className="credits-role">Researcher, Dentist</div>
+                <div className="credits-role">Former PhD student @ King's College London</div>
+              </div>
+
+              <div className="credits-person">
+                <div className="credits-name">Prof. N. Shaun B. Thomas</div>
+                <div className="credits-role">Cell Cycle & Epigenetics Team, Division of Cancer Studies</div>
+                <div className="credits-role">King's College London</div>
+              </div>
+
+              <div className="credits-person">
+                <div className="credits-name">Dr. Attila Csikasz-Nagy</div>
+                <div className="credits-role">Csikasz-Nagy Group, Randall Division of Cell and Molecular Biophysics</div>
+                <div className="credits-role">King's College London</div>
+              </div>
+
+              <div className="credits-person">
+                <div className="credits-name">Dr. Azeddine Si Ammour</div>
+                <div className="credits-role">Genomics and Biology of Fruit Crop</div>
+                <div className="credits-role">Fondazione Edmund Mach, San Michele all'Adige</div>
+              </div>
+            </div>
+
+            <div className="credits-section">
+              <h3 className="credits-section-title">Contact</h3>
+              <div className="credits-contact">
+                <a href="mailto:zoltan.dul@gmail.com">zoltan.dul@gmail.com</a>
+              </div>
+            </div>
+          </div>
+
+          <button className="btn welcome-summary-btn" onClick={() => setShowCredits(false)}>
+            Close
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="dialog-overlay">
@@ -38,9 +92,14 @@ export function WelcomeDialog({ isOpen, onSelectMode, onSummary }: WelcomeDialog
           </button>
         </div>
 
-        <button className="btn welcome-summary-btn" onClick={onSummary}>
-          View All 39 Diagram Models
-        </button>
+        <div className="welcome-bottom-buttons">
+          <button className="btn welcome-summary-btn" onClick={onSummary}>
+            View All 39 Diagram Models
+          </button>
+          <button className="btn welcome-summary-btn" onClick={() => setShowCredits(true)}>
+            Credits
+          </button>
+        </div>
       </div>
     </div>
   );

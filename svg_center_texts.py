@@ -3,6 +3,9 @@
 Add text-anchor:middle to all Group_Values texts in SVG files.
 For venn-7-set-work.svg: positions are already centered, just add text-anchor.
 For all others: shift x by half the estimated text width, then add text-anchor.
+
+Created by Zoltan Dul in 2026 - free to use with MIT license. 
+Part of React Venn Diagram Lab Module - https://github.com/ZoliQua/React-Venn-Diagram-Lab
 """
 
 import re

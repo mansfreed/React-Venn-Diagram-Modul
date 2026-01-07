@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect } from 'react';
 import { getModelsBySetCount, MODEL_LIST } from '../models.ts';
-import { APP_NAME, APP_VERSION } from '../version.ts';
+import { APP_NAME } from '../version.ts';
 
 interface SummaryDialogProps {
   isOpen: boolean;
@@ -83,7 +83,7 @@ export function SummaryDialog({ isOpen, onClose, onSelectModel, selectMode, onOp
       <div className="summary-dialog" onClick={e => e.stopPropagation()}>
         <div className="summary-header">
           <h1 className="summary-title">{selectMode ? 'Select SVG Model' : APP_NAME}</h1>
-          <p className="summary-subtitle">{selectMode ? 'Choose a diagram to open in the editor' : `${MODEL_LIST.length} Venn diagram models from 2-set to 8-set — v${APP_VERSION}`}</p>
+          <p className="summary-subtitle">{selectMode ? 'Choose a diagram to open in the editor' : `${MODEL_LIST.length} Venn diagram models from 2-set to 8-set`}</p>
           <div className="summary-header-buttons">
             {selectMode && onOpenCustom && <button className="btn btn-toolbar" onClick={onOpenCustom}>Open Custom SVG</button>}
             <button className="btn btn-toolbar summary-close-btn" onClick={onClose}>Close</button>
