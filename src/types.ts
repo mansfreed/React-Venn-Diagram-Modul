@@ -4,6 +4,7 @@ export interface VennDocument {
   viewBox: { x: number; y: number; w: number; h: number };
   comment: string;
   shapes: VennShape[];
+  shapesExtras: VennShape[];  // Extra shapes (e.g. ShapeA2 in Euler diagrams)
   texts: {
     header: VennText | null;
     names: VennText[];

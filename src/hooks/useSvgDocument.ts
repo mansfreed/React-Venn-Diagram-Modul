@@ -139,6 +139,19 @@ export function useSvgDocument() {
     });
   }, [updateDoc]);
 
+  const updateTextTransform = useCallback((id: string, transform: string | undefined) => {
+    updateDoc(d => {
+      const allTexts = [d.texts.header, ...d.texts.names, ...d.texts.values, ...d.texts.sums];
+      for (const t of allTexts) {
+        if (t && t.id === id) {
+          t.transformExtra = transform;
+          break;
+        }
+      }
+      return d;
+    });
+  }, [updateDoc]);
+
   const updateViewBox = useCallback((vb: { x: number; y: number; w: number; h: number }) => {
     updateDoc(d => {
       d.viewBox = vb;
@@ -161,7 +174,7 @@ export function useSvgDocument() {
 
   const updateShapeStyle = useCallback((id: string, property: string, value: string) => {
     updateDoc(d => {
-      for (const s of d.shapes) {
+      for (const s of [...d.shapes, ...d.shapesExtras]) {
         if (s.id === id) {
           const styleMap = parseStyleString(s.style);
           styleMap[property] = value;
@@ -175,7 +188,7 @@ export function useSvgDocument() {
 
   const updateShapeAttribute = useCallback((id: string, attr: string, value: string) => {
     updateDoc(d => {
-      for (const s of d.shapes) {
+      for (const s of [...d.shapes, ...d.shapesExtras]) {
         if (s.id === id) {
           s.attributes[attr] = value;
           break;
@@ -307,6 +320,7 @@ export function useSvgDocument() {
     updateTextPositionLive,
     updateTextContent,
     updateTextStyle,
+    updateTextTransform,
     updateViewBox,
     updateBulletPosition,
     updateShapeStyle,

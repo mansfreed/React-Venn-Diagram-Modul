@@ -8,6 +8,10 @@ function r1(n: number): string {
 }
 
 function textTransform(t: VennText): string {
+  if (t.transformExtra && t.transformExtra.startsWith('rotate')) {
+    // Non-matrix transform (e.g., rotate(angle,cx,cy))
+    return `${t.transformExtra} translate(${r1(t.x)}, ${r1(t.y)})`;
+  }
   const matrixBody = t.transformExtra
     ? `${t.transformExtra} ${r1(t.x)} ${r1(t.y)}`
     : `1 0 0 1 ${r1(t.x)} ${r1(t.y)}`;
@@ -58,6 +62,15 @@ export function saveSvg(doc: VennDocument): string {
     serializeShapeMultiline(shape, lines);
   }
   lines.push('</g>');
+
+  // Extra shapes (e.g. ShapeA2 in Euler diagrams)
+  if (doc.shapesExtras.length > 0) {
+    lines.push('<g id="ShapesExtras">');
+    for (const shape of doc.shapesExtras) {
+      serializeShapeMultiline(shape, lines);
+    }
+    lines.push('</g>');
+  }
 
   // Texts
   lines.push('<g id="Texts">');

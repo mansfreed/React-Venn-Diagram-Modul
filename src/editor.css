@@ -461,6 +461,39 @@ html, body, #root {
   color: var(--text-muted);
 }
 
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  z-index: 50;
+}
+
+.loading-spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loading-text {
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
 .canvas-empty-text {
   font-size: 16px;
 }
@@ -1232,9 +1265,8 @@ html, body, #root {
 /* ---- Stats Panel ---- */
 
 .stats-panel {
-  margin-top: 8px;
-  padding-top: 8px;
-  border-top: 1px solid var(--border);
+  margin-top: 4px;
+  padding-top: 4px;
 }
 
 .stats-title {
@@ -1556,10 +1588,8 @@ html, body, #root {
 }
 
 /* ---- Centered Canvas (View mode) ---- */
-.canvas-container {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.canvas-container .canvas-inner {
+  margin: auto;
 }
 
 /* ---- Mode Dropdown ---- */
@@ -2436,6 +2466,54 @@ html, body, #root {
 .csv-import-row-filter-field label {
   font-size: 12px;
   color: var(--text-secondary);
+}
+
+.csv-import-descriptions {
+  max-height: 120px;
+  overflow-y: auto;
+}
+
+.csv-import-desc-row {
+  display: flex;
+  gap: 8px;
+  font-size: 11px;
+  padding: 2px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+
+.csv-import-desc-name {
+  font-weight: 600;
+  color: var(--text-primary);
+  min-width: 80px;
+  flex-shrink: 0;
+}
+
+.csv-import-desc-text {
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.csv-import-desc-text a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.csv-import-detected {
+  font-size: 12px;
+  font-weight: 600;
+  color: #4caf50;
+  margin-top: 6px;
+  padding: 4px 8px;
+  background: rgba(76, 175, 80, 0.1);
+  border-radius: 3px;
+}
+
+.csv-import-detected-neutral {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-top: 4px;
 }
 
 .csv-import-error {

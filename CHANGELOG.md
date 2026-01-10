@@ -2,6 +2,28 @@
 
 All notable changes to the Venn Diagram Lab project.
 
+## [1.7.1] — 2026-03-30
+
+### Added
+- **5 new diagram models**: `venn-2e-set-rectangle.svg`, `venn-5e-set-euler.svg` (21/31 Euler), `venn-8a-set-edwards.svg` (255 regions), `venn-9a-set-edwards.svg` (511 regions), `venn-2e-set-carroll-triangle.svg`; total models: 44 (was 39)
+- **9-set support**: Edwards 9-set diagram with 511 regions, extending set range from 2-8 to 2-9
+- **ShapesExtras support**: parser, serializer, and Canvas now handle `<g id="ShapesExtras">` with `ShapeX2` elements for Euler diagrams (e.g. `venn-4e-set-euler.svg`)
+- **`generate_region_json.py`**: standalone Python script for generating JSON region data from SVGs using Shapely Boolean operations; supports `--all`, specific names, and auto-detect missing; handles `<polygon>` elements and chained `translate()` transforms
+- **Multi-line source labels**: SOURCES labels with `\n` now render as line breaks in Summary and View gallery
+- **Standard color I (Orange)**: `#F7941E` added for 9th set
+
+### Changed
+- **SVG comment header**: updated to "React Venn Diagram Lab Module" with new GitHub URL across all 44 SVGs
+- **`text-anchor:middle`**: enforced on all Count_ and CountSUM_ text elements across all SVG models (488 fixes)
+- **Group_Values sort order**: all SVGs sorted by (character count, alphabetical) — single chars first, then pairs, etc.
+- **Model count**: 39 → 44 updated in HelpDialog, WelcomeDialog, tests, and SummaryDialog
+- **Set range**: "2-set to 8-set" → "2-set to 9-set" in all UI text
+- **README**: updated with 44 models, 9-set section, ShapesExtras documentation, new publications
+
+### Fixed
+- **`generate_region_json.py` transform handling**: circles with chained `translate()` transforms (used in Euler diagrams) now correctly compute cumulative offsets for Shapely region detection
+- **Source label rendering in App.tsx**: View mode gallery now uses `renderLabel()` for multi-line source labels (was only applied in SummaryDialog)
+
 ## [1.7.0] — 2026-01-09
 
 ### Added

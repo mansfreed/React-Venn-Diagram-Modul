@@ -37,9 +37,11 @@ interface TestSidebarProps {
   csvData: CsvData | null;
   csvFilename: string | null;
   fileType?: 'binary' | 'aggregated';
+  geneSetFormat?: 'gmt' | 'gmx' | null;
   selectedModel: string | null;
   onSelectModel: (filename: string, setCount: number) => void;
   columnMapping: number[];  // indices into csv headers for A, B, C, ...
+  originalColumnCount: number;
   onSetColumnMapping: (mapping: number[]) => void;
   onCalculate: () => void;
   isCalculated: boolean;
@@ -79,9 +81,9 @@ interface TestSidebarProps {
 }
 
 export function TestSidebar({
-  csvData, csvFilename, fileType,
+  csvData, csvFilename, fileType, geneSetFormat,
   selectedModel, onSelectModel,
-  columnMapping, onSetColumnMapping,
+  columnMapping, originalColumnCount, onSetColumnMapping,
   onCalculate, isCalculated,
   viewStyle, onSetViewStyle,
   cutColorMode, onSetCutColorMode,
@@ -119,7 +121,7 @@ export function TestSidebar({
   }, [columnMapping, onSetColumnMapping]);
 
   const n = columnMapping.length;
-  const maxSets = fileType === 'aggregated' ? Math.min(n, 8) : Math.min(binaryColumns.length, 8);
+  const maxSets = Math.min(originalColumnCount, 8);
   const letters = 'ABCDEFGH'.slice(0, n).split('');
 
   // Show all models from 2-set up to max available binary columns
@@ -148,7 +150,11 @@ export function TestSidebar({
             <>
               <div className="sidebar-file-info">
                 <div><span className="file-info-label">Filename:</span> {csvFilename}</div>
-                <div><span className="file-info-label">Format:</span> {fileType === 'aggregated' ? 'Aggregated' : 'Binary'}</div>
+                <div><span className="file-info-label">Format:</span> {
+                  geneSetFormat === 'gmt' ? 'GMT (Gene Matrix Transposed)' :
+                  geneSetFormat === 'gmx' ? 'GMX (Gene Matrix)' :
+                  fileType === 'aggregated' ? 'Aggregated' : 'Binary'
+                }</div>
                 <div><span className="file-info-label">Columns:</span> {csvData.headers.length} columns</div>
                 {fileType !== 'aggregated' && <div><span className="file-info-label">Binary:</span> {binaryColumns.length} detected</div>}
                 <div><span className="file-info-label">Rows:</span> {csvData.rows.length}</div>

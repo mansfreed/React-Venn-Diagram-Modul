@@ -4,8 +4,8 @@ import { existsSync } from 'fs';
 import { resolve } from 'path';
 
 describe('MODEL_LIST', () => {
-  it('contains 39 models', () => {
-    expect(MODEL_LIST).toHaveLength(39);
+  it('contains 44 models', () => {
+    expect(MODEL_LIST).toHaveLength(44);
   });
 
   it('every model has required fields', () => {
@@ -13,7 +13,7 @@ describe('MODEL_LIST', () => {
       expect(m.filename).toMatch(/^venn-\d.*\.svg$/);
       expect(m.label).toBeTruthy();
       expect(m.setCount).toBeGreaterThanOrEqual(2);
-      expect(m.setCount).toBeLessThanOrEqual(8);
+      expect(m.setCount).toBeLessThanOrEqual(9);
     }
   });
 
@@ -46,12 +46,12 @@ describe('getModelsBySetCount', () => {
     let total = 0;
     for (const [setCount, models] of groups) {
       expect(setCount).toBeGreaterThanOrEqual(2);
-      expect(setCount).toBeLessThanOrEqual(8);
+      expect(setCount).toBeLessThanOrEqual(9);
       for (const m of models) {
         expect(m.setCount).toBe(setCount);
       }
       total += models.length;
     }
-    expect(total).toBe(39);
+    expect(total).toBe(44);
   });
 });

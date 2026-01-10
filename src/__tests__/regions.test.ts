@@ -3,7 +3,7 @@ import { getAllRegions } from '../utils/regions.ts';
 import type { VennDocument } from '../types.ts';
 
 function makeDoc(n: number): VennDocument {
-  const letters = 'ABCDEFGH'.slice(0, n).split('');
+  const letters = 'ABCDEFGHI'.slice(0, n).split('');
   const shapes = letters.map(l => ({
     id: `Shape${l}`,
     tagName: 'circle',

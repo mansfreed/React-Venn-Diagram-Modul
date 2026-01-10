@@ -145,7 +145,7 @@ export function LayerTree({ doc, selected, onSelect, onToggleMeta, onMoveElement
   const selectedId = getSelectedId(selected);
   const { hiddenIds, hiddenGroups } = doc.meta;
 
-  const shapeItems = doc.shapes.map(s => ({ id: s.id, label: s.id }));
+  const shapeItems = [...doc.shapes, ...doc.shapesExtras].map(s => ({ id: s.id, label: s.id }));
   const headerItems = doc.texts.header
     ? [{ id: doc.texts.header.id, label: doc.texts.header.id }]
     : [];

@@ -1,22 +1,22 @@
 # Venn Diagram Lab
 
-Interactive viewer and editor for Venn diagrams — from 2-set to 8-set, covering all known construction methods. Built with React, TypeScript, and Vite.
+Interactive viewer and editor for Venn diagrams — from 2-set to 9-set, covering all known construction methods. Built with React, TypeScript, and Vite.
 
-**Version:** 1.7.0 | **Models:** 39 SVG diagrams | **License:** MIT
+**Version:** 1.7.1 | **Models:** 44 SVG diagrams | **License:** MIT
 
 ## Features
 
-### Three Modes
+### Four Modes
 
 | Mode | Description |
 |------|-------------|
-| **Summary** | Gallery view of all 39 diagrams with SVG previews, grouped by set count, with publication references |
+| **Summary** | Gallery view of all 44 diagrams with SVG previews, grouped by set count, with publication references |
 | **View** | Interactive diagram viewer with region detection. Two sub-modes: **Layer** (transparent overlapping shapes) and **Cut** (pre-computed intersection regions from JSON data) |
 | **Edit** | Full SVG editor with drag-to-position, text editing, undo/redo, validation, and export |
 | **Data** | Load CSV/TSV data (binary or aggregated), map columns to Venn sets, calculate intersections, export results as TSV |
 
 ### View Mode — Layer View
-- Load any of the 39 SVG models from the dropdown
+- Load any of the 44 SVG models from the dropdown
 - Hover over the diagram to detect which intersection region you're in
 - Region detection uses `SVGGeometryElement.isPointInFill()` hit-testing
 - Right panel shows: region label, involved sets with colors, intersection expression
@@ -37,6 +37,7 @@ Interactive viewer and editor for Venn diagrams — from 2-set to 8-set, coverin
 - Grid overlay and validation checker
 - Layer tree with visibility toggles
 - ViewBox editor
+- Shape move, rotate, and resize tools
 
 ### Data Mode
 - Import CSV, TSV, or TXT files via configurable import dialog
@@ -52,18 +53,18 @@ Interactive viewer and editor for Venn diagrams — from 2-set to 8-set, coverin
 - Sample datasets: binary (streaming platforms) and aggregated (gene sets)
 
 ### Summary Mode
-- Dialog gallery of all 39 diagrams
+- Dialog gallery of all 44 diagrams
 - SVG previews rendered inline
-- Grouped by set count (2-set through 8-set)
-- Source references linked to publication PDFs
+- Grouped by set count (2-set through 9-set)
+- Source references linked to publication PDFs (multi-line labels supported)
 
 ## Project Structure
 
 ```
 ├── src/                       React + TypeScript source code
-│   ├── App.tsx                Main app component (3 modes)
+│   ├── App.tsx                Main app component (4 modes)
 │   ├── version.ts             Version constant
-│   ├── models.ts              39-model catalog + fetch utilities
+│   ├── models.ts              44-model catalog + fetch utilities
 │   ├── components/            UI components
 │   │   ├── Toolbar.tsx        Top bar (mode switcher, zoom, tools)
 │   │   ├── Canvas.tsx         SVG rendering + interaction
@@ -85,10 +86,10 @@ Interactive viewer and editor for Venn diagrams — from 2-set to 8-set, coverin
 │   │   ├── regions.ts         Region enumeration (2^n - 1 subsets)
 │   │   ├── csvParser.ts       CSV/TSV parser, binary & aggregated Venn calculation
 │   │   └── exportData.ts      TSV export (Region Summary + Item Matrix)
-│   └── __tests__/             Test suites (443 tests)
+│   └── __tests__/             Test suites
 ├── models/
-│   ├── svg/                   39 SVG Venn diagram models
-│   └── json/                  39 JSON pre-computed region data
+│   ├── svg/                   44 SVG Venn diagram models
+│   └── json/                  44 JSON pre-computed region data
 ├── publications/              Research papers (PDF)
 ├── samples/                   Source SVG samples for model generation
 ├── *.py                       Python utility scripts
@@ -97,20 +98,20 @@ Interactive viewer and editor for Venn diagrams — from 2-set to 8-set, coverin
 ├── VENN-DIAGRAM-SVG-SPECIFICATION.md  SVG format specification
 ├── VENN-DIGARAM-PROJECT-STRUCTURE.md  Standard color mapping & project info
 └── package.json               Node.js project
-```
 
 ## SVG Format
 
-All 39 models use a standardized SVG structure. See [VENN-DIAGRAM-SVG-SPECIFICATION.md](VENN-DIAGRAM-SVG-SPECIFICATION.md) for the full specification.
+All 44 models use a standardized SVG structure. See [VENN-DIAGRAM-SVG-SPECIFICATION.md](VENN-DIAGRAM-SVG-SPECIFICATION.md) for the full specification.
 
 **Key elements:**
-- `<g id="Shapes">` — Shape geometry (`ShapeA`-`ShapeH`)
-- `<g id="Group_Values">` — Intersection count labels (`Count_A`, `Count_AB`, ..., `Count_ABCDEFGH`)
-- `<g id="Group_Names">` — Set name labels (`NameA`-`NameH`)
+- `<g id="Shapes">` — Shape geometry (`ShapeA`-`ShapeI`)
+- `<g id="ShapesExtras">` — Extra shapes for Euler diagrams (`ShapeA2`, `ShapeB2`, ...)
+- `<g id="Group_Values">` — Intersection count labels (`Count_A`, `Count_AB`, ..., `Count_ABCDEFGHI`)
+- `<g id="Group_Names">` — Set name labels (`NameA`-`NameI`)
 - `<g id="Group_CountSums">` — Set total labels
 - `<g id="Group_Bullets">` — Color legend circles
 
-**Region count:** 2^n - 1 (3 for 2-set, 7 for 3-set, 15 for 4-set, ..., 255 for 8-set)
+**Region count:** 2^n - 1 (3 for 2-set, 7 for 3-set, 15 for 4-set, ..., 511 for 9-set)
 
 ### Standard Color Mapping
 
@@ -124,6 +125,7 @@ All 39 models use a standardized SVG structure. See [VENN-DIAGRAM-SVG-SPECIFICAT
 | F | Magenta | `#9E1F63` |
 | G | Pink | `#CA4B9B` |
 | H | Cyan | `#21AED1` |
+| I | Orange | `#F7941E` |
 
 ## Diagram Models
 
@@ -132,6 +134,8 @@ All 39 models use a standardized SVG structure. See [VENN-DIAGRAM-SVG-SPECIFICAT
 |------|------|--------|
 | `venn-2-set.svg` | Classic two-circle | Venn, 1880 |
 | `venn-2a-set-edwards.svg` | Edwards construction | Edwards, 1996 |
+| `venn-2e-set-carroll-triangle.svg` | Carroll triangle | Carroll, 2000 |
+| `venn-2e-set-rectangle.svg` | Rectangle layout | — |
 
 ### 3-Set (7 regions)
 | File | Type | Source |
@@ -163,6 +167,7 @@ All 39 models use a standardized SVG structure. See [VENN-DIAGRAM-SVG-SPECIFICAT
 | `venn-5d-set-bannier.svg` | Bannier-Bodin variant | Bannier & Bodin, 2017 |
 | `venn-5e-set.svg` | Organic/freeform | — |
 | `venn-5e-set-carroll-triangle.svg` | Carroll triangle | Carroll, 2000 |
+| `venn-5e-set-euler.svg` | Euler diagram (21/31 regions) | — |
 | `venn-5f-set.svg` | Original Venn construction | Venn, 1880 |
 
 ### 6-Set (63 regions)
@@ -179,20 +184,26 @@ All 39 models use a standardized SVG structure. See [VENN-DIAGRAM-SVG-SPECIFICAT
 |------|------|--------|
 | `venn-7-set-grunbaum.svg` | Grunbaum construction | Grunbaum, 1992 |
 | `venn-7a-set-edwards.svg` | Edwards construction | Edwards, 1996 |
-| `venn-7c-set-adelaide.svg` | Adelaide symmetric | Mamakani et al., 2012 |
+| `venn-7c-set-adelaide.svg` | Adelaide symmetric | Edwards, 1996; Mamakani et al., 2012 |
 | `venn-7d-set-bannier.svg` | Bannier-Bodin variant | Bannier & Bodin, 2017 |
-| `venn-7e-set-adelaide.svg` | Adelaide variant | Mamakani et al., 2012 |
-| `venn-7e-set-hamilton.svg` | Hamilton variant | Mamakani et al., 2012 |
-| `venn-7e-set-manawatu.svg` | Manawatu variant | Mamakani et al., 2012 |
-| `venn-7e-set-massey.svg` | Massey variant | Mamakani et al., 2012 |
-| `venn-7e-set-palmerston-north.svg` | Palmerston North variant | Mamakani et al., 2012 |
-| `venn-7e-set-victoria.svg` | Victoria variant | Mamakani et al., 2012 |
+| `venn-7e-set-adelaide.svg` | Adelaide variant | Edwards, 1996; Mamakani et al., 2012 |
+| `venn-7e-set-hamilton.svg` | Hamilton variant | Edwards, 1996; Mamakani et al., 2012 |
+| `venn-7e-set-manawatu.svg` | Manawatu variant | Edwards, 1996; Mamakani et al., 2012 |
+| `venn-7e-set-massey.svg` | Massey variant | Edwards, 1996; Mamakani et al., 2012 |
+| `venn-7e-set-palmerston-north.svg` | Palmerston North variant | Edwards, 1996; Mamakani et al., 2012 |
+| `venn-7e-set-victoria.svg` | Victoria variant | Edwards, 1996; Mamakani et al., 2012 |
 
 ### 8-Set (255 regions)
 | File | Type | Source |
 |------|------|--------|
 | `venn-8-set.svg` | SUMO-Venn construction | SUMO-Venn |
+| `venn-8a-set-edwards.svg` | Edwards construction | Edwards, 1996 |
 | `venn-8d-set-bannier.svg` | Bannier-Bodin variant | Bannier & Bodin, 2017 |
+
+### 9-Set (511 regions)
+| File | Type | Source |
+|------|------|--------|
+| `venn-9a-set-edwards.svg` | Edwards construction | Edwards, 1996 |
 
 ## Publications
 
@@ -206,6 +217,7 @@ All 39 models use a standardized SVG structure. See [VENN-DIAGRAM-SVG-SPECIFICAT
 | `Edwards-1996.pdf` | Edwards, A.W.F. (1996). *Seven-set Venn diagrams with rotational and polar symmetry.* |
 | `Caroll-2000.pdf` | Carroll, C. (2000). *Venn diagrams using convex polygons.* |
 | `Mamakani-et-al-2012.pdf` | Mamakani, K. et al. (2012). *New roses: simple symmetric Venn diagrams.* |
+| `Mamakani-and-Ruskey-2012.pdf` | Mamakani, K. & Ruskey, F. (2012). *A new rose: the first simple symmetric 11-Venn diagram.* |
 | `Bannier-and-Bodin-2017.pdf` | Bannier, D. & Bodin, A. (2017). *Venn diagram constructions for higher set counts.* |
 | `Griggs-et-al-2004.pdf` | Griggs, J. et al. (2004). *Venn diagrams and symmetric chain decompositions.* |
 | `Farrokhi-lecture-2023.pdf` | Farrokhi, M. (2023). *Lecture notes on Venn diagram constructions.* |

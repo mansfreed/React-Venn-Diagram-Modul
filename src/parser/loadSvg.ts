@@ -117,6 +117,15 @@ export function loadSvg(filename: string, svgString: string): VennDocument {
     }
   }
 
+  // Parse extra shapes (e.g. ShapeA2 in Euler diagrams)
+  const shapesExtras: VennShape[] = [];
+  const shapesExtrasGroup = svgEl.querySelector('#ShapesExtras');
+  if (shapesExtrasGroup) {
+    for (let i = 0; i < shapesExtrasGroup.children.length; i++) {
+      shapesExtras.push(parseShape(shapesExtrasGroup.children[i]));
+    }
+  }
+
   // Parse texts
   let header: VennText | null = null;
   let headerHidden = false;
@@ -173,6 +182,7 @@ export function loadSvg(filename: string, svgString: string): VennDocument {
     viewBox,
     comment,
     shapes,
+    shapesExtras,
     texts: { header, names, values, sums },
     bullets,
     meta: { headerHidden, bulletsHidden, hiddenIds: new Set(), hiddenGroups: new Set() },

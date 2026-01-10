@@ -151,7 +151,7 @@ function TextElement({
 }) {
   const styleObj = useMemo(() => parseStyleToObj(t.style), [t.style]);
   const transformStr = t.transformExtra
-    ? `matrix(${t.transformExtra} ${t.x} ${t.y})`
+    ? `${t.transformExtra} translate(${t.x}, ${t.y})`
     : `translate(${t.x}, ${t.y})`;
 
   const isCut = isCutView && !errorHighlight;
@@ -392,7 +392,7 @@ export function Canvas({
         // Name/CountSUM click → select the single-set region
         if (t.id.startsWith('Name') || t.id.startsWith('CountSUM_')) {
           const letter = t.id.replace('Name', '').replace('CountSUM_', '');
-          if (letter && /^[A-H]$/.test(letter) && onReadOnlyTextClick) {
+          if (letter && /^[A-I]$/.test(letter) && onReadOnlyTextClick) {
             onReadOnlyTextClick(letter);
           }
         }
@@ -522,10 +522,61 @@ export function Canvas({
             })}
           </g>
 
+          {/* ShapesExtras (e.g. ShapeA2 in Euler diagrams) */}
+          {doc.shapesExtras.length > 0 && (
+          <g id="ShapesExtras">
+            {doc.shapesExtras.filter(s => !doc.meta.hiddenIds.has(s.id) && !doc.meta.hiddenGroups.has('shapes')).map(s => {
+              const styleObj = parseStyleToObj(s.style);
+              const baseOpacity = styleObj['opacity'] ? Number(styleObj['opacity']) : undefined;
+              const isHighlighted = highlightedShapeIds.has(s.id.replace(/\d+$/, ''));
+              const hasAnyHighlight = highlightedShapeIds.size > 0;
+              let finalOpacity = baseOpacity;
+              if (readOnly && hasAnyHighlight) {
+                if (isCutView) {
+                  finalOpacity = isHighlighted ? 0.35 : (baseOpacity ?? 0.2) * 0.12;
+                } else {
+                  finalOpacity = isHighlighted ? 0.5 : (baseOpacity ?? 0.2) * 0.3;
+                }
+              } else if (isCutView && !hasAnyHighlight) {
+                finalOpacity = (baseOpacity ?? 0.2) * 0.8;
+              }
+              const commonStyle: React.CSSProperties = {
+                opacity: finalOpacity,
+                fill: styleObj['fill'],
+                stroke: styleObj['stroke'],
+                strokeWidth: styleObj['stroke-width'],
+                strokeMiterlimit: styleObj['stroke-miterlimit'] ? Number(styleObj['stroke-miterlimit']) : undefined,
+                strokeLinecap: styleObj['stroke-linecap'] as React.CSSProperties['strokeLinecap'],
+                strokeLinejoin: styleObj['stroke-linejoin'] as React.CSSProperties['strokeLinejoin'],
+                cursor: readOnly ? 'crosshair' : moveShapes ? (shapeCursor ?? 'move') : 'pointer',
+              };
+              const isSelected = selectedId === s.id;
+              const handleClick = (e: React.MouseEvent) => {
+                if (readOnly) return;
+                e.stopPropagation();
+                onSelect(s.id);
+              };
+              const handleShapePointerDown = moveShapes && onDragShapeStart
+                ? (e: React.PointerEvent) => { e.stopPropagation(); onDragShapeStart(e, s.id); }
+                : undefined;
+              const svgAttrs: Record<string, string | undefined> = {};
+              for (const [key, val] of Object.entries(s.attributes)) {
+                svgAttrs[key] = val;
+              }
+              return (
+                <g key={s.id} onPointerDown={handleShapePointerDown}>
+                  {renderShapeElement(s.tagName, s.id, svgAttrs, commonStyle, handleClick)}
+                  {isSelected && <SelectionRect targetId={s.id} />}
+                </g>
+              );
+            })}
+          </g>
+          )}
+
           {/* Cut View: clip-path defs + hover overlay */}
           {isCutView && (
             <defs>
-              {doc.shapes.filter(s => /^Shape[A-H]$/.test(s.id)).map(s => {
+              {doc.shapes.filter(s => /^Shape[A-I]$/.test(s.id)).map(s => {
                 const a = s.attributes;
                 return (
                   <clipPath key={`cut-clip-${s.id}`} id={`cut-clip-${s.id}`}>

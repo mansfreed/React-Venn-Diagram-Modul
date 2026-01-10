@@ -56,7 +56,7 @@ export function shapeIdToLetter(id: string): string {
 
 /** Extract expected shape letters from a Count ID like "Count_ACE" → ["A","C","E"] */
 export function expectedLettersFromId(id: string): string[] {
-  const match = id.match(/^Count_([A-H]+)$/);
+  const match = id.match(/^Count_([A-I]+)$/);
   if (!match) return [];
   return match[1].split('');
 }

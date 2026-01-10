@@ -15,7 +15,7 @@ export interface Region {
 export function getAllRegions(doc: VennDocument): Region[] {
   const letters = doc.shapes
     .map(s => s.id.replace('Shape', ''))
-    .filter(l => /^[A-H]$/.test(l))
+    .filter(l => /^[A-I]$/.test(l))
     .sort();
   const regions: Region[] = [];
   const n = letters.length;

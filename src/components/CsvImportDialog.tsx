@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import type { FileType, Delimiter, CsvImportResult } from '../utils/csvParser.ts';
+import type { FileType, Delimiter, CsvImportResult, GeneSetFormat } from '../utils/csvParser.ts';
 import {
   parseCsvWithDelimiter,
   detectDelimiter,
@@ -7,12 +7,15 @@ import {
   validateBinaryColumns,
   validateAggregatedColumns,
   getBinaryColumns,
+  parseGmt,
+  parseGmx,
 } from '../utils/csvParser.ts';
 
 interface CsvImportDialogProps {
   isOpen: boolean;
   rawText: string;
   filename: string;
+  geneSetFormat?: GeneSetFormat;
   onLoad: (result: CsvImportResult) => void;
   onCancel: () => void;
 }
@@ -43,8 +46,19 @@ function parseRowSpec(spec: string): Set<number> {
   return result;
 }
 
-export function CsvImportDialog({ isOpen, rawText, filename, onLoad, onCancel }: CsvImportDialogProps) {
+export function CsvImportDialog({ isOpen, rawText, filename, geneSetFormat, onLoad, onCancel }: CsvImportDialogProps) {
+  const isGeneSet = !!geneSetFormat;
   const detectedDelimiter = useMemo(() => detectDelimiter(rawText), [rawText]);
+
+  // Pre-parse GMT/GMX
+  const geneSetParsed = useMemo(() => {
+    if (!geneSetFormat) return null;
+    try {
+      return geneSetFormat === 'gmt' ? parseGmt(rawText) : parseGmx(rawText);
+    } catch {
+      return null;
+    }
+  }, [rawText, geneSetFormat]);
 
   const [fileType, setFileType] = useState<FileType>('binary');
   const [rowDelimiter, setRowDelimiter] = useState<Delimiter>(detectedDelimiter);
@@ -59,20 +73,24 @@ export function CsvImportDialog({ isOpen, rawText, filename, onLoad, onCancel }:
 
   // Re-parse preview when delimiter or header changes
   const preview = useMemo(() => {
+    if (geneSetParsed) {
+      return { headers: geneSetParsed.csv.headers, rows: geneSetParsed.csv.rows.slice(0, 5) };
+    }
     try {
       return getPreviewRows(rawText, rowDelimiter, 5);
     } catch {
       return { headers: [], rows: [] };
     }
-  }, [rawText, rowDelimiter]);
+  }, [rawText, rowDelimiter, geneSetParsed]);
 
   const fullCsv = useMemo(() => {
+    if (geneSetParsed) return geneSetParsed.csv;
     try {
       return parseCsvWithDelimiter(rawText, rowDelimiter, hasHeader);
     } catch {
       return null;
     }
-  }, [rawText, rowDelimiter, hasHeader]);
+  }, [rawText, rowDelimiter, hasHeader, geneSetParsed]);
 
   const colCount = preview.headers.length;
 
@@ -82,6 +100,15 @@ export function CsvImportDialog({ isOpen, rawText, filename, onLoad, onCancel }:
       Array.from({ length: colCount }, (_, i) => prev[i] ?? `Column ${i + 1}`)
     );
   }, [colCount]);
+
+  // Auto-configure for gene set formats
+  useEffect(() => {
+    if (geneSetParsed) {
+      setFileType('aggregated');
+      setRowDelimiter('\t');
+      setHasHeader(true);
+    }
+  }, [geneSetParsed]);
 
   // Auto-select columns on file type or delimiter change
   useEffect(() => {
@@ -186,6 +213,7 @@ export function CsvImportDialog({ isOpen, rawText, filename, onLoad, onCancel }:
       selectedColumns: cols,
       itemDelimiter: fileType === 'aggregated' ? itemDelimiter : undefined,
       hasHeader,
+      geneSetMeta: geneSetParsed?.meta,
     });
   };
 
@@ -195,7 +223,7 @@ export function CsvImportDialog({ isOpen, rawText, filename, onLoad, onCancel }:
     <div className="dialog-overlay" onClick={onCancel}>
       <div className="csv-import-dialog" onClick={e => e.stopPropagation()}>
         <div className="csv-import-header">
-          <h2 className="csv-import-title">Import Custom Dataset: {filename}</h2>
+          <h2 className="csv-import-title">{isGeneSet ? 'Import Gene Set File' : 'Import Custom Dataset'}: {filename}</h2>
         </div>
 
         <div className="csv-import-body">
@@ -204,13 +232,20 @@ export function CsvImportDialog({ isOpen, rawText, filename, onLoad, onCancel }:
             <div className="csv-import-section-title">1. File Type</div>
             <div className="csv-import-radio-group">
               <label className="csv-import-radio">
-                <input type="radio" checked={fileType === 'binary'} onChange={() => setFileType('binary')} />
+                <input type="radio" checked={fileType === 'binary'} onChange={() => setFileType('binary')} disabled={isGeneSet} />
                 <span>Binary file <span className="csv-import-hint">(0/1 values per cell)</span></span>
               </label>
               <label className="csv-import-radio">
-                <input type="radio" checked={fileType === 'aggregated'} onChange={() => setFileType('aggregated')} />
+                <input type="radio" checked={fileType === 'aggregated'} onChange={() => setFileType('aggregated')} disabled={isGeneSet} />
                 <span>Aggregated <span className="csv-import-hint">(item names per column)</span></span>
               </label>
+              {isGeneSet ? (
+                <div className="csv-import-detected">{geneSetFormat?.toUpperCase()} file detected — auto-configured as aggregated gene set format</div>
+              ) : (
+                <div className="csv-import-detected-neutral">
+                  {filename.toLowerCase().endsWith('.tsv') ? 'TSV' : filename.toLowerCase().endsWith('.txt') ? 'TXT' : 'CSV'} file detected
+                </div>
+              )}
             </div>
           </div>
 
@@ -219,7 +254,7 @@ export function CsvImportDialog({ isOpen, rawText, filename, onLoad, onCancel }:
             <div className="csv-import-section-title">2. Delimiters</div>
             <div className="csv-import-delimiter-row">
               <label>Row delimiter:</label>
-              <select className="csv-import-select" value={rowDelimiter} onChange={e => setRowDelimiter(e.target.value as Delimiter)}>
+              <select className="csv-import-select" value={rowDelimiter} onChange={e => setRowDelimiter(e.target.value as Delimiter)} disabled={isGeneSet}>
                 {DELIMITER_OPTIONS.map(d => (
                   <option key={d.value} value={d.value}>{d.label}</option>
                 ))}
@@ -241,7 +276,7 @@ export function CsvImportDialog({ isOpen, rawText, filename, onLoad, onCancel }:
           <div className="csv-import-section">
             <div className="csv-import-section-title">3. Header</div>
             <label className="csv-import-checkbox-label">
-              <input type="checkbox" checked={hasHeader} onChange={e => setHasHeader(e.target.checked)} />
+              <input type="checkbox" checked={hasHeader} onChange={e => setHasHeader(e.target.checked)} disabled={isGeneSet} />
               First row is header
             </label>
             {!hasHeader && colCount > 0 && (
@@ -263,6 +298,24 @@ export function CsvImportDialog({ isOpen, rawText, filename, onLoad, onCancel }:
               </div>
             )}
           </div>
+
+          {/* Gene Set Descriptions */}
+          {isGeneSet && geneSetParsed?.meta.descriptions && Object.keys(geneSetParsed.meta.descriptions).length > 0 && (
+            <div className="csv-import-section">
+              <div className="csv-import-section-title">Gene Set Descriptions</div>
+              <div className="csv-import-descriptions">
+                {Object.entries(geneSetParsed.meta.descriptions).slice(0, 20).map(([name, desc]) => (
+                  <div key={name} className="csv-import-desc-row">
+                    <span className="csv-import-desc-name">{name}</span>
+                    <span className="csv-import-desc-text">{desc.startsWith('http') ? <a href={desc} target="_blank" rel="noopener noreferrer">{desc}</a> : desc}</span>
+                  </div>
+                ))}
+                {Object.keys(geneSetParsed.meta.descriptions).length > 20 && (
+                  <div className="csv-import-hint">...and {Object.keys(geneSetParsed.meta.descriptions).length - 20} more</div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* 4. Data Columns */}
           <div className="csv-import-section">

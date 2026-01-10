@@ -17,7 +17,7 @@ export function useRegionDetection(doc: VennDocument | null) {
   const rafRef = useRef(0);
 
   const allShapeIds = useMemo(() =>
-    doc?.shapes.map(s => s.id).filter(id => /^Shape[A-H]$/.test(id)) ?? [],
+    doc?.shapes.map(s => s.id).filter(id => /^Shape[A-I]$/.test(id)) ?? [],
     [doc?.shapes]
   );
 

@@ -100,7 +100,7 @@ export function ViewerSidebar({
           </div>
           {infoOpen && (
             <div className="viewer-stats">
-              <div>Sets: {doc.shapes.filter(s => /^Shape[A-H]$/.test(s.id)).length}</div>
+              <div>Sets: {doc.shapes.filter(s => /^Shape[A-I]$/.test(s.id)).length}</div>
               <div>Regions: {regions.length}</div>
               <div>File: {currentModel}</div>
             </div>

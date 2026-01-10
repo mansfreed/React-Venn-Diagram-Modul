@@ -28,7 +28,7 @@ const HELP: Record<AppMode, HelpPage> = {
       {
         heading: 'Overview',
         items: [
-          { content: 'Browse and explore 39 pre-built Venn diagram SVG models, from 2-set to 8-set, covering constructions by Venn (1880), Edwards (1996), Anderson (1988), Grünbaum (1984, 1992), Bannier & Bodin (2017), Mamakani et al. (2012), and Carroll (2000).' },
+          { content: 'Browse and explore 44 pre-built Venn diagram SVG models, from 2-set to 9-set, covering constructions by Venn (1880), Edwards (1996), Anderson (1988), Grünbaum (1984, 1992), Bannier & Bodin (2017), Mamakani et al. (2012), and Carroll (2000).' },
           { content: 'When no model is selected, the full model gallery is shown. Click any diagram card to load it.' },
         ],
       },
@@ -82,7 +82,7 @@ const HELP: Record<AppMode, HelpPage> = {
       {
         heading: 'Summary',
         items: [
-          { content: 'Click the ☰ icon in the toolbar to open the Summary dialog showing all 39 models with SVG previews, grouped by set count, with links to source publications.' },
+          { content: 'Click the ☰ icon in the toolbar to open the Summary dialog showing all 44 models with SVG previews, grouped by set count, with links to source publications.' },
         ],
       },
     ],
@@ -100,7 +100,7 @@ const HELP: Record<AppMode, HelpPage> = {
       {
         heading: 'Opening Files',
         items: [
-          { content: 'Click "Open" in the toolbar to browse the 39 built-in models, or click "Open Custom SVG" to load your own file.' },
+          { content: 'Click "Open" in the toolbar to browse the 44 built-in models, or click "Open Custom SVG" to load your own file.' },
           { content: 'Custom files are validated against the Venn SVG specification. A validation dialog reports any issues.' },
         ],
       },
@@ -186,7 +186,7 @@ const HELP: Record<AppMode, HelpPage> = {
       {
         heading: 'Overview',
         items: [
-          { content: 'Load tabular data (CSV, TSV, or TXT), map columns to Venn diagram sets, calculate intersection counts, and visualize results.' },
+          { content: 'Load tabular data (CSV, TSV, TXT) or gene set files (GMT, GMX), map columns to Venn diagram sets, calculate intersection counts, and visualize results.' },
           { content: 'Supports Binary (0/1 per cell) and Aggregated (item names per column) formats.' },
           { content: 'Includes statistical analysis: Jaccard, Dice, hypergeometric enrichment, and data export.' },
         ],
@@ -213,6 +213,8 @@ const HELP: Record<AppMode, HelpPage> = {
             items: [
               { content: 'Binary: each row = an item, selected columns have 0/1 values. Program counts items per intersection region.' },
               { content: 'Aggregated: each column = a set with item names. Items in multiple columns create intersections.' },
+              { content: 'GMT (Gene Matrix Transposed): GSEA/MSigDB format. Each row = one gene set (tab-delimited: name, description, genes). Auto-detected from .gmt extension.' },
+              { content: 'GMX (Gene Matrix): GSEA/MSigDB format. Each column = one gene set (tab-delimited: row 1 = names, row 2 = descriptions, row 3+ = genes). Auto-detected from .gmx extension.' },
             ],
           },
         ],

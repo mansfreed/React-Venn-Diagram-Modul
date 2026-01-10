@@ -33,7 +33,7 @@ function validateSvg(content: string): CheckResult[] {
   results.push({ label: 'Shapes group', passed: hasShapes, detail: hasShapes ? 'Found' : 'Missing id="Shapes"' });
 
   // 4. Shape elements
-  const shapeMatches = content.match(/id="Shape[A-H]"/g) ?? [];
+  const shapeMatches = content.match(/id="Shape[A-I]"/g) ?? [];
   const n = shapeMatches.length;
   results.push({ label: 'Shape elements', passed: n >= 2, detail: `${n} shapes found (${n >= 2 ? 'OK' : 'need at least 2'})` });
 
@@ -46,7 +46,7 @@ function validateSvg(content: string): CheckResult[] {
   results.push({ label: 'Group_Values', passed: hasValues, detail: hasValues ? 'Found' : 'Missing' });
 
   // 7. Count elements
-  const countMatches = content.match(/id="Count_[A-H]+"/g) ?? [];
+  const countMatches = content.match(/id="Count_[A-I]+"/g) ?? [];
   const expected = n >= 2 ? Math.pow(2, n) - 1 : 0;
   results.push({
     label: 'Count elements',
@@ -59,7 +59,7 @@ function validateSvg(content: string): CheckResult[] {
   results.push({ label: 'Group_Names', passed: hasNames, detail: hasNames ? 'Found' : 'Missing' });
 
   // 9. Name elements
-  const nameMatches = content.match(/id="Name[A-H]"/g) ?? [];
+  const nameMatches = content.match(/id="Name[A-I]"/g) ?? [];
   results.push({ label: 'Name elements', passed: nameMatches.length === n, detail: `${nameMatches.length} found, ${n} expected` });
 
   // 10. Author comment

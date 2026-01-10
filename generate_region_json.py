@@ -37,6 +37,17 @@ STANDARD_COLORS = {
 
 # ── SVG Shape Parsing ──────────────────────────────────────────────
 
+def parse_translate_chain(transform_str):
+    """Sum all translate(x,y) values in a chained transform attribute."""
+    if not transform_str:
+        return 0.0, 0.0
+    dx_total, dy_total = 0.0, 0.0
+    for m in re.finditer(r'translate\(([-\d.]+)[,\s]+([-\d.]+)\)', transform_str):
+        dx_total += float(m.group(1))
+        dy_total += float(m.group(2))
+    return dx_total, dy_total
+
+
 def parse_svg_shapes(svg_content):
     """Extract shapes from SVG content, return dict of label → Shapely polygon."""
     shapes = {}
@@ -50,9 +61,18 @@ def parse_svg_shapes(svg_content):
 
     block = shapes_block.group(1)
 
-    # Parse circles
-    for m in re.finditer(r'<circle\s+id="Shape([A-Z])"[^>]*cx="([^"]+)"[^>]*cy="([^"]+)"[^>]*r="([^"]+)"', block):
-        label, cx, cy, r = m.group(1), float(m.group(2)), float(m.group(3)), float(m.group(4))
+    # Parse circles (with optional translate transform chain)
+    for m in re.finditer(r'<circle\s+id="Shape([A-Z])"[^>]*', block):
+        label = m.group(1)
+        elem = m.group(0)
+        cx = float(re.search(r'cx="([^"]+)"', elem).group(1))
+        cy = float(re.search(r'cy="([^"]+)"', elem).group(1))
+        r = float(re.search(r'\sr="([^"]+)"', elem).group(1))
+        tr = re.search(r'transform="([^"]+)"', elem)
+        if tr:
+            dx, dy = parse_translate_chain(tr.group(1))
+            cx += dx
+            cy += dy
         shapes[label] = Point(cx, cy).buffer(r, resolution=64)
 
     # Parse ellipses

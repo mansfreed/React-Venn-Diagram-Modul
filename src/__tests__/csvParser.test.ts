@@ -7,6 +7,9 @@ import {
   validateAggregatedColumns,
   calculateVennCountsFromAggregated,
   getBinaryColumns,
+  detectGeneSetFormat,
+  parseGmt,
+  parseGmx,
 } from '../utils/csvParser.ts';
 
 describe('splitCsvLineWithDelimiter', () => {
@@ -90,9 +93,6 @@ describe('validateBinaryColumns', () => {
   });
   it('rejects fewer than 2 columns', () => {
     expect(validateBinaryColumns(csv, [1])).toContain('At least 2');
-  });
-  it('rejects more than 8 columns', () => {
-    expect(validateBinaryColumns(csv, [0, 1, 2, 3, 4, 5, 6, 7, 8])).toContain('Maximum 8');
   });
   it('rejects column with invalid values', () => {
     const badCsv = {
@@ -236,5 +236,94 @@ describe('getBinaryColumns', () => {
       rows: [['0', '1'], ['0', '0']],
     };
     expect(getBinaryColumns(csv)).toEqual([1]);
+  });
+});
+
+describe('detectGeneSetFormat', () => {
+  it('detects .gmt', () => {
+    expect(detectGeneSetFormat('pathways.gmt')).toBe('gmt');
+  });
+  it('detects .gmx', () => {
+    expect(detectGeneSetFormat('sets.gmx')).toBe('gmx');
+  });
+  it('returns null for .csv', () => {
+    expect(detectGeneSetFormat('data.csv')).toBeNull();
+  });
+  it('is case insensitive', () => {
+    expect(detectGeneSetFormat('DATA.GMT')).toBe('gmt');
+    expect(detectGeneSetFormat('file.GMX')).toBe('gmx');
+  });
+  it('returns null for .txt', () => {
+    expect(detectGeneSetFormat('file.txt')).toBeNull();
+  });
+});
+
+describe('parseGmt', () => {
+  it('parses basic 2-set GMT', () => {
+    const text = 'SetA\thttp://example.com\tGene1\tGene2\tGene3\nSetB\tna\tGene2\tGene4';
+    const result = parseGmt(text);
+    expect(result.csv.headers).toEqual(['SetA', 'SetB']);
+    expect(result.csv.rows.length).toBe(3); // max genes = 3
+    expect(result.csv.rows[0]).toEqual(['Gene1', 'Gene2']); // first gene of each set
+    expect(result.csv.rows[1]).toEqual(['Gene2', 'Gene4']);
+    expect(result.csv.rows[2]).toEqual(['Gene3', '']); // SetB shorter, padded
+    expect(result.meta.format).toBe('gmt');
+    expect(result.meta.descriptions['SetA']).toBe('http://example.com');
+    expect(result.meta.descriptions['SetB']).toBeUndefined(); // 'na' filtered
+  });
+
+  it('handles variable-length rows', () => {
+    const text = 'A\tdesc\tX\nB\tdesc\tY\tZ\tW';
+    const result = parseGmt(text);
+    expect(result.csv.rows.length).toBe(3); // max = 3 (from B)
+    expect(result.csv.rows[0]).toEqual(['X', 'Y']);
+    expect(result.csv.rows[1]).toEqual(['', 'Z']);
+    expect(result.csv.rows[2]).toEqual(['', 'W']);
+  });
+
+  it('skips empty lines', () => {
+    const text = 'A\tdesc\tX\n\n\nB\tdesc\tY';
+    const result = parseGmt(text);
+    expect(result.csv.headers).toEqual(['A', 'B']);
+  });
+
+  it('throws on empty file', () => {
+    expect(() => parseGmt('')).toThrow();
+  });
+
+  it('works with calculateVennCountsFromAggregated', () => {
+    const text = 'SetA\tna\tX\tY\tZ\nSetB\tna\tY\tZ\tW';
+    const { csv } = parseGmt(text);
+    // SetA = {X,Y,Z}, SetB = {Y,Z,W}
+    const result = calculateVennCountsFromAggregated(csv, [0, 1], ',');
+    expect(result.exclusive.get('A')).toBe(1);  // X
+    expect(result.exclusive.get('B')).toBe(1);  // W
+    expect(result.exclusive.get('AB')).toBe(2); // Y, Z
+  });
+});
+
+describe('parseGmx', () => {
+  it('parses basic 2-set GMX', () => {
+    const text = 'SetA\tSetB\nhttp://a.com\thttp://b.com\nGene1\tGene2\nGene3\tGene4\nGene5\t';
+    const result = parseGmx(text);
+    expect(result.csv.headers).toEqual(['SetA', 'SetB']);
+    expect(result.csv.rows.length).toBe(3);
+    expect(result.csv.rows[0]).toEqual(['Gene1', 'Gene2']);
+    expect(result.csv.rows[1]).toEqual(['Gene3', 'Gene4']);
+    expect(result.csv.rows[2]).toEqual(['Gene5', '']);
+    expect(result.meta.format).toBe('gmx');
+    expect(result.meta.descriptions['SetA']).toBe('http://a.com');
+    expect(result.meta.descriptions['SetB']).toBe('http://b.com');
+  });
+
+  it('filters na descriptions', () => {
+    const text = 'A\tB\nna\tsome desc\nX\tY';
+    const result = parseGmx(text);
+    expect(result.meta.descriptions['A']).toBeUndefined();
+    expect(result.meta.descriptions['B']).toBe('some desc');
+  });
+
+  it('throws on file with fewer than 3 rows', () => {
+    expect(() => parseGmx('A\tB\ndesc1\tdesc2')).toThrow();
   });
 });

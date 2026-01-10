@@ -20,21 +20,21 @@
 		<text id="NameD" transform="matrix(1 0 0 1 386 162)" style="fill:#262262;stroke:#000000;stroke-width:0.5;stroke-miterlimit:10; font-family:'Tahoma'; font-size:14;">NameD</text>
 	</g>
 	<g id="Group_Values">
-		<text id="Count_A" transform="matrix(1 0 0 1 203.5 215.4)" style="fill:#262262;stroke:#000000;stroke-width:0.5;stroke-miterlimit:10;font-family:'Tahoma';font-size:36;text-anchor:middle">A</text>
+		<text id="Count_A" transform="matrix(1 0 0 1 197.5 221.6)" style="fill:#262262;stroke:#000000;stroke-width:0.5;stroke-miterlimit:10;font-family:'Tahoma';font-size:36;text-anchor:middle">A</text>
 		<text id="Count_B" transform="matrix(1 0 0 1 446.1 268.4)" style="fill:#262262;stroke:#000000;stroke-width:0.5;stroke-miterlimit:10;font-family:'Tahoma';font-size:36;text-anchor:middle">B</text>
 		<text id="Count_C" transform="matrix(1 0 0 1 479.3 451.5)" style="fill:#262262;stroke:#000000;stroke-width:0.5;stroke-miterlimit:10;font-family:'Tahoma';font-size:32;text-anchor:middle">C</text>
 		<text id="Count_D" transform="matrix(1 0 0 1 164.4 594.9)" style="fill:#262262;stroke:#000000;stroke-width:0.5;stroke-miterlimit:10;font-family:'Tahoma';font-size:30;text-anchor:middle">D</text>
-		<text id="Count_AB" transform="matrix(1 0 0 1 248.1 264.9)" style="fill:#262262;stroke:#000000;stroke-width:0.5;stroke-miterlimit:10;font-family:'Tahoma';font-size:16">AB</text>
-		<text id="Count_AC" transform="matrix(1 0 0 1 393.4 457.7)" style="fill:#262262;stroke:#000000;stroke-width:0.5;stroke-miterlimit:10;font-family:'Tahoma';font-size:16">AC</text>
-		<text id="Count_AD" transform="matrix(1 0 0 1 175.9 363.4)" style="fill:#262262;stroke:#000000;stroke-width:0.5;stroke-miterlimit:10;font-family:'Tahoma';font-size:16">AD</text>
-		<text id="Count_BC" transform="matrix(1 0 0 1 354.6 328.6)" style="fill:#262262;stroke:#000000;stroke-width:0.5;stroke-miterlimit:10;font-family:'Tahoma';font-size:14">BC</text>
-		<text id="Count_BD" transform="matrix(1 0 0 1 199.4 496.6)" style="fill:#262262;stroke:#000000;stroke-width:0.5;stroke-miterlimit:10;font-family:'Tahoma';font-size:20">BD</text>
-		<text id="Count_CD" transform="matrix(1 0 0 1 400.6 388.2)" style="fill:#262262;stroke:#000000;stroke-width:0.5;stroke-miterlimit:10;font-family:'Tahoma';font-size:16">CD</text>
-		<text id="Count_ABC" transform="matrix(1 0 0 1 287.1 305.1)" style="fill:#262262;stroke:#000000;stroke-width:0.5;stroke-miterlimit:10;font-family:'Tahoma';font-size:16">ABC</text>
-		<text id="Count_ABD" transform="matrix(1 0 0 1 224.5 325.9)" style="fill:#262262;stroke:#000000;stroke-width:0.5;stroke-miterlimit:10;font-family:'Tahoma';font-size:16">ABD</text>
-		<text id="Count_ACD" transform="matrix(1 0 0 1 344.1 435)" style="fill:#262262;stroke:#000000;stroke-width:0.5;stroke-miterlimit:10;font-family:'Tahoma';font-size:12">ACD</text>
-		<text id="Count_BCD" transform="matrix(1 0 0 1 373.5 369)" style="fill:#262262;stroke:#000000;stroke-width:0.5;stroke-miterlimit:10;font-family:'Tahoma';font-size:13">BCD</text>
-		<text id="Count_ABCD" transform="matrix(1 0 0 1 267.3 394)" style="fill:#FFFFFF;stroke:#000000;stroke-width:0.5;stroke-miterlimit:10;font-family:'Tahoma';font-size:28">ABCD</text>
+		<text id="Count_AB" transform="matrix(1 0 0 1 251.6 266.5)" style="text-anchor:middle;fill:#262262;stroke:#000000;stroke-width:0.5;stroke-miterlimit:10;font-family:'Tahoma';font-size:16">AB</text>
+		<text id="Count_AC" transform="matrix(1 0 0 1 395.6 450.7)" style="text-anchor:middle;fill:#262262;stroke:#000000;stroke-width:0.5;stroke-miterlimit:10;font-family:'Tahoma';font-size:16">AC</text>
+		<text id="Count_AD" transform="matrix(1 0 0 1 187 363.4)" style="text-anchor:middle;fill:#262262;stroke:#000000;stroke-width:0.5;stroke-miterlimit:10;font-family:'Tahoma';font-size:16">AD</text>
+		<text id="Count_BC" transform="matrix(1 0 0 1 365.9 333.9)" style="text-anchor:middle;fill:#262262;stroke:#000000;stroke-width:0.5;stroke-miterlimit:10;font-family:'Tahoma';font-size:14">BC</text>
+		<text id="Count_BD" transform="matrix(1 0 0 1 217.9 488.4)" style="text-anchor:middle;fill:#262262;stroke:#000000;stroke-width:0.5;stroke-miterlimit:10;font-family:'Tahoma';font-size:20">BD</text>
+		<text id="Count_CD" transform="matrix(1 0 0 1 407.6 389.8)" style="text-anchor:middle;fill:#262262;stroke:#000000;stroke-width:0.5;stroke-miterlimit:10;font-family:'Tahoma';font-size:16">CD</text>
+		<text id="Count_ABC" transform="matrix(1 0 0 1 302.8 305.1)" style="text-anchor:middle;fill:#262262;stroke:#000000;stroke-width:0.5;stroke-miterlimit:10;font-family:'Tahoma';font-size:16">ABC</text>
+		<text id="Count_ABD" transform="matrix(1 0 0 1 234.8 325.9)" style="text-anchor:middle;fill:#262262;stroke:#000000;stroke-width:0.5;stroke-miterlimit:10;font-family:'Tahoma';font-size:16">ABD</text>
+		<text id="Count_ACD" transform="matrix(1 0 0 1 353.4 435.4)" style="text-anchor:middle;fill:#262262;stroke:#000000;stroke-width:0.5;stroke-miterlimit:10;font-family:'Tahoma';font-size:12">ACD</text>
+		<text id="Count_BCD" transform="matrix(1 0 0 1 385.7 370.9)" style="text-anchor:middle;fill:#262262;stroke:#000000;stroke-width:0.5;stroke-miterlimit:10;font-family:'Tahoma';font-size:13">BCD</text>
+		<text id="Count_ABCD" transform="matrix(1 0 0 1 297.5 386)" style="text-anchor:middle;fill:#FFFFFF;stroke:#000000;stroke-width:0.5;stroke-miterlimit:10;font-family:'Tahoma';font-size:28">ABCD</text>
 	</g>
 	<g id="Group_CountSums">
 		<text id="CountSUM_A" transform="matrix(1 0 0 1 570 95.9)" style="fill:#262262;font-family:'Tahoma';font-size:14;text-anchor:middle">CountSUM_A</text>

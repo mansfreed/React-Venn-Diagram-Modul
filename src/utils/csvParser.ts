@@ -5,6 +5,12 @@ export interface CsvData {
 
 export type FileType = 'binary' | 'aggregated';
 export type Delimiter = ',' | ';' | ' ' | '\t';
+export type GeneSetFormat = 'gmt' | 'gmx' | null;
+
+export interface GeneSetMeta {
+  format: GeneSetFormat;
+  descriptions: Record<string, string>;
+}
 
 export interface CsvImportResult {
   csv: CsvData;
@@ -12,6 +18,7 @@ export interface CsvImportResult {
   selectedColumns: number[];
   itemDelimiter?: Delimiter;
   hasHeader: boolean;
+  geneSetMeta?: GeneSetMeta;
 }
 
 /** Split a CSV line respecting quoted fields, with configurable delimiter */
@@ -125,7 +132,6 @@ export function getPreviewRows(text: string, delimiter: Delimiter, maxRows: numb
 /** Validate that selected columns contain only binary values */
 export function validateBinaryColumns(csv: CsvData, columns: number[]): string | null {
   if (columns.length < 2) return 'At least 2 data columns must be selected';
-  if (columns.length > 8) return 'Maximum 8 data columns allowed';
 
   for (const colIdx of columns) {
     if (colIdx < 0 || colIdx >= csv.headers.length) return `Column index ${colIdx} out of range`;
@@ -146,7 +152,6 @@ export function validateBinaryColumns(csv: CsvData, columns: number[]): string |
 /** Validate that selected columns contain non-empty string values */
 export function validateAggregatedColumns(csv: CsvData, columns: number[]): string | null {
   if (columns.length < 2) return 'At least 2 data columns must be selected';
-  if (columns.length > 8) return 'Maximum 8 data columns allowed';
 
   for (const colIdx of columns) {
     if (colIdx < 0 || colIdx >= csv.headers.length) return `Column index ${colIdx} out of range`;
@@ -300,4 +305,90 @@ export function getBinaryColumns(csv: CsvData): number[] {
     }
   }
   return result;
+}
+
+/** Detect gene set format from file extension */
+export function detectGeneSetFormat(filename: string): GeneSetFormat {
+  const ext = filename.toLowerCase().split('.').pop();
+  if (ext === 'gmt') return 'gmt';
+  if (ext === 'gmx') return 'gmx';
+  return null;
+}
+
+/**
+ * Parse GMT (Gene Matrix Transposed) format.
+ * Each row = one gene set: setName\tdescription\tgene1\tgene2\t...
+ * Returns CsvData with sets as columns (transposed) + metadata with descriptions.
+ */
+export function parseGmt(text: string): { csv: CsvData; meta: GeneSetMeta } {
+  const lines = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').trim().split('\n').filter(l => l.trim());
+  if (lines.length === 0) throw new Error('GMT file is empty');
+
+  const sets: { name: string; description: string; genes: string[] }[] = [];
+
+  for (const line of lines) {
+    const parts = line.split('\t');
+    if (parts.length < 3) continue;
+    const name = parts[0].trim();
+    const description = parts[1].trim();
+    const genes = parts.slice(2).map(g => g.trim()).filter(g => g);
+    if (name) sets.push({ name, description, genes });
+  }
+
+  if (sets.length === 0) throw new Error('GMT file has no valid gene sets');
+
+  const headers = sets.map(s => s.name);
+  const descriptions: Record<string, string> = {};
+  for (const s of sets) {
+    if (s.description && s.description.toLowerCase() !== 'na') {
+      descriptions[s.name] = s.description;
+    }
+  }
+
+  const maxGenes = Math.max(...sets.map(s => s.genes.length));
+  const rows: string[][] = [];
+  for (let gi = 0; gi < maxGenes; gi++) {
+    const row: string[] = [];
+    for (const s of sets) {
+      row.push(gi < s.genes.length ? s.genes[gi] : '');
+    }
+    rows.push(row);
+  }
+
+  return {
+    csv: { headers, rows },
+    meta: { format: 'gmt', descriptions },
+  };
+}
+
+/**
+ * Parse GMX (Gene MatriX) format.
+ * Column-oriented: Row 1 = set names, Row 2 = descriptions, Row 3+ = genes.
+ */
+export function parseGmx(text: string): { csv: CsvData; meta: GeneSetMeta } {
+  const lines = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').trim().split('\n').filter(l => l.trim());
+  if (lines.length < 3) throw new Error('GMX file must have at least 3 rows (names, descriptions, genes)');
+
+  const headers = lines[0].split('\t').map(h => h.trim());
+  const descRow = lines[1].split('\t').map(d => d.trim());
+
+  const descriptions: Record<string, string> = {};
+  for (let i = 0; i < headers.length; i++) {
+    const desc = descRow[i] ?? '';
+    if (desc && desc.toLowerCase() !== 'na' && headers[i]) {
+      descriptions[headers[i]] = desc;
+    }
+  }
+
+  const rows: string[][] = [];
+  for (let li = 2; li < lines.length; li++) {
+    const parts = lines[li].split('\t').map(p => p.trim());
+    while (parts.length < headers.length) parts.push('');
+    rows.push(parts);
+  }
+
+  return {
+    csv: { headers, rows },
+    meta: { format: 'gmx', descriptions },
+  };
 }

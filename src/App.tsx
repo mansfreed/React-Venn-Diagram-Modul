@@ -16,7 +16,7 @@ import { ViewerInfoPanel } from './components/ViewerInfoPanel.tsx';
 import { fetchModel, fetchRegionData, getModelsBySetCount } from './models.ts';
 import type { RegionData } from './models.ts';
 import { CutViewCanvas } from './components/CutViewCanvas.tsx';
-import { SummaryDialog, SvgPreview, SOURCES } from './components/SummaryDialog.tsx';
+import { SummaryDialog, SvgPreview, SOURCES, renderLabel } from './components/SummaryDialog.tsx';
 import { WelcomeDialog } from './components/WelcomeDialog.tsx';
 import { HelpDialog } from './components/HelpDialog.tsx';
 import { SvgValidationDialog } from './components/SvgValidationDialog.tsx';
@@ -25,7 +25,8 @@ import { CsvImportDialog } from './components/CsvImportDialog.tsx';
 import { DataSummaryPanel } from './components/DataSummaryPanel.tsx';
 import type { Region } from './utils/regions.ts';
 import { calculateVennCounts, calculateVennCountsFromAggregated } from './utils/csvParser.ts';
-import type { CsvData, FileType, Delimiter, CsvImportResult, VennResult } from './utils/csvParser.ts';
+import type { CsvData, FileType, Delimiter, CsvImportResult, VennResult, GeneSetFormat, GeneSetMeta } from './utils/csvParser.ts';
+import { detectGeneSetFormat } from './utils/csvParser.ts';
 import { exportRegionSummaryTsv, exportMatrixTsv, downloadFile } from './utils/exportData.ts';
 
 export type ViewStyle = 'layer' | 'cut';
@@ -35,6 +36,7 @@ export default function App() {
   const [mode, setMode] = useState<AppMode>('view');
   const [currentModel, setCurrentModel] = useState<string | null>(null);
   const [isLoadingModel, setIsLoadingModel] = useState(false);
+  const [isCalculating, setIsCalculating] = useState(false);
   const [viewStyle, setViewStyle] = useState<ViewStyle>('layer');
   const [cutColorMode, setCutColorMode] = useState<'depth' | 'heatmap'>('depth');
   const [heatmapColors, setHeatmapColors] = useState({ low: '#2166AC', mid: '#F7F7F7', high: '#B2182B' });
@@ -49,7 +51,7 @@ export default function App() {
   const [helpOpen, setHelpOpen] = useState(false);
   const [modeSwitchTarget, setModeSwitchTarget] = useState<AppMode | null>(null);
   const [dataOpenDialog, setDataOpenDialog] = useState(false);
-  const [csvImportDialog, setCsvImportDialog] = useState<{ rawText: string; filename: string } | null>(null);
+  const [csvImportDialog, setCsvImportDialog] = useState<{ rawText: string; filename: string; geneSetFormat?: GeneSetFormat } | null>(null);
   const [validationDialog, setValidationDialog] = useState<{ filename: string; content: string } | null>(null);
   const [originalSvgContent, setOriginalSvgContent] = useState<string | null>(null);
 
@@ -61,6 +63,7 @@ export default function App() {
   const [testOriginalColumns, setTestOriginalColumns] = useState<number[]>([]);
   const [testFileType, setTestFileType] = useState<FileType>('binary');
   const [testItemDelimiter, setTestItemDelimiter] = useState<Delimiter>(',');
+  const [testGeneSetMeta, setTestGeneSetMeta] = useState<GeneSetMeta | null>(null);
   const [testCalculated, setTestCalculated] = useState(false);
   const [testVennResult, setTestVennResult] = useState<VennResult | null>(null);
   const [testExclusiveItems, setTestExclusiveItems] = useState<Map<string, string[]> | null>(null);
@@ -127,18 +130,10 @@ export default function App() {
   const [textToolCursor, setTextToolCursor] = useState<{ x: number; y: number } | null>(null);
   const [textToolSize, setTextToolSize] = useState<number | null>(null);
 
-  const handleTextToolStart = useCallback((e: React.PointerEvent, id: string, _origX: number, _origY: number) => {
+  const handleTextToolStart = useCallback((e: React.PointerEvent, id: string, origX: number, origY: number) => {
     if (!textTool || textTool === 'move') return;
-    const svg = document.querySelector('.canvas-svg') as SVGSVGElement | null;
-    if (!svg) return;
-    const ctm = svg.getScreenCTM();
-    if (!ctm) return;
-    // Get visual center via bounding box (like shape rotate)
-    const domEl = document.getElementById(id);
-    if (!domEl) return;
-    const bbox = domEl.getBoundingClientRect();
-    const centerScreen = new DOMPoint(bbox.left + bbox.width / 2, bbox.top + bbox.height / 2);
-    const center = centerScreen.matrixTransform(ctm.inverse());
+    // Use the text element's own x,y as rotation center (reliable in SVG space)
+    const center = { x: origX, y: origY };
     // Get font size from text style
     const allTexts = doc ? [doc.texts.header, ...doc.texts.names, ...doc.texts.values, ...doc.texts.sums].filter(Boolean) : [];
     const textEl = allTexts.find(t => t?.id === id);
@@ -169,7 +164,7 @@ export default function App() {
       setTextToolAngle(delta);
       const el = document.getElementById(id);
       if (el) {
-        el.setAttribute('transform', `rotate(${delta},${Math.round(centerX * 10) / 10},${Math.round(centerY * 10) / 10})`);
+        el.setAttribute('transform', `rotate(${delta},${Math.round(centerX * 10) / 10},${Math.round(centerY * 10) / 10}) translate(${centerX},${centerY})`);
       }
     } else {
       // Resize: each 10px vertical drag = 1pt
@@ -194,11 +189,8 @@ export default function App() {
       if (Math.abs(angle) > 0.5) {
         const cx = Math.round(centerX * 10) / 10;
         const cy = Math.round(centerY * 10) / 10;
-        svgDoc.updateTextStyle(id, 'transform', `rotate(${angle},${cx},${cy})`);
+        svgDoc.updateTextTransform(id, `rotate(${angle},${cx},${cy})`);
       }
-      // Remove DOM transform
-      const el = document.getElementById(id);
-      if (el) el.removeAttribute('transform');
     } else {
       const newSize = textToolSize ?? 12;
       svgDoc.updateTextStyle(id, 'font-size', String(newSize));
@@ -219,7 +211,7 @@ export default function App() {
     const ctm = svg.getScreenCTM();
     if (!ctm) return;
     const pt = new DOMPoint(e.clientX, e.clientY).matrixTransform(ctm.inverse());
-    const shape = doc?.shapes.find(s => s.id === id);
+    const shape = doc?.shapes.find(s => s.id === id) ?? doc?.shapesExtras.find(s => s.id === id);
     shapeDragRef.current = {
       id,
       startX: pt.x,
@@ -249,7 +241,7 @@ export default function App() {
     const center = centerScreen.matrixTransform(ctm.inverse());
     const pt = new DOMPoint(e.clientX, e.clientY).matrixTransform(ctm.inverse());
     const startAngle = Math.atan2(pt.y - center.y, pt.x - center.x) * 180 / Math.PI;
-    const shape = doc?.shapes.find(s => s.id === id);
+    const shape = doc?.shapes.find(s => s.id === id) ?? doc?.shapesExtras.find(s => s.id === id);
     shapeRotateRef.current = {
       id,
       centerX: center.x,
@@ -293,7 +285,7 @@ export default function App() {
       const newTransform = `rotate(${angle},${Math.round(centerX * 10) / 10},${Math.round(centerY * 10) / 10}) ${origTransform}`.trim();
       // Bullets are circles — rotation is committed as transform attribute on the shape
       // updateShapeAttribute works on doc.shapes; bullets don't need rotation
-      const isShape = doc?.shapes.some(s => s.id === id);
+      const isShape = doc?.shapes.some(s => s.id === id) || doc?.shapesExtras.some(s => s.id === id);
       if (isShape) {
         svgDoc.updateShapeAttribute(id, 'transform', newTransform);
       }
@@ -321,7 +313,7 @@ export default function App() {
     const center = centerScreen.matrixTransform(ctm.inverse());
     const pt = new DOMPoint(e.clientX, e.clientY).matrixTransform(ctm.inverse());
     const startDist = Math.hypot(pt.x - center.x, pt.y - center.y);
-    const shape = doc?.shapes.find(s => s.id === id);
+    const shape = doc?.shapes.find(s => s.id === id) ?? doc?.shapesExtras.find(s => s.id === id);
     shapeResizeRef.current = {
       id,
       centerX: center.x,
@@ -366,7 +358,7 @@ export default function App() {
       const cy = Math.round(centerY * 10) / 10;
       const s = Math.round(scale * 1000) / 1000;
       const newTransform = `translate(${cx},${cy}) scale(${s}) translate(${-cx},${-cy}) ${origTransform}`.trim();
-      const isShape = doc?.shapes.some(sh => sh.id === id);
+      const isShape = doc?.shapes.some(sh => sh.id === id) || doc?.shapesExtras.some(sh => sh.id === id);
       if (isShape) {
         svgDoc.updateShapeAttribute(id, 'transform', newTransform);
       }
@@ -606,7 +598,7 @@ export default function App() {
   const handleTestFileUpload = useCallback((file: File) => {
     const reader = new FileReader();
     reader.onload = () => {
-      setCsvImportDialog({ rawText: reader.result as string, filename: file.name });
+      setCsvImportDialog({ rawText: reader.result as string, filename: file.name, geneSetFormat: detectGeneSetFormat(file.name) });
     };
     reader.readAsText(file);
   }, []);
@@ -618,6 +610,7 @@ export default function App() {
     setTestCsvFilename(filename);
     setTestFileType(result.fileType);
     if (result.itemDelimiter) setTestItemDelimiter(result.itemDelimiter);
+    setTestGeneSetMeta(result.geneSetMeta ?? null);
     setTestError(null);
     setTestCalculated(false);
     // For aggregated: selectedColumns are the set columns; for binary: column indices
@@ -636,6 +629,7 @@ export default function App() {
     setTestOriginalColumns([]);
     setTestCalculated(false);
     setTestVennResult(null);
+    setTestGeneSetMeta(null);
     setTestExclusiveItems(null);
     setTestInclusiveItems(null);
     setTestError(null);
@@ -647,6 +641,7 @@ export default function App() {
   const handleTestCalculate = useCallback(async () => {
     if (!testCsvData || !testModel || testColumnMapping.length < 2) return;
     setTestError(null);
+    setIsCalculating(true);
     try {
       // Load SVG model
       const [svgString, regData] = await Promise.all([
@@ -703,13 +698,29 @@ export default function App() {
         svgDoc.updateShapeStyle(`Shape${letter}`, 'opacity', String(testShapeOpacity));
       }
 
+      // Re-apply view settings (font size, font family, visibility)
+      for (let i = 0; i < testColumnMapping.length; i++) {
+        svgDoc.updateTextStyle(`Name${letters[i]}`, 'font-size', String(testNameFontSize));
+        svgDoc.updateTextStyle(`Name${letters[i]}`, 'font-family', `'${testNameFontFamily}'`);
+      }
+      if (svgDoc.doc?.texts.header) {
+        svgDoc.updateTextStyle(svgDoc.doc.texts.header.id, 'font-size', String(testTitleFontSize));
+        svgDoc.updateTextStyle(svgDoc.doc.texts.header.id, 'font-family', `'${testTitleFontFamily}'`);
+      }
+      // Re-apply visibility toggles
+      if (!testShowTitle && svgDoc.doc) svgDoc.toggleMeta('headerHidden');
+      if (!testShowNames && svgDoc.doc) svgDoc.toggleGroupVisibility('names');
+      if (!testShowSums && svgDoc.doc) svgDoc.toggleGroupVisibility('sums');
+
       setTestCalculated(true);
       setCutColorMode('heatmap');
       regionDetection.clearSelection();
     } catch (e) {
       setTestError(`Calculation failed: ${e}`);
+    } finally {
+      setIsCalculating(false);
     }
-  }, [testCsvData, testModel, testColumnMapping, svgDoc, zoomPan, regionDetection, testShapeColors, testShapeOpacity, testFileType, testItemDelimiter]);
+  }, [testCsvData, testModel, testColumnMapping, svgDoc, zoomPan, regionDetection, testShapeColors, testShapeOpacity, testFileType, testItemDelimiter, testNameFontSize, testNameFontFamily, testTitleFontSize, testTitleFontFamily, testShowTitle, testShowNames, testShowSums]);
 
   // Viewer: region list hover/click
   const handleSidebarHoverRegion = useCallback((_region: Region | null) => {
@@ -734,7 +745,7 @@ export default function App() {
   return (
     <div className="app">
       <input ref={fileInputRef} type="file" accept=".svg" style={{ display: 'none' }} onChange={handleFileChange} />
-      <input ref={dataFileInputRef} type="file" accept=".csv,.tsv,.txt" style={{ display: 'none' }} onChange={(e) => {
+      <input ref={dataFileInputRef} type="file" accept=".csv,.tsv,.txt,.gmt,.gmx" style={{ display: 'none' }} onChange={(e) => {
         const file = e.target.files?.[0];
         if (file) handleTestFileUpload(file);
         e.target.value = '';
@@ -769,6 +780,15 @@ export default function App() {
         onToggleGrid={() => setShowGrid(g => !g)}
         onToggleValidation={() => setShowValidation(v => !v)}
         onOpen={handleSelectFromLibrary}
+        onClose={() => {
+          if (mode === 'edit' && svgDoc.isModified) {
+            if (!confirm('You have unsaved changes. Close anyway?')) return;
+          }
+          svgDoc.clearDoc();
+          setCurrentModel(null);
+          setRegionData(null);
+          if (mode === 'view') setWelcomeOpen(true);
+        }}
         onDataOpen={() => setDataOpenDialog(true)}
         onDataSave={handleSave}
         onDataClose={handleDataClose}
@@ -800,6 +820,7 @@ export default function App() {
             csvData={testCsvData}
             csvFilename={testCsvFilename}
             fileType={testFileType}
+            geneSetFormat={testGeneSetMeta?.format}
             selectedModel={testModel}
             onSelectModel={(filename, setCount) => {
               setTestModel(filename);
@@ -816,6 +837,7 @@ export default function App() {
               }
             }}
             columnMapping={testColumnMapping}
+            originalColumnCount={testOriginalColumns.length}
             onSetColumnMapping={setTestColumnMapping}
             onCalculate={handleTestCalculate}
             isCalculated={testCalculated}
@@ -923,6 +945,12 @@ export default function App() {
         )}
 
         <div className="canvas-area">
+          {isCalculating && (
+            <div className="loading-overlay">
+              <div className="loading-spinner" />
+              <div className="loading-text">Calculating...</div>
+            </div>
+          )}
           {doc ? (
             (mode === 'view' || mode === 'data') && viewStyle === 'cut' && regionData ? (
               <div className="canvas-container" ref={zoomPan.setContainerRef} onWheel={zoomPan.onWheel}>
@@ -1041,7 +1069,7 @@ export default function App() {
                                 <div className="summary-card-name">{m.label}</div>
                                 {source && (
                                   <div className="summary-card-source">
-                                    <span>{source.label}</span>
+                                    <span>{renderLabel(source.label)}</span>
                                   </div>
                                 )}
                               </div>
@@ -1069,7 +1097,7 @@ export default function App() {
                   <button className="btn btn-large" onClick={() => handleTestLoadCsv('sample')}>Load Sample Data</button>
                   <label className="btn btn-large" style={{ cursor: 'pointer' }}>
                     Upload Custom File
-                    <input type="file" accept=".csv,.tsv,.txt" style={{ display: 'none' }} onChange={(e) => {
+                    <input type="file" accept=".csv,.tsv,.txt,.gmt,.gmx" style={{ display: 'none' }} onChange={(e) => {
                       const file = e.target.files?.[0];
                       if (file) handleTestFileUpload(file);
                       e.target.value = '';
@@ -1120,7 +1148,7 @@ export default function App() {
         ) : (
           <PropertyPanel
             selected={selected}
-            shapes={doc?.shapes ?? []}
+            shapes={[...(doc?.shapes ?? []), ...(doc?.shapesExtras ?? [])]}
             onUpdateTextPosition={svgDoc.updateTextPosition}
             onUpdateTextContent={svgDoc.updateTextContent}
             onUpdateTextStyle={svgDoc.updateTextStyle}
@@ -1216,6 +1244,7 @@ export default function App() {
           isOpen={true}
           rawText={csvImportDialog.rawText}
           filename={csvImportDialog.filename}
+          geneSetFormat={csvImportDialog.geneSetFormat}
           onLoad={handleCsvImportLoad}
           onCancel={() => setCsvImportDialog(null)}
         />

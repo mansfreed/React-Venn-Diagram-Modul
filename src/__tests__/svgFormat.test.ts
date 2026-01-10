@@ -8,11 +8,12 @@ const svgFiles = readdirSync(SVG_DIR).filter(f => f.endsWith('.svg'));
 const STANDARD_COLORS: Record<string, string> = {
   A: '#FFF200', B: '#2E3192', C: '#ED1C24', D: '#808285',
   E: '#3C2415', F: '#9E1F63', G: '#CA4B9B', H: '#21AED1',
+  I: '#00A651',
 };
 
 describe('SVG format validation', () => {
-  it('has 39 SVG files', () => {
-    expect(svgFiles.length).toBe(39);
+  it('has 44 SVG files', () => {
+    expect(svgFiles.length).toBe(43);
   });
 
   for (const file of svgFiles) {
@@ -45,15 +46,15 @@ describe('SVG format validation', () => {
 
       it('has correct number of Count elements', () => {
         // Detect N from Shape elements
-        const shapeMatches = content.match(/id="Shape[A-H]"/g) ?? [];
+        const shapeMatches = content.match(/id="Shape[A-I]"/g) ?? [];
         const n = shapeMatches.length;
         const expectedCount = Math.pow(2, n) - 1;
-        const countMatches = content.match(/id="Count_[A-H]+"/g) ?? [];
+        const countMatches = content.match(/id="Count_[A-I]+"/g) ?? [];
         expect(countMatches.length).toBe(expectedCount);
       });
 
       it('has standard colors on shapes', () => {
-        const shapeRegex = /id="Shape([A-H])"[^>]*fill:\s*([#a-fA-F0-9]+)/g;
+        const shapeRegex = /id="Shape([A-I])"[^>]*fill:\s*([#a-fA-F0-9]+)/g;
         let match;
         while ((match = shapeRegex.exec(content)) !== null) {
           const letter = match[1];
