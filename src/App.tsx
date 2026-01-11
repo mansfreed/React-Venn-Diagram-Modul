@@ -28,8 +28,12 @@ import { calculateVennCounts, calculateVennCountsFromAggregated } from './utils/
 import type { CsvData, FileType, Delimiter, CsvImportResult, VennResult, GeneSetFormat, GeneSetMeta } from './utils/csvParser.ts';
 import { detectGeneSetFormat } from './utils/csvParser.ts';
 import { exportRegionSummaryTsv, exportMatrixTsv, downloadFile } from './utils/exportData.ts';
+import { UpsetPlot } from './components/UpsetPlot.tsx';
+import type { UpsetColorMode, UpsetSortMode } from './components/UpsetPlot.tsx';
+import { upsetDataFromRegionData, upsetDataFromVennResult } from './utils/upsetData.ts';
+import { PdfReportDialog } from './components/PdfReportDialog.tsx';
 
-export type ViewStyle = 'layer' | 'cut';
+export type ViewStyle = 'layer' | 'cut' | 'upset';
 export type AppMode = 'view' | 'edit' | 'data';
 
 export default function App() {
@@ -41,6 +45,10 @@ export default function App() {
   const [cutColorMode, setCutColorMode] = useState<'depth' | 'heatmap'>('depth');
   const [heatmapColors, setHeatmapColors] = useState({ low: '#2166AC', mid: '#F7F7F7', high: '#B2182B' });
   const [heatmapLegendPosition, setHeatmapLegendPosition] = useState('bottom-left');
+  const [upsetColorMode, setUpsetColorMode] = useState<UpsetColorMode>('depth');
+  const [upsetSortMode, setUpsetSortMode] = useState<UpsetSortMode>('size');
+  const [upsetThreshold, setUpsetThreshold] = useState(0);
+  const [upsetCustomColor, setUpsetCustomColor] = useState('#4a90d9');
   const [hoverColor, setHoverColor] = useState('#00ff88');
   const [dataRightPanel, setDataRightPanel] = useState<'properties' | 'statistics'>('properties');
   const [regionData, setRegionData] = useState<RegionData | null>(null);
@@ -49,6 +57,7 @@ export default function App() {
   const [summaryFromWelcome, setSummaryFromWelcome] = useState(false);
   const [welcomeOpen, setWelcomeOpen] = useState(true);
   const [helpOpen, setHelpOpen] = useState(false);
+  const [pdfReportOpen, setPdfReportOpen] = useState(false);
   const [modeSwitchTarget, setModeSwitchTarget] = useState<AppMode | null>(null);
   const [dataOpenDialog, setDataOpenDialog] = useState(false);
   const [csvImportDialog, setCsvImportDialog] = useState<{ rawText: string; filename: string; geneSetFormat?: GeneSetFormat } | null>(null);
@@ -79,7 +88,7 @@ export default function App() {
   const [testShapeOpacity, setTestShapeOpacity] = useState(0.2);
   const [testShapeColors, setTestShapeColors] = useState<Record<string, string>>({
     A: '#FFF200', B: '#2E3192', C: '#ED1C24', D: '#808285',
-    E: '#3C2415', F: '#9E1F63', G: '#CA4B9B', H: '#21AED1',
+    E: '#3C2415', F: '#9E1F63', G: '#CA4B9B', H: '#21AED1', I: '#F7941E',
   });
 
   const svgDoc = useSvgDocument();
@@ -403,7 +412,11 @@ export default function App() {
     const img = new Image();
     img.onload = () => {
       // Use viewBox dimensions for high-quality export
-      const vb = doc.viewBox;
+      const vbAttr = svgEl.getAttribute('viewBox');
+      const vbParts = vbAttr?.split(/\s+/).map(Number);
+      const vb = vbParts && vbParts.length === 4
+        ? { w: vbParts[2], h: vbParts[3] }
+        : doc.viewBox;
       const scale = 2; // 2x for retina quality
       const canvas = document.createElement('canvas');
       canvas.width = vb.w * scale;
@@ -614,7 +627,7 @@ export default function App() {
     setTestError(null);
     setTestCalculated(false);
     // For aggregated: selectedColumns are the set columns; for binary: column indices
-    const cols = result.selectedColumns.slice(0, 8);
+    const cols = result.selectedColumns.slice(0, 9);
     setTestColumnMapping(cols);
     setTestOriginalColumns(cols);
   }, [csvImportDialog]);
@@ -666,7 +679,7 @@ export default function App() {
       setTestExclusiveItems(result.exclusiveItems);
       setTestInclusiveItems(result.inclusiveItems);
 
-      const letters = 'ABCDEFGH'.slice(0, testColumnMapping.length).split('');
+      const letters = 'ABCDEFGHI'.slice(0, testColumnMapping.length).split('');
 
       // Count_X texts = exclusive counts (only in exactly these sets)
       for (const [label, count] of result.exclusive) {
@@ -793,9 +806,11 @@ export default function App() {
         onDataSave={handleSave}
         onDataClose={handleDataClose}
         hasDataFile={!!testCsvData}
+        isCalculated={testCalculated}
         onUndo={svgDoc.undo}
         onRedo={svgDoc.redo}
         onReport={() => setReportOpen(true)}
+        onDataReport={() => setPdfReportOpen(true)}
       />
 
       <div className="main-layout">
@@ -862,8 +877,8 @@ export default function App() {
             onShapeOpacityChange={(opacity) => {
               setTestShapeOpacity(opacity);
               if (doc) {
-                const letters = 'ABCDEFGH';
-                for (let i = 0; i < doc.shapes.length && i < 8; i++) {
+                const letters = 'ABCDEFGHI';
+                for (let i = 0; i < doc.shapes.length && i < 9; i++) {
                   svgDoc.updateShapeStyle(`Shape${letters[i]}`, 'opacity', String(opacity));
                 }
               }
@@ -882,8 +897,8 @@ export default function App() {
             onNameFontSizeChange={(size) => {
               setTestNameFontSize(size);
               if (!doc) return;
-              const letters = 'ABCDEFGH';
-              for (let i = 0; i < doc.shapes.length && i < 8; i++) {
+              const letters = 'ABCDEFGHI';
+              for (let i = 0; i < doc.shapes.length && i < 9; i++) {
                 svgDoc.updateTextStyle(`Name${letters[i]}`, 'font-size', String(size));
               }
             }}
@@ -891,8 +906,8 @@ export default function App() {
             onNameFontFamilyChange={(font) => {
               setTestNameFontFamily(font);
               if (!doc) return;
-              const letters = 'ABCDEFGH';
-              for (let i = 0; i < doc.shapes.length && i < 8; i++) {
+              const letters = 'ABCDEFGHI';
+              for (let i = 0; i < doc.shapes.length && i < 9; i++) {
                 svgDoc.updateTextStyle(`Name${letters[i]}`, 'font-family', `'${font}'`);
               }
             }}
@@ -920,6 +935,14 @@ export default function App() {
               const tsv = exportMatrixTsv(testVennResult, testColumnMapping.length, setNames);
               downloadFile(tsv, `venn_${testColumnMapping.length}set_matrix.tsv`);
             } : undefined}
+            upsetColorMode={upsetColorMode}
+            onSetUpsetColorMode={setUpsetColorMode}
+            upsetSortMode={upsetSortMode}
+            onSetUpsetSortMode={setUpsetSortMode}
+            upsetThreshold={upsetThreshold}
+            onSetUpsetThreshold={setUpsetThreshold}
+            upsetCustomColor={upsetCustomColor}
+            onSetUpsetCustomColor={setUpsetCustomColor}
             onSaveSvg={handleSave}
             onExportImage={handleExportImage}
           />
@@ -952,6 +975,25 @@ export default function App() {
             </div>
           )}
           {doc ? (
+            (mode === 'view' || mode === 'data') && viewStyle === 'upset' && regionData ? (
+              <div className="canvas-container" ref={zoomPan.setContainerRef} onWheel={zoomPan.onWheel}>
+                <UpsetPlot
+                  data={mode === 'data' && testVennResult
+                    ? upsetDataFromVennResult(testVennResult, testColumnMapping.length)
+                    : upsetDataFromRegionData(regionData, doc)
+                  }
+                  scale={zoomPan.state.scale}
+                  colorMode={upsetColorMode}
+                  customColor={upsetCustomColor}
+                  heatmapColors={heatmapColors}
+                  sortMode={upsetSortMode}
+                  threshold={upsetThreshold}
+                  onRegionHover={regionDetection.setHoverByLabel}
+                  onRegionClick={regionDetection.setSelectByLabel}
+                  lockedLabel={regionDetection.selectedRegion?.label ?? null}
+                />
+              </div>
+            ) :
             (mode === 'view' || mode === 'data') && viewStyle === 'cut' && regionData ? (
               <div className="canvas-container" ref={zoomPan.setContainerRef} onWheel={zoomPan.onWheel}>
                 <CutViewCanvas
@@ -1272,6 +1314,23 @@ export default function App() {
         onAccept={handleValidationAccept}
         onCancel={() => setValidationDialog(null)}
       />
+
+      {pdfReportOpen && testVennResult && testCsvData && doc && (
+        <PdfReportDialog
+          isOpen={pdfReportOpen}
+          onClose={() => setPdfReportOpen(false)}
+          vennResult={testVennResult}
+          doc={doc}
+          n={testColumnMapping.length}
+          setNames={testColumnMapping.map(i => testCsvData.headers[i] ?? '')}
+          totalItems={testCsvData.rows.length}
+          totalFileRows={testCsvData.rows.length}
+          filename={testCsvFilename ?? 'data'}
+          title={doc.texts.header?.content ?? testCsvFilename ?? 'Venn Diagram Report'}
+          modelName={testModel ?? ''}
+          viewStyle={viewStyle}
+        />
+      )}
 
       {/* Rotate angle tooltip */}
       {rotateAngle !== null && rotateCursor && (

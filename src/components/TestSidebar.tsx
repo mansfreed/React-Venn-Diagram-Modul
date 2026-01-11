@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback } from 'react';
 import type { ViewStyle } from '../App.tsx';
+import type { UpsetColorMode, UpsetSortMode } from './UpsetPlot.tsx';
 import { MODEL_LIST, getModelsBySetCount } from '../models.ts';
 import type { CsvData } from '../utils/csvParser.ts';
 import { getBinaryColumns } from '../utils/csvParser.ts';
@@ -74,6 +75,14 @@ interface TestSidebarProps {
   onShapeColorChange: (letter: string, color: string) => void;
   shapeOpacity: number;
   onShapeOpacityChange: (opacity: number) => void;
+  upsetColorMode: UpsetColorMode;
+  onSetUpsetColorMode: (mode: UpsetColorMode) => void;
+  upsetSortMode: UpsetSortMode;
+  onSetUpsetSortMode: (mode: UpsetSortMode) => void;
+  upsetThreshold: number;
+  onSetUpsetThreshold: (v: number) => void;
+  upsetCustomColor: string;
+  onSetUpsetCustomColor: (c: string) => void;
   onExportRegionSummary?: () => void;
   onExportMatrix?: () => void;
   onSaveSvg?: () => void;
@@ -99,6 +108,10 @@ export function TestSidebar({
   titleFontFamily, onTitleFontFamilyChange,
   shapeColors, onShapeColorChange,
   shapeOpacity, onShapeOpacityChange,
+  upsetColorMode, onSetUpsetColorMode,
+  upsetSortMode, onSetUpsetSortMode,
+  upsetThreshold, onSetUpsetThreshold,
+  upsetCustomColor, onSetUpsetCustomColor,
   onExportRegionSummary, onExportMatrix,
   onSaveSvg, onExportImage,
 }: TestSidebarProps) {
@@ -121,8 +134,8 @@ export function TestSidebar({
   }, [columnMapping, onSetColumnMapping]);
 
   const n = columnMapping.length;
-  const maxSets = Math.min(originalColumnCount, 8);
-  const letters = 'ABCDEFGH'.slice(0, n).split('');
+  const maxSets = Math.min(originalColumnCount, 9);
+  const letters = 'ABCDEFGHI'.slice(0, n).split('');
 
   // Show all models from 2-set up to max available binary columns
   const compatibleModelsBySet = useMemo(() => {
@@ -265,7 +278,34 @@ export function TestSidebar({
           <div className="view-style-switcher">
             <button className={`btn btn-sm btn-view-style ${viewStyle === 'layer' ? 'btn-mode-active' : ''}`} onClick={() => onSetViewStyle('layer')}>Layer</button>
             <button className={`btn btn-sm btn-view-style ${viewStyle === 'cut' ? 'btn-mode-active' : ''}`} onClick={() => onSetViewStyle('cut')}>Cut</button>
+            <button className={`btn btn-sm btn-view-style ${viewStyle === 'upset' ? 'btn-mode-active' : ''}`} onClick={() => onSetViewStyle('upset')}>UpSet</button>
           </div>
+          {viewStyle === 'upset' && (
+            <div style={{ marginTop: 8 }}>
+              <div className="sidebar-subsection-title">Sort by</div>
+              <div className="view-style-switcher">
+                <button className={`btn btn-sm btn-view-style ${upsetSortMode === 'size' ? 'btn-mode-active' : ''}`} onClick={() => onSetUpsetSortMode('size')}>Size</button>
+                <button className={`btn btn-sm btn-view-style ${upsetSortMode === 'degree' ? 'btn-mode-active' : ''}`} onClick={() => onSetUpsetSortMode('degree')}>Degree</button>
+              </div>
+              <div className="sidebar-subsection-title" style={{ marginTop: 6 }}>Color mode</div>
+              <div className="view-style-switcher">
+                <button className={`btn btn-sm btn-view-style ${upsetColorMode === 'depth' ? 'btn-mode-active' : ''}`} onClick={() => onSetUpsetColorMode('depth')}>Depth</button>
+                <button className={`btn btn-sm btn-view-style ${upsetColorMode === 'heatmap' ? 'btn-mode-active' : ''}`} onClick={() => onSetUpsetColorMode('heatmap')}>Heatmap</button>
+                <button className={`btn btn-sm btn-view-style ${upsetColorMode === 'custom' ? 'btn-mode-active' : ''}`} onClick={() => onSetUpsetColorMode('custom')}>Custom</button>
+              </div>
+              {upsetColorMode === 'custom' && (
+                <div className="heatmap-color-row" style={{ marginTop: 6 }}>
+                  <label>Color</label>
+                  <input type="color" className="test-color-input" value={upsetCustomColor} onChange={e => onSetUpsetCustomColor(e.target.value)} />
+                </div>
+              )}
+              <div className="sidebar-subsection-title" style={{ marginTop: 6 }}>Min. count threshold</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <input type="range" min="0" max="100" value={upsetThreshold} onChange={e => onSetUpsetThreshold(parseInt(e.target.value))} style={{ flex: 1 }} />
+                <span style={{ fontSize: 11, color: '#aaa', minWidth: 24, textAlign: 'right' }}>{upsetThreshold}</span>
+              </div>
+            </div>
+          )}
           {viewStyle === 'cut' && (
             <div style={{ marginTop: 8 }}>
               <div className="sidebar-subsection-title">Color mode</div>
