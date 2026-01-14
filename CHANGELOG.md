@@ -2,6 +2,15 @@
 
 All notable changes to the Venn Diagram Lab project.
 
+## [1.8.4] — 2026-01-14
+
+### Added
+- **Sample Data Dialog**: "Load Sample Data" now opens a selection dialog with 5 curated datasets:
+  - 3 real datasets: MSigDB Hallmark Cancer pathways, MSigDB Immune signaling, Cancer drivers (COSMIC/OncoKB/IntOGen/Vogelstein)
+  - 2 test/mock datasets: Mock gene sets, Mock streaming platforms
+  - Each entry shows name, description, and reference placeholder (for real datasets)
+  - Dataset selection proceeds directly to the CSV Import Dialog
+
 ## [1.8.3] — 2026-01-14
 
 ### Changed
@@ -413,7 +422,7 @@ All notable changes to the Venn Diagram Lab project.
 ## [0.1.0] — 2025-12-08
 
 ### Added
-- Initial project setup: CLAUDE.md, README.md
+- Initial project setup: README.md
 - SVG Venn diagram editor (React + TypeScript + Vite)
 - 32 SVG Venn diagram models (2–8 sets)
 - Research publications

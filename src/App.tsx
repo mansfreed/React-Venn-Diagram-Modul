@@ -32,6 +32,8 @@ import { UpsetPlot } from './components/UpsetPlot.tsx';
 import type { UpsetColorMode, UpsetSortMode } from './components/UpsetPlot.tsx';
 import { upsetDataFromRegionData, upsetDataFromVennResult } from './utils/upsetData.ts';
 import { PdfReportDialog } from './components/PdfReportDialog.tsx';
+import { SampleDataDialog } from './components/SampleDataDialog.tsx';
+import type { SampleDataset } from './components/SampleDataDialog.tsx';
 
 export type ViewStyle = 'layer' | 'cut' | 'upset';
 export type AppMode = 'view' | 'edit' | 'data';
@@ -58,6 +60,7 @@ export default function App() {
   const [welcomeOpen, setWelcomeOpen] = useState(true);
   const [helpOpen, setHelpOpen] = useState(false);
   const [pdfReportOpen, setPdfReportOpen] = useState(false);
+  const [sampleDataDialog, setSampleDataDialog] = useState(false);
   const [modeSwitchTarget, setModeSwitchTarget] = useState<AppMode | null>(null);
   const [dataOpenDialog, setDataOpenDialog] = useState(false);
   const [csvImportDialog, setCsvImportDialog] = useState<{ rawText: string; filename: string; geneSetFormat?: GeneSetFormat } | null>(null);
@@ -597,15 +600,15 @@ export default function App() {
   const handleEditThis = useCallback(() => { setMode('edit'); }, []);
 
   // Data mode handlers
-  const handleTestLoadCsv = useCallback(async (source: 'file' | 'sample') => {
-    if (source === 'sample') {
-      try {
-        const resp = await fetch('./data/dataset_streaming_platforms.csv');
-        const text = await resp.text();
-        setCsvImportDialog({ rawText: text, filename: 'dataset_streaming_platforms.csv' });
-      } catch (e) {
-        setTestError(`Failed to load sample: ${e}`);
-      }
+  const handleLoadSampleDataset = useCallback(async (dataset: SampleDataset) => {
+    setSampleDataDialog(false);
+    try {
+      const resp = await fetch(`./data/${dataset.filename}`);
+      const text = await resp.text();
+      const geneSetFormat = detectGeneSetFormat(dataset.filename);
+      setCsvImportDialog({ rawText: text, filename: dataset.filename, geneSetFormat: geneSetFormat ?? undefined });
+    } catch (e) {
+      setTestError(`Failed to load sample: ${e}`);
     }
   }, []);
 
@@ -1149,7 +1152,7 @@ export default function App() {
               )}
               {mode === 'data' && !testCsvData && (
                 <div style={{ display: 'flex', gap: 12 }}>
-                  <button className="btn btn-large" onClick={() => handleTestLoadCsv('sample')}>Load Sample Data</button>
+                  <button className="btn btn-large" onClick={() => setSampleDataDialog(true)}>Load Sample Data</button>
                   <label className="btn btn-large" style={{ cursor: 'pointer' }}>
                     Upload Custom File
                     <input type="file" accept=".csv,.tsv,.txt,.gmt,.gmx" style={{ display: 'none' }} onChange={(e) => {
@@ -1285,7 +1288,7 @@ export default function App() {
             <h3 className="confirm-title">Open Data</h3>
             <p className="confirm-text">Choose a data source for Venn diagram calculation.</p>
             <div className="confirm-actions">
-              <button className="btn btn-accent" onClick={() => { setDataOpenDialog(false); handleTestLoadCsv('sample'); }}>Load Sample Data</button>
+              <button className="btn btn-accent" onClick={() => { setDataOpenDialog(false); setSampleDataDialog(true); }}>Load Sample Data</button>
               <button className="btn" onClick={() => { setDataOpenDialog(false); dataFileInputRef.current?.click(); }}>Upload Custom File</button>
               <button className="btn" onClick={() => setDataOpenDialog(false)}>Cancel</button>
             </div>
@@ -1344,6 +1347,12 @@ export default function App() {
           viewStyle={viewStyle}
         />
       )}
+
+      <SampleDataDialog
+        isOpen={sampleDataDialog}
+        onSelect={handleLoadSampleDataset}
+        onClose={() => setSampleDataDialog(false)}
+      />
 
       {/* Rotate angle tooltip */}
       {rotateAngle !== null && rotateCursor && (
