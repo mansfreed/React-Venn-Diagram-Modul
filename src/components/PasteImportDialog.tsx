@@ -97,7 +97,7 @@ export function PasteImportDialog({ isOpen, onLoad, onCancel }: PasteImportDialo
         style={{ minWidth: 500, maxWidth: 580, maxHeight: '85vh', overflow: 'auto', padding: 20 }}
       >
         <h3 style={{ margin: '0 0 4px', fontSize: 16 }}>Paste Gene Lists</h3>
-        <p style={{ margin: '0 0 12px', fontSize: 12, color: '#888' }}>
+        <p style={{ margin: '0 0 12px', fontSize: 12, color: 'var(--text-secondary)' }}>
           Paste one list per set. Items can be separated by newline, comma, tab, or space.
         </p>
 
@@ -107,7 +107,7 @@ export function PasteImportDialog({ isOpen, onLoad, onCancel }: PasteImportDialo
           <select
             value={numSets}
             onChange={e => setNumSets(parseInt(e.target.value))}
-            style={{ padding: '4px 8px', borderRadius: 4, border: '1px solid #555', background: '#2a2a3a', color: '#ccc' }}
+            style={{ padding: '4px 8px', borderRadius: 4, border: '1px solid var(--border)', background: 'var(--bg-tertiary)', color: 'var(--text-primary)' }}
           >
             {[2, 3, 4, 5, 6, 7, 8, 9].map(n => (
               <option key={n} value={n}>{n}</option>
@@ -127,8 +127,8 @@ export function PasteImportDialog({ isOpen, onLoad, onCancel }: PasteImportDialo
                 marginBottom: 10,
                 padding: '8px 10px',
                 borderRadius: 6,
-                border: `1px solid ${isEmpty ? '#555' : '#4a6a8a'}`,
-                background: '#1e1e2e',
+                border: `1px solid ${isEmpty ? 'var(--border)' : '#4a6a8a'}`,
+                background: 'var(--bg-tertiary)',
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
@@ -138,7 +138,7 @@ export function PasteImportDialog({ isOpen, onLoad, onCancel }: PasteImportDialo
                     background: SHAPE_COLORS[letter], flexShrink: 0,
                   }}
                 />
-                <span style={{ fontSize: 12, fontWeight: 'bold', color: '#ccc', minWidth: 14 }}>{letter}</span>
+                <span style={{ fontSize: 12, fontWeight: 'bold', color: 'var(--text-primary)', minWidth: 14 }}>{letter}</span>
                 <input
                   type="text"
                   value={setNames[i]}
@@ -146,10 +146,10 @@ export function PasteImportDialog({ isOpen, onLoad, onCancel }: PasteImportDialo
                   placeholder={`Set ${letter} name`}
                   style={{
                     flex: 1, padding: '3px 6px', fontSize: 11, borderRadius: 3,
-                    border: '1px solid #444', background: '#2a2a3a', color: '#ddd',
+                    border: '1px solid var(--border)', background: 'var(--bg-tertiary)', color: 'var(--text-bright)',
                   }}
                 />
-                <span style={{ fontSize: 10, color: '#888', minWidth: 50, textAlign: 'right' }}>
+                <span style={{ fontSize: 10, color: 'var(--text-secondary)', minWidth: 50, textAlign: 'right' }}>
                   {count} item{count !== 1 ? 's' : ''}
                 </span>
               </div>
@@ -161,7 +161,7 @@ export function PasteImportDialog({ isOpen, onLoad, onCancel }: PasteImportDialo
                   width: '100%', minHeight: 60, maxHeight: 150,
                   fontFamily: 'monospace', fontSize: 11,
                   padding: 6, borderRadius: 3,
-                  border: '1px solid #444', background: '#252535', color: '#ccc',
+                  border: '1px solid var(--border)', background: 'var(--bg-tertiary)', color: 'var(--text-primary)',
                   resize: 'vertical', boxSizing: 'border-box',
                 }}
               />
@@ -170,7 +170,7 @@ export function PasteImportDialog({ isOpen, onLoad, onCancel }: PasteImportDialo
         })}
 
         {/* Delimiter selector */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12, fontSize: 11, color: '#999' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12, fontSize: 11, color: 'var(--text-secondary)' }}>
           <span>Delimiter:</span>
           {([['newline', 'Newline'], [',', 'Comma'], ['\t', 'Tab'], [' ', 'Space']] as [PasteDelimiter, string][]).map(([val, label]) => (
             <label key={val} style={{ display: 'flex', alignItems: 'center', gap: 3, cursor: 'pointer' }}>
@@ -187,7 +187,7 @@ export function PasteImportDialog({ isOpen, onLoad, onCancel }: PasteImportDialo
 
         {/* Summary + buttons */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span style={{ fontSize: 11, color: '#888' }}>
+          <span style={{ fontSize: 11, color: 'var(--text-secondary)' }}>
             {filledSets} / {numSets} sets filled, {totalUniqueItems} unique items
           </span>
           <div style={{ display: 'flex', gap: 8 }}>

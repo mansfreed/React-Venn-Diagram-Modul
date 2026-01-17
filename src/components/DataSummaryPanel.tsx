@@ -24,14 +24,14 @@ function sigLabel(fdr: number): string {
 }
 
 function fdrBgColor(fdr: number): string | undefined {
-  if (fdr < 0.001) return '#1a3a1a';
-  if (fdr < 0.05) return '#3a3a1a';
+  if (fdr < 0.001) return 'var(--sig-strong-bg)';
+  if (fdr < 0.05) return 'var(--sig-weak-bg)';
   return undefined;
 }
 
 function jaccardBgColor(j: number): string | undefined {
-  if (j >= 0.7) return '#1a3a1a';
-  if (j <= 0.3) return '#3a1a1a';
+  if (j >= 0.7) return 'var(--sig-strong-bg)';
+  if (j <= 0.3) return 'var(--sig-neg-bg)';
   return undefined;
 }
 

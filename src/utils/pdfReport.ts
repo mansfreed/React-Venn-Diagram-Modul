@@ -150,15 +150,8 @@ function drawTable(
   }
 
   // Table border for last page section
-  // Find where the table started on this page
-  const currentPageTableStart = y - (rows.length > 0 ? 0 : cellH); // approximate
   pdf.setDrawColor(200, 200, 200);
   pdf.setLineWidth(0.2);
-  // We need to track per-page start; simplified: draw border from M.top or tableStartY
-  const borderStart = pdf.getNumberOfPages() === 1 || tableStartY >= M.top ? tableStartY : M.top;
-  const finalStart = y - rows.length * cellH - cellH <= M.top + 1 ? M.top : borderStart;
-  // Simpler approach: just draw a rect around the visible portion
-  // Calculate how many rows are on current page
   pdf.rect(x, Math.max(M.top, tableStartY), tableW, y - Math.max(M.top, tableStartY));
   cx = x;
   for (let c = 0; c < colWidths.length - 1; c++) { cx += colWidths[c]; pdf.line(cx, Math.max(M.top, tableStartY), cx, y); }
@@ -310,10 +303,9 @@ export async function generatePdfReport(params: PdfReportParams): Promise<Blob> 
   const pdf = new jsPDF('p', 'mm', 'a4');
 
   const {
-    title, filename, vennResult, n, setNames, totalItems, totalFileRows,
+    filename, vennResult, n, setNames, totalItems, totalFileRows,
     vennImageDataUrl, vennImageWidth, vennImageHeight,
     upsetImageDataUrl, upsetImageWidth, upsetImageHeight,
-    modelName,
   } = params;
 
   const letters = 'ABCDEFGHI'.slice(0, n).split('');

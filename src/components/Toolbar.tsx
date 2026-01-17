@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { APP_NAME, APP_VERSION } from '../version.ts';
 
-import type { AppMode } from '../App.tsx';
+import type { AppMode, ThemeMode } from '../App.tsx';
 
 const MODE_LABELS: Record<AppMode, string> = {
   view: '👁 View',
@@ -34,6 +34,8 @@ interface ToolbarProps {
   onRedo: () => void;
   onReport: () => void;
   onDataReport?: () => void;
+  theme: ThemeMode;
+  onToggleTheme: () => void;
 }
 
 export function Toolbar({
@@ -45,6 +47,7 @@ export function Toolbar({
   onToggleGrid, onToggleValidation,
   onOpen, onClose, onDataOpen, onDataSave, onDataClose, hasDataFile, isCalculated,
   onUndo, onRedo, onReport, onDataReport,
+  theme, onToggleTheme,
 }: ToolbarProps) {
   const [modeDropdownOpen, setModeDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -129,6 +132,11 @@ export function Toolbar({
         <button className="btn btn-toolbar btn-sm" onClick={onZoomIn}>+</button>
         <button className="btn btn-toolbar btn-sm" onClick={onZoomReset}>1:1</button>
         <button className="btn btn-toolbar btn-sm" onClick={onSummary} title="All diagrams">☰</button>
+        <button
+          className="btn btn-toolbar btn-sm"
+          onClick={onToggleTheme}
+          title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+        >{theme === 'dark' ? '\u2600' : '\u263E'}</button>
         <button className="btn btn-toolbar btn-sm" onClick={onHelp} title="Help">?</button>
         <span className="toolbar-version">v{APP_VERSION}</span>
       </div>

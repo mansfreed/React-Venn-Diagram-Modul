@@ -40,7 +40,25 @@ import { UrlImportDialog } from './components/UrlImportDialog.tsx';
 export type ViewStyle = 'layer' | 'cut' | 'upset';
 export type AppMode = 'view' | 'edit' | 'data';
 
+export type ThemeMode = 'dark' | 'light';
+
 export default function App() {
+  const [theme, setTheme] = useState<ThemeMode>(() => {
+    const saved = localStorage.getItem('vdl-theme');
+    if (saved === 'dark' || saved === 'light') return saved;
+    if (window.matchMedia?.('(prefers-color-scheme: light)').matches) return 'light';
+    return 'dark';
+  });
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('vdl-theme', theme);
+  }, [theme]);
+
+  const handleToggleTheme = useCallback(() => {
+    setTheme(prev => prev === 'dark' ? 'light' : 'dark');
+  }, []);
+
   const [mode, setMode] = useState<AppMode>('view');
   const [currentModel, setCurrentModel] = useState<string | null>(null);
   const [isLoadingModel, setIsLoadingModel] = useState(false);
@@ -845,6 +863,8 @@ export default function App() {
         onRedo={svgDoc.redo}
         onReport={() => setReportOpen(true)}
         onDataReport={() => setPdfReportOpen(true)}
+        theme={theme}
+        onToggleTheme={handleToggleTheme}
       />
 
       <div className="main-layout">
@@ -888,7 +908,6 @@ export default function App() {
             columnMapping={testColumnMapping}
             originalColumnCount={testOriginalColumns.length}
             onSetColumnMapping={setTestColumnMapping}
-            onCalculate={handleTestCalculate}
             isCalculated={testCalculated}
             viewStyle={viewStyle}
             onSetViewStyle={setViewStyle}
@@ -1111,7 +1130,7 @@ export default function App() {
                 moveShapes={moveShapes || rotateShapes || resizeShapes}
                 shapeCursor={rotateShapes ? 'grab' : resizeShapes ? 'nwse-resize' : 'move'}
                 readOnly={mode === 'view' || mode === 'data'}
-                viewStyle={(mode === 'view' || mode === 'data') ? viewStyle : 'layer'}
+                viewStyle={(mode === 'view' || mode === 'data') ? (viewStyle === 'upset' ? 'layer' : viewStyle) : 'layer'}
                 hoveredRegion={activeRegion}
                 hoverColor={mode === 'data' ? hoverColor : undefined}
                 onRegionHover={regionDetection.onHover}
@@ -1370,7 +1389,6 @@ export default function App() {
           filename={testCsvFilename ?? 'data'}
           title={doc.texts.header?.content ?? testCsvFilename ?? 'Venn Diagram Report'}
           modelName={testModel ?? ''}
-          viewStyle={viewStyle}
         />
       )}
 

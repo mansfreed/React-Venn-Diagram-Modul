@@ -3,10 +3,9 @@ import type { VennResult } from '../utils/csvParser.ts';
 import type { VennDocument } from '../types.ts';
 import { upsetDataFromVennResult } from '../utils/upsetData.ts';
 import { buildUpsetSvgString } from '../utils/upsetSvgBuilder.ts';
-import { svgElementToDataUrl, svgStringToDataUrl } from '../utils/svgToImage.ts';
+import { svgStringToDataUrl } from '../utils/svgToImage.ts';
 import { generatePdfReport } from '../utils/pdfReport.ts';
 import { saveSvg } from '../parser/saveSvg.ts';
-import { downloadFile } from '../utils/exportData.ts';
 
 interface PdfReportDialogProps {
   isOpen: boolean;
@@ -20,13 +19,12 @@ interface PdfReportDialogProps {
   filename: string;
   title: string;
   modelName: string;
-  viewStyle: string;
 }
 
 export function PdfReportDialog({
   isOpen, onClose,
   vennResult, doc, n, setNames, totalItems, totalFileRows,
-  filename, title, modelName, viewStyle,
+  filename, title, modelName,
 }: PdfReportDialogProps) {
   const [step, setStep] = useState('');
   const [error, setError] = useState<string | null>(null);

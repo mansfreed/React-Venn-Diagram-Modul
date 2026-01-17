@@ -44,7 +44,6 @@ interface TestSidebarProps {
   columnMapping: number[];  // indices into csv headers for A, B, C, ...
   originalColumnCount: number;
   onSetColumnMapping: (mapping: number[]) => void;
-  onCalculate: () => void;
   isCalculated: boolean;
   viewStyle: ViewStyle;
   onSetViewStyle: (style: ViewStyle) => void;
@@ -93,7 +92,7 @@ export function TestSidebar({
   csvData, csvFilename, fileType, geneSetFormat,
   selectedModel, onSelectModel,
   columnMapping, originalColumnCount, onSetColumnMapping,
-  onCalculate, isCalculated,
+  isCalculated,
   viewStyle, onSetViewStyle,
   cutColorMode, onSetCutColorMode,
   heatmapColors, onSetHeatmapColors,

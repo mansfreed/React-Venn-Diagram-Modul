@@ -24,13 +24,6 @@ export function UrlImportDialog({ isOpen, onLoad, onCancel }: UrlImportDialogPro
   const [previewLines, setPreviewLines] = useState<string[]>([]);
   const [steps, setSteps] = useState<ValidationStep[]>([]);
 
-  const updateStep = (index: number, update: Partial<ValidationStep>) => {
-    setSteps(prev => {
-      const next = [...prev];
-      next[index] = { ...next[index], ...update };
-      return next;
-    });
-  };
 
   const handleFetch = useCallback(async () => {
     setFetchedText(null);
@@ -169,11 +162,11 @@ export function UrlImportDialog({ isOpen, onLoad, onCancel }: UrlImportDialogPro
   };
   const statusColor = (s: ValidationStep['status']) => {
     switch (s) {
-      case 'ok': return '#6a8';
-      case 'warn': return '#da6';
-      case 'error': return '#e55';
+      case 'ok': return 'var(--success)';
+      case 'warn': return 'var(--warning)';
+      case 'error': return 'var(--error)';
       case 'pending': return '#88c';
-      default: return '#666';
+      default: return 'var(--text-muted)';
     }
   };
 
@@ -185,7 +178,7 @@ export function UrlImportDialog({ isOpen, onLoad, onCancel }: UrlImportDialogPro
         style={{ minWidth: 500, maxWidth: 600, maxHeight: '85vh', overflow: 'auto', padding: 20 }}
       >
         <h3 style={{ margin: '0 0 4px', fontSize: 16 }}>Load Data from URL</h3>
-        <p style={{ margin: '0 0 12px', fontSize: 12, color: '#888' }}>
+        <p style={{ margin: '0 0 12px', fontSize: 12, color: 'var(--text-secondary)' }}>
           Enter a direct link to a CSV, TSV, GMT, or GMX file.
         </p>
 
@@ -198,7 +191,7 @@ export function UrlImportDialog({ isOpen, onLoad, onCancel }: UrlImportDialogPro
             placeholder="https://example.com/data.tsv"
             style={{
               flex: 1, padding: '6px 10px', fontSize: 12, borderRadius: 4,
-              border: '1px solid #555', background: '#2a2a3a', color: '#ddd',
+              border: '1px solid var(--border)', background: 'var(--bg-tertiary)', color: 'var(--text-bright)',
               fontFamily: 'monospace',
             }}
             onKeyDown={e => { if (e.key === 'Enter' && url.trim()) handleFetch(); }}
@@ -216,14 +209,14 @@ export function UrlImportDialog({ isOpen, onLoad, onCancel }: UrlImportDialogPro
         {steps.length > 0 && (
           <div style={{
             marginBottom: 12, padding: '8px 10px', borderRadius: 6,
-            border: '1px solid #3a3a4a', background: '#1e1e2e',
+            border: '1px solid var(--dialog-border)', background: 'var(--bg-tertiary)',
           }}>
             {steps.map((step, i) => (
               step.status !== 'idle' && (
                 <div key={i} style={{ fontSize: 11, marginBottom: 2, display: 'flex', gap: 6 }}>
                   <span style={{ color: statusColor(step.status), minWidth: 12 }}>{statusIcon(step.status)}</span>
-                  <span style={{ color: '#ccc' }}>{step.label}</span>
-                  {step.detail && <span style={{ color: '#888' }}>— {step.detail}</span>}
+                  <span style={{ color: 'var(--text-primary)' }}>{step.label}</span>
+                  {step.detail && <span style={{ color: 'var(--text-secondary)' }}>— {step.detail}</span>}
                 </div>
               )
             ))}
@@ -233,14 +226,14 @@ export function UrlImportDialog({ isOpen, onLoad, onCancel }: UrlImportDialogPro
         {/* Preview */}
         {previewLines.length > 0 && (
           <div style={{ marginBottom: 12 }}>
-            <div style={{ fontSize: 11, color: '#888', marginBottom: 4 }}>Preview (first 5 lines):</div>
+            <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginBottom: 4 }}>Preview (first 5 lines):</div>
             <div style={{
-              padding: 8, borderRadius: 4, border: '1px solid #3a3a4a',
-              background: '#1a1a2a', fontFamily: 'monospace', fontSize: 10,
-              overflow: 'auto', maxHeight: 120, whiteSpace: 'pre', color: '#bbb',
+              padding: 8, borderRadius: 4, border: '1px solid var(--dialog-border)',
+              background: 'var(--bg-tertiary)', fontFamily: 'monospace', fontSize: 10,
+              overflow: 'auto', maxHeight: 120, whiteSpace: 'pre', color: 'var(--text-primary)',
             }}>
               {previewLines.map((line, i) => (
-                <div key={i} style={{ color: i === 0 ? '#8af' : '#bbb' }}>
+                <div key={i} style={{ color: i === 0 ? 'var(--accent)' : 'var(--text-primary)' }}>
                   {line.length > 120 ? line.slice(0, 120) + '...' : line}
                 </div>
               ))}

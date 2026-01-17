@@ -68,10 +68,10 @@ export function SampleDataDialog({ isOpen, onSelect, onClose }: SampleDataDialog
     <div className="dialog-overlay" onClick={onClose}>
       <div className="dialog" onClick={e => e.stopPropagation()} style={{ minWidth: 480, maxWidth: 560, maxHeight: '80vh', overflow: 'auto' }}>
         <h3 style={{ margin: '0 0 4px', fontSize: 16 }}>Select Sample Dataset</h3>
-        <p style={{ margin: '0 0 14px', fontSize: 12, color: '#888' }}>Choose a dataset to load into the Venn Diagram calculator.</p>
+        <p style={{ margin: '0 0 14px', fontSize: 12, color: 'var(--text-secondary)' }}>Choose a dataset to load into the Venn Diagram calculator.</p>
 
         <div style={{ marginBottom: 12 }}>
-          <div style={{ fontSize: 11, fontWeight: 'bold', color: '#aaa', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6 }}>Real datasets</div>
+          <div style={{ fontSize: 11, fontWeight: 'bold', color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6 }}>Real datasets</div>
           {realDatasets.map(d => (
             <div
               key={d.id}
@@ -80,9 +80,9 @@ export function SampleDataDialog({ isOpen, onSelect, onClose }: SampleDataDialog
                 padding: '10px 12px',
                 marginBottom: 6,
                 borderRadius: 6,
-                border: '1px solid #3a3a4a',
+                border: '1px solid var(--dialog-border)',
                 cursor: 'pointer',
-                background: hoveredId === d.id ? '#2a2a3a' : 'transparent',
+                background: hoveredId === d.id ? 'var(--bg-hover)' : 'transparent',
                 transition: 'background 0.1s',
               }}
               onMouseEnter={() => setHoveredId(d.id)}
@@ -90,16 +90,16 @@ export function SampleDataDialog({ isOpen, onSelect, onClose }: SampleDataDialog
               onClick={() => onSelect(d)}
             >
               <div style={{ fontSize: 13, fontWeight: 'bold', marginBottom: 3 }}>{d.name}</div>
-              <div style={{ fontSize: 11, color: '#999', lineHeight: 1.4 }}>{d.description}</div>
+              <div style={{ fontSize: 11, color: 'var(--text-secondary)', lineHeight: 1.4 }}>{d.description}</div>
               {d.reference && (
-                <div style={{ fontSize: 10, color: '#6a8', marginTop: 3 }}>Ref: {d.reference}</div>
+                <div style={{ fontSize: 10, color: 'var(--success)', marginTop: 3 }}>Ref: {d.reference}</div>
               )}
             </div>
           ))}
         </div>
 
         <div style={{ marginBottom: 12 }}>
-          <div style={{ fontSize: 11, fontWeight: 'bold', color: '#aaa', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6 }}>Test / mock datasets</div>
+          <div style={{ fontSize: 11, fontWeight: 'bold', color: 'var(--text-primary)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 6 }}>Test / mock datasets</div>
           {mockDatasets.map(d => (
             <div
               key={d.id}
@@ -108,9 +108,9 @@ export function SampleDataDialog({ isOpen, onSelect, onClose }: SampleDataDialog
                 padding: '10px 12px',
                 marginBottom: 6,
                 borderRadius: 6,
-                border: '1px solid #3a3a4a',
+                border: '1px solid var(--dialog-border)',
                 cursor: 'pointer',
-                background: hoveredId === d.id ? '#2a2a3a' : 'transparent',
+                background: hoveredId === d.id ? 'var(--bg-hover)' : 'transparent',
                 transition: 'background 0.1s',
               }}
               onMouseEnter={() => setHoveredId(d.id)}
@@ -118,7 +118,7 @@ export function SampleDataDialog({ isOpen, onSelect, onClose }: SampleDataDialog
               onClick={() => onSelect(d)}
             >
               <div style={{ fontSize: 13, fontWeight: 'bold', marginBottom: 3 }}>{d.name}</div>
-              <div style={{ fontSize: 11, color: '#999', lineHeight: 1.4 }}>{d.description}</div>
+              <div style={{ fontSize: 11, color: 'var(--text-secondary)', lineHeight: 1.4 }}>{d.description}</div>
             </div>
           ))}
         </div>
