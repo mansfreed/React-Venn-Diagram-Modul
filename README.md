@@ -2,7 +2,7 @@
 
 Interactive viewer and editor for Venn diagrams — from 2-set to 9-set, covering all known construction methods. Built with React, TypeScript, and Vite.
 
-**Version:** 1.9.0 | **Models:** 44 SVG diagrams | **License:** MIT
+**Version:** 1.9.1 | **Models:** 44 SVG diagrams + proportional | **License:** MIT
 
 ## Features
 
@@ -66,6 +66,7 @@ Interactive viewer and editor for Venn diagrams — from 2-set to 9-set, coverin
 - Collapsible sidebar sections (File Info, Model, Column Mapping, View, Export)
 - Right panel toggle: **Properties** (region info, items, unlock) / **Statistics** (Jaccard, Dice, enrichment)
 - Selected region style: configurable highlight color for hovered/selected count values
+- **Area-proportional diagrams** (2-3 sets): computed circle layout where sizes match your data, with accuracy display
 - Visual model browser after data import — shows compatible diagram models filtered by set count
 - Auto-calculate on model selection (no manual Calculate button needed)
 - **Find Item** search: global cross-region search with match highlighting and region navigation
@@ -122,7 +123,10 @@ Interactive viewer and editor for Venn diagrams — from 2-set to 9-set, coverin
 │   │   ├── svgToImage.ts      SVG-to-PNG capture utility
 │   │   ├── upsetSvgBuilder.ts Print-optimized UpSet SVG builder
 │   │   ├── networkData.ts     Network data model + force layout algorithm
-│   │   └── networkSvgBuilder.ts Print-optimized Network SVG builder
+│   │   ├── networkSvgBuilder.ts Print-optimized Network SVG builder
+│   │   ├── proportionalLayout.ts Area-proportional circle solver (2/3-set)
+│   │   ├── proportionalModel.ts  VennDocument generator for proportional
+│   │   └── proportionalRegions.ts Cut View region paths for proportional
 │   └── __tests__/             Test suites
 ├── models/
 │   ├── svg/                   44 SVG Venn diagram models

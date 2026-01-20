@@ -2,6 +2,7 @@ import { useState, useMemo, useCallback } from 'react';
 import type { ViewStyle } from '../App.tsx';
 import type { UpsetColorMode, UpsetSortMode } from './UpsetPlot.tsx';
 import type { EdgeWeightMetric } from '../utils/networkData.ts';
+import type { ProportionalAccuracy } from '../utils/proportionalLayout.ts';
 import { MODEL_LIST, getModelsBySetCount } from '../models.ts';
 import type { CsvData } from '../utils/csvParser.ts';
 import { getBinaryColumns } from '../utils/csvParser.ts';
@@ -97,6 +98,7 @@ interface TestSidebarProps {
   onSetNetworkMoveNodes: (v: boolean) => void;
   plotBackground: 'dark' | 'white';
   onSetPlotBackground: (v: 'dark' | 'white') => void;
+  proportionalAccuracy: ProportionalAccuracy | null;
   onExportRegionSummary?: () => void;
   onExportMatrix?: () => void;
   onSaveSvg?: () => void;
@@ -133,6 +135,7 @@ export function TestSidebar({
   networkMinWeight, onSetNetworkMinWeight,
   networkMoveNodes, onSetNetworkMoveNodes,
   plotBackground, onSetPlotBackground,
+  proportionalAccuracy,
   onExportRegionSummary, onExportMatrix,
   onSaveSvg, onExportImage,
 }: TestSidebarProps) {
@@ -216,14 +219,22 @@ export function TestSidebar({
             <>
               <select
                 className="model-selector"
-                value={selectedModel ?? ''}
+                value={selectedModel === '__proportional__' ? `__proportional_${n}__` : (selectedModel ?? '')}
                 onChange={e => {
                   const fn = e.target.value;
+                  if (fn === '__proportional_2__') { onSelectModel('__proportional__', 2); return; }
+                  if (fn === '__proportional_3__') { onSelectModel('__proportional__', 3); return; }
                   const model = MODEL_LIST.find(m => m.filename === fn);
                   if (model) onSelectModel(fn, model.setCount);
                 }}
               >
                 <option value="">— Select model (2–{maxSets} sets) —</option>
+                {n <= 3 && (
+                  <optgroup label="Area-Proportional (computed)">
+                    <option value="__proportional_2__">2-set (area-proportional)</option>
+                    {maxSets >= 3 && <option value="__proportional_3__">3-set (area-proportional)</option>}
+                  </optgroup>
+                )}
                 {Array.from(compatibleModelsBySet.entries())
                   .sort(([a], [b]) => a - b)
                   .map(([setCount, models]) => (
@@ -240,6 +251,30 @@ export function TestSidebar({
           ) : (
             <div className="test-error">{fileType === 'aggregated' ? 'Need at least 2 data columns' : 'Need at least 2 binary columns'}</div>
           ))}
+        </div>
+      )}
+
+      {/* Proportional Accuracy */}
+      {proportionalAccuracy && selectedModel && (
+        <div className="sidebar-section">
+          <div className="sidebar-subsection-title">Proportional Accuracy</div>
+          {[...proportionalAccuracy.pairwise.entries()].map(([pair, acc]) => (
+            <div key={pair} style={{ fontSize: 11, display: 'flex', justifyContent: 'space-between', padding: '1px 0' }}>
+              <span>{pair}</span>
+              <span style={{ color: acc >= 0.95 ? '#4caf50' : acc >= 0.8 ? '#ff9800' : '#f44336' }}>
+                {(acc * 100).toFixed(1)}%
+              </span>
+            </div>
+          ))}
+          <div style={{ fontSize: 12, fontWeight: 'bold', marginTop: 4, display: 'flex', justifyContent: 'space-between', borderTop: '1px solid var(--border)', paddingTop: 4 }}>
+            <span>Overall</span>
+            <span>{(proportionalAccuracy.overall * 100).toFixed(1)}%</span>
+          </div>
+          {proportionalAccuracy.overall < 0.8 && (
+            <div style={{ fontSize: 10, color: '#ff9800', marginTop: 4, padding: '4px 6px', background: 'var(--sig-weak-bg)', borderRadius: 4 }}>
+              Low accuracy — consider using a fixed model.
+            </div>
+          )}
         </div>
       )}
 

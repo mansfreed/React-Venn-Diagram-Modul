@@ -2024,6 +2024,44 @@ html, body, #root {
 }
 
 /* ---- Data Import Cards ---- */
+/* ---- Proportional Model Card ---- */
+.summary-card-proportional {
+  border: 2px dashed var(--accent) !important;
+}
+
+.computed-badge {
+  display: inline-block;
+  font-size: 9px;
+  font-weight: bold;
+  padding: 1px 5px;
+  border-radius: 3px;
+  margin-left: 6px;
+  background: var(--accent);
+  color: var(--text-inverse);
+  vertical-align: middle;
+  letter-spacing: 0.5px;
+}
+
+.proportional-preview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 70px;
+  padding: 4px;
+}
+
+.canvas-fallback-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--text-secondary);
+  font-size: 14px;
+  text-align: center;
+  gap: 8px;
+}
+
 .data-import-cards {
   display: grid;
   grid-template-columns: repeat(2, 1fr);

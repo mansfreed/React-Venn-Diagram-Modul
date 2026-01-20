@@ -50,6 +50,14 @@ export function useSvgDocument() {
     syncModified();
   }, [syncModified]);
 
+  const loadDoc = useCallback((newDoc: VennDocument) => {
+    setDoc(newDoc);
+    historyRef.current = [cloneDoc(newDoc)];
+    historyIndexRef.current = 0;
+    savedIndexRef.current = 0;
+    syncModified();
+  }, [syncModified]);
+
   const updateDoc = useCallback((updater: (d: VennDocument) => VennDocument, addToHistory = true) => {
     setDoc(prev => {
       if (!prev) return prev;
@@ -179,6 +187,15 @@ export function useSvgDocument() {
           const styleMap = parseStyleString(s.style);
           styleMap[property] = value;
           s.style = serializeStyleMap(styleMap);
+          break;
+        }
+      }
+      // Also check bullets
+      for (const b of d.bullets) {
+        if (b.id === id) {
+          const styleMap = parseStyleString(b.style);
+          styleMap[property] = value;
+          b.style = serializeStyleMap(styleMap);
           break;
         }
       }
@@ -316,6 +333,7 @@ export function useSvgDocument() {
   return {
     doc,
     loadFromString,
+    loadDoc,
     updateTextPosition,
     updateTextPositionLive,
     updateTextContent,

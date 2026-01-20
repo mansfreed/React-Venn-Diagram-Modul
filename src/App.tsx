@@ -13,7 +13,7 @@ import { TextEditDialog } from './components/TextEditDialog.tsx';
 import { ReportDialog } from './components/ReportDialog.tsx';
 import { ViewerSidebar } from './components/ViewerSidebar.tsx';
 import { ViewerInfoPanel } from './components/ViewerInfoPanel.tsx';
-import { fetchModel, fetchRegionData, getModelsBySetCount } from './models.ts';
+import { fetchModel, fetchRegionData, getModelsBySetCount, MODEL_LIST } from './models.ts';
 import type { RegionData } from './models.ts';
 import { CutViewCanvas } from './components/CutViewCanvas.tsx';
 import { SummaryDialog, SvgPreview, SOURCES, renderLabel } from './components/SummaryDialog.tsx';
@@ -34,7 +34,13 @@ import { upsetDataFromRegionData, upsetDataFromVennResult } from './utils/upsetD
 import { NetworkPlot } from './components/NetworkPlot.tsx';
 import type { EdgeWeightMetric } from './utils/networkData.ts';
 import { buildNetworkData } from './utils/networkData.ts';
+import { solve2SetLayout, solve3SetLayout } from './utils/proportionalLayout.ts';
+import type { ProportionalAccuracy, ProportionalCircle } from './utils/proportionalLayout.ts';
+import { generateProportionalModel } from './utils/proportionalModel.ts';
+import { generate2SetRegions, generate3SetRegions } from './utils/proportionalRegions.ts';
 import { PdfReportDialog } from './components/PdfReportDialog.tsx';
+
+const PROPORTIONAL_MODEL = '__proportional__';
 import { SampleDataDialog } from './components/SampleDataDialog.tsx';
 import type { SampleDataset } from './components/SampleDataDialog.tsx';
 import { PasteImportDialog } from './components/PasteImportDialog.tsx';
@@ -81,6 +87,7 @@ export default function App() {
   const [networkMinWeight, setNetworkMinWeight] = useState(0);
   const [networkMoveNodes, setNetworkMoveNodes] = useState(true);
   const [plotBackground, setPlotBackground] = useState<'dark' | 'white'>('dark');
+  const [proportionalAccuracy, setProportionalAccuracy] = useState<ProportionalAccuracy | null>(null);
   const [hoverColor, setHoverColor] = useState('#00ff88');
   const [dataRightPanel, setDataRightPanel] = useState<'properties' | 'statistics'>('properties');
   const [regionData, setRegionData] = useState<RegionData | null>(null);
@@ -736,22 +743,9 @@ export default function App() {
     setTestError(null);
     setIsCalculating(true);
     try {
-      // Load SVG model
-      const [svgString, regData] = await Promise.all([
-        fetchModel(testModel),
-        fetchRegionData(testModel).catch(() => null),
-      ]);
-      svgDoc.loadFromString(testModel, svgString);
-      setRegionData(regData);
-      setCurrentModel(testModel);
-      // Large diagrams (8-set SUMO: 1400x1400) → 60% zoom
-      if (testModel.includes('venn-8-set')) {
-        zoomPan.setZoom(0.6);
-      } else {
-        zoomPan.resetZoom();
-      }
+      const n = testColumnMapping.length;
 
-      // Calculate Venn counts
+      // Calculate Venn counts first (needed for both fixed and proportional)
       const result = testFileType === 'aggregated'
         ? calculateVennCountsFromAggregated(testCsvData, testColumnMapping, testItemDelimiter)
         : calculateVennCounts(testCsvData, testColumnMapping);
@@ -759,30 +753,76 @@ export default function App() {
       setTestExclusiveItems(result.exclusiveItems);
       setTestInclusiveItems(result.inclusiveItems);
 
-      const letters = 'ABCDEFGHI'.slice(0, testColumnMapping.length).split('');
+      const letters = 'ABCDEFGHI'.slice(0, n).split('');
 
-      // Count_X texts = exclusive counts (only in exactly these sets)
-      for (const [label, count] of result.exclusive) {
-        svgDoc.updateTextContent(`Count_${label}`, String(count));
-        // Ensure text-anchor:middle for proper centering
-        svgDoc.updateTextStyle(`Count_${label}`, 'text-anchor', 'middle');
+      if (testModel === PROPORTIONAL_MODEL) {
+        // ═══════ PROPORTIONAL PATH ═══════
+        const sizes = letters.map(l => result.inclusive.get(l) ?? 0);
+        const pairInt = new Map<string, number>();
+        for (let i = 0; i < n; i++)
+          for (let j = i + 1; j < n; j++)
+            pairInt.set(letters[i] + letters[j], result.inclusive.get(letters[i] + letters[j]) ?? 0);
+
+        const layout = n === 2
+          ? solve2SetLayout(sizes[0], sizes[1], pairInt.get('AB')!, 700)
+          : solve3SetLayout(
+              sizes as [number, number, number],
+              { AB: pairInt.get('AB')!, AC: pairInt.get('AC')!, BC: pairInt.get('BC')! },
+              result.inclusive.get('ABC') ?? 0,
+              700,
+            );
+
+        const colNames = testColumnMapping.map(ci => testCsvData.headers[ci]);
+        const generatedDoc = generateProportionalModel(n, colNames, result.exclusive, result.inclusive, layout);
+        svgDoc.loadDoc(generatedDoc);
+
+        if (n === 2) {
+          setRegionData(generate2SetRegions(layout.circles as [ProportionalCircle, ProportionalCircle], 700));
+        } else if (n === 3) {
+          setRegionData(generate3SetRegions(layout.circles, 700));
+        } else {
+          setRegionData(null);
+        }
+
+        setProportionalAccuracy(layout.accuracy);
+        setCurrentModel(PROPORTIONAL_MODEL);
+        zoomPan.resetZoom();
+
+      } else {
+        // ═══════ FIXED MODEL PATH ═══════
+        const [svgString, regData] = await Promise.all([
+          fetchModel(testModel),
+          fetchRegionData(testModel).catch(() => null),
+        ]);
+        svgDoc.loadFromString(testModel, svgString);
+        setRegionData(regData);
+        setCurrentModel(testModel);
+        setProportionalAccuracy(null);
+
+        if (testModel.includes('venn-8-set')) {
+          zoomPan.setZoom(0.6);
+        } else {
+          zoomPan.resetZoom();
+        }
+
+        // Update Count, Name, CountSUM texts for fixed model
+        for (const [label, count] of result.exclusive) {
+          svgDoc.updateTextContent(`Count_${label}`, String(count));
+          svgDoc.updateTextStyle(`Count_${label}`, 'text-anchor', 'middle');
+        }
+        for (let i = 0; i < n; i++) {
+          const colName = testCsvData.headers[testColumnMapping[i]];
+          svgDoc.updateTextContent(`Name${letters[i]}`, colName);
+        }
+        for (let i = 0; i < n; i++) {
+          const total = result.inclusive.get(letters[i]) ?? 0;
+          svgDoc.updateTextContent(`CountSUM_${letters[i]}`, String(total));
+          svgDoc.updateTextStyle(`CountSUM_${letters[i]}`, 'text-anchor', 'middle');
+        }
       }
 
-      // Name labels = column names (keep original text-anchor)
-      for (let i = 0; i < testColumnMapping.length; i++) {
-        const colName = testCsvData.headers[testColumnMapping[i]];
-        svgDoc.updateTextContent(`Name${letters[i]}`, colName);
-      }
-
-      // CountSUM_X = inclusive total (all rows containing set X, ensure centered)
-      for (let i = 0; i < testColumnMapping.length; i++) {
-        const total = result.inclusive.get(letters[i]) ?? 0;
-        svgDoc.updateTextContent(`CountSUM_${letters[i]}`, String(total));
-        svgDoc.updateTextStyle(`CountSUM_${letters[i]}`, 'text-anchor', 'middle');
-      }
-
-      // Apply custom shape colors and opacity
-      for (let i = 0; i < testColumnMapping.length; i++) {
+      // ═══════ COMMON: Apply visual settings ═══════
+      for (let i = 0; i < n; i++) {
         const letter = letters[i];
         const color = testShapeColors[letter];
         if (color) {
@@ -827,6 +867,27 @@ export default function App() {
       handleTestCalculate();
     }
   }, [testPendingCalculate, testModel, testCsvData, testColumnMapping, handleTestCalculate]);
+
+  // Auto-switch from proportional when n > 3
+  useEffect(() => {
+    if (testModel === PROPORTIONAL_MODEL && testColumnMapping.length > 3) {
+      const n = testColumnMapping.length;
+      const defaultModel = MODEL_LIST.find(m => m.setCount === n)?.filename ?? `venn-${n}-set.svg`;
+      setTestModel(defaultModel);
+      setTestPendingCalculate(true);
+      setTestError('Area-proportional mode only supports 2-3 sets. Switched to standard model.');
+    }
+  }, [testModel, testColumnMapping.length]);
+
+  // Auto-recalculate when column mapping changes (user swaps columns in sidebar)
+  const prevMappingRef = useRef<string>('');
+  useEffect(() => {
+    const key = testColumnMapping.join(',');
+    if (prevMappingRef.current && prevMappingRef.current !== key && testModel && testCsvData && testCalculated) {
+      setTestPendingCalculate(true);
+    }
+    prevMappingRef.current = key;
+  }, [testColumnMapping, testModel, testCsvData, testCalculated]);
 
   // Viewer: region list hover/click
   const handleSidebarHoverRegion = useCallback((_region: Region | null) => {
@@ -974,6 +1035,7 @@ export default function App() {
                 const letters = 'ABCDEFGHI';
                 for (let i = 0; i < doc.shapes.length && i < 9; i++) {
                   svgDoc.updateShapeStyle(`Shape${letters[i]}`, 'opacity', String(opacity));
+                  svgDoc.updateShapeStyle(`Bullet${letters[i]}`, 'opacity', String(opacity));
                 }
               }
             }}
@@ -1051,6 +1113,7 @@ export default function App() {
             onSetNetworkMoveNodes={setNetworkMoveNodes}
             plotBackground={plotBackground}
             onSetPlotBackground={setPlotBackground}
+            proportionalAccuracy={proportionalAccuracy}
             onSaveSvg={handleSave}
             onExportImage={handleExportImage}
           />
@@ -1267,6 +1330,44 @@ export default function App() {
                 <div className="canvas-model-browser-inner">
                   <h2 className="canvas-model-browser-title">Select Venn Diagram Model</h2>
                   <p style={{ textAlign: 'center', color: 'var(--text-secondary)', marginTop: -8, marginBottom: 16, fontSize: 13 }}>for your dataset</p>
+                  {testOriginalColumns.length <= 3 && (
+                    <div className="summary-group">
+                      <h3 className="summary-group-title">
+                        Computed Models
+                        <span className="summary-group-count">data-driven layout</span>
+                      </h3>
+                      <div className="summary-grid">
+                        <div
+                          className="summary-card summary-card-proportional"
+                          onClick={() => {
+                            setTestModel(PROPORTIONAL_MODEL);
+                            setTestCalculated(false);
+                            setTestColumnMapping(testOriginalColumns.slice(0, testOriginalColumns.length));
+                            setTestPendingCalculate(true);
+                          }}
+                        >
+                          <div className="proportional-preview">
+                            <svg viewBox="0 0 100 60" style={{ width: '100%', height: 60 }}>
+                              <circle cx={38} cy={30} r={22} fill="#FFF200" fillOpacity={0.3} stroke="#000" strokeWidth={0.5} />
+                              <circle cx={62} cy={30} r={18} fill="#2E3192" fillOpacity={0.3} stroke="#000" strokeWidth={0.5} />
+                              {testOriginalColumns.length >= 3 && (
+                                <circle cx={50} cy={46} r={16} fill="#ED1C24" fillOpacity={0.3} stroke="#000" strokeWidth={0.5} />
+                              )}
+                            </svg>
+                          </div>
+                          <div className="summary-card-info">
+                            <div className="summary-card-name">
+                              Area-Proportional
+                              <span className="computed-badge">COMPUTED</span>
+                            </div>
+                            <div className="summary-card-source">
+                              <span>Circle sizes match your data</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                   {Array.from(modelsBySet.entries())
                     .sort(([a], [b]) => a - b)
                     .filter(([setCount]) => setCount <= testOriginalColumns.length)

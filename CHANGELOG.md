@@ -2,6 +2,24 @@
 
 All notable changes to the Venn Diagram Lab project.
 
+## [1.9.1] — 2026-01-20
+
+### Added
+- **Area-Proportional Venn Diagrams**: Data-driven circle layout for 2 and 3 sets
+  - Circle radii proportional to set sizes, distances computed via binary search for exact intersection areas
+  - Available in Model Browser ("Computed Models" section with COMPUTED badge) and sidebar dropdown
+  - Layer View: legend with bullets, names, and SUM counts in bottom-left corner
+  - Cut View: 2-set analytical arc paths; 3-set grid-sampled contour paths (400x400 resolution, ~200-point polygons)
+  - Proportional Accuracy display in sidebar (pairwise %, overall, warning if <80%)
+  - Auto-switch to standard model when n > 3 with notification
+- **Auto-recalculate on column change**: Swapping columns in the 3. COLUMN MAPPING section automatically recalculates the diagram
+- **Bullet opacity sync**: Opacity slider now affects both shape and bullet opacity
+- **`loadDoc()` method**: New `useSvgDocument` hook method to load pre-built VennDocument objects directly
+
+### Changed
+- **Proportional legend layout**: Names, SUM counts, and bullets positioned in bottom-left legend (not above circles)
+- **SUM count position**: Dynamically positioned after the longest set name
+
 ## [1.9.0] — 2026-01-19
 
 ### Added
