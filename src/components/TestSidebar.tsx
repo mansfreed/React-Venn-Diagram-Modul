@@ -275,6 +275,14 @@ export function TestSidebar({
       {proportionalAccuracy && selectedModel && (
         <div className="sidebar-section">
           <div className="sidebar-subsection-title">Proportional Accuracy</div>
+          {proportionalAccuracy.single && [...proportionalAccuracy.single.entries()].map(([label, acc]) => (
+            <div key={label} style={{ fontSize: 11, display: 'flex', justifyContent: 'space-between', padding: '1px 0' }}>
+              <span>{label}</span>
+              <span style={{ color: acc >= 0.95 ? '#4caf50' : acc >= 0.8 ? '#ff9800' : '#f44336' }}>
+                {(acc * 100).toFixed(1)}%
+              </span>
+            </div>
+          ))}
           {[...proportionalAccuracy.pairwise.entries()].map(([pair, acc]) => (
             <div key={pair} style={{ fontSize: 11, display: 'flex', justifyContent: 'space-between', padding: '1px 0' }}>
               <span>{pair}</span>
@@ -283,6 +291,14 @@ export function TestSidebar({
               </span>
             </div>
           ))}
+          {proportionalAccuracy.triple !== undefined && (
+            <div style={{ fontSize: 11, display: 'flex', justifyContent: 'space-between', padding: '1px 0' }}>
+              <span>ABC</span>
+              <span style={{ color: proportionalAccuracy.triple >= 0.95 ? '#4caf50' : proportionalAccuracy.triple >= 0.8 ? '#ff9800' : '#f44336' }}>
+                {(proportionalAccuracy.triple * 100).toFixed(1)}%
+              </span>
+            </div>
+          )}
           <div style={{ fontSize: 12, fontWeight: 'bold', marginTop: 4, display: 'flex', justifyContent: 'space-between', borderTop: '1px solid var(--border)', paddingTop: 4 }}>
             <span>Overall</span>
             <span>{(proportionalAccuracy.overall * 100).toFixed(1)}%</span>

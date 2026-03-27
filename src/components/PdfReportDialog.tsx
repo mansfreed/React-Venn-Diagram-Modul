@@ -21,7 +21,7 @@ interface PdfReportDialogProps {
   filename: string;
   title: string;
   modelName: string;
-  proportionalAccuracy?: { pairwise: Map<string, number>; triple?: number; overall: number } | null;
+  proportionalAccuracy?: { single?: Map<string, number>; pairwise: Map<string, number>; triple?: number; overall: number } | null;
 }
 
 export function PdfReportDialog({

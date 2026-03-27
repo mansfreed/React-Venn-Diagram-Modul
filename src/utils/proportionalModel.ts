@@ -16,7 +16,7 @@ function sampleRegionCentroid(
   circles: ProportionalCircle[],
   targetMask: number,
   canvasSize: number,
-  resolution = 60,
+  resolution = 120,
 ): { x: number; y: number } | null {
   let sumX = 0, sumY = 0, count = 0;
   const step = canvasSize / resolution;
@@ -100,28 +100,34 @@ export function generateProportionalModel(
   for (let mask = 1; mask < (1 << n); mask++) {
     const label = letters.filter((_, i) => mask & (1 << i)).join('');
     const count = exclusiveCounts.get(label) ?? 0;
-    const centroid = sampleRegionCentroid(circles, mask, canvasSize);
 
-    if (centroid) {
-      values.push({
-        id: `Count_${label}`,
-        x: Math.round(centroid.x),
-        y: Math.round(centroid.y),
-        content: String(count),
-        style: 'font-size:20;font-family:Tahoma;text-anchor:middle;fill:#262262;font-weight:bold;',
-      });
+    let cx: number, cy: number;
+
+    // For the full intersection (all sets), use geometric center of involved circles
+    if (mask === (1 << n) - 1 && n >= 3) {
+      const involved = circles.filter((_, i) => mask & (1 << i));
+      cx = involved.reduce((s, c) => s + c.cx, 0) / involved.length;
+      cy = involved.reduce((s, c) => s + c.cy, 0) / involved.length;
     } else {
-      // Fallback: place near first circle of the set
-      const firstLetter = label[0];
-      const fc = circles.find(c => c.letter === firstLetter)!;
-      values.push({
-        id: `Count_${label}`,
-        x: Math.round(fc.cx),
-        y: Math.round(fc.cy + 5),
-        content: String(count),
-        style: 'font-size:20;font-family:Tahoma;text-anchor:middle;fill:#262262;font-weight:bold;',
-      });
+      const centroid = sampleRegionCentroid(circles, mask, canvasSize);
+      if (centroid) {
+        cx = centroid.x;
+        cy = centroid.y;
+      } else {
+        // Fallback: geometric center of involved circles
+        const involved = circles.filter((_, i) => mask & (1 << i));
+        cx = involved.reduce((s, c) => s + c.cx, 0) / involved.length;
+        cy = involved.reduce((s, c) => s + c.cy, 0) / involved.length;
+      }
     }
+
+    values.push({
+      id: `Count_${label}`,
+      x: Math.round(cx),
+      y: Math.round(cy),
+      content: String(count),
+      style: 'font-size:20;font-family:Tahoma;text-anchor:middle;fill:#262262;font-weight:bold;',
+    });
   }
 
   // Bullets — in legend area, left of names
@@ -135,9 +141,9 @@ export function generateProportionalModel(
 
   return {
     filename: '__proportional__.svg',
-    rawSvgAttrs: `xmlns="http://www.w3.org/2000/svg" version="1.1" x="0px" y="0px" style="enable-background:new 0 0 ${canvasSize} ${canvasSize};" xml:space="preserve" viewBox="0 0 ${canvasSize} ${canvasSize}"`,
+    rawSvgAttrs: `xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0px" y="0px" style="enable-background:new 0 0 ${canvasSize} ${canvasSize};" xml:space="preserve"`,
     viewBox: { x: 0, y: 0, w: canvasSize, h: canvasSize },
-    comment: '<!-- Area-Proportional Venn Diagram (computed) -->',
+    comment: 'Area-Proportional Venn Diagram (computed)',
     shapes,
     shapesExtras: [],
     texts: { header, names, values, sums },

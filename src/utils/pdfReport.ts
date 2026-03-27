@@ -18,7 +18,7 @@ export interface PdfReportParams {
   upsetImageWidth: number;
   upsetImageHeight: number;
   networkImageDataUrl: string;
-  proportionalAccuracy?: { pairwise: Map<string, number>; triple?: number; overall: number } | null;
+  proportionalAccuracy?: { single?: Map<string, number>; pairwise: Map<string, number>; triple?: number; overall: number } | null;
   networkImageWidth: number;
   networkImageHeight: number;
   modelName: string;
@@ -492,7 +492,9 @@ export async function generatePdfReport(params: PdfReportParams): Promise<Blob> 
     pdf.setFontSize(8);
     pdf.setFont(FONT, 'normal');
     pdf.setTextColor(80, 80, 80);
-    const accParts = [...pa.pairwise.entries()].map(([k, v]) => `${k}: ${(v * 100).toFixed(1)}%`);
+    const accParts: string[] = [];
+    if (pa.single) accParts.push(...[...pa.single.entries()].map(([k, v]) => `${k}: ${(v * 100).toFixed(1)}%`));
+    accParts.push(...[...pa.pairwise.entries()].map(([k, v]) => `${k}: ${(v * 100).toFixed(1)}%`));
     if (pa.triple !== undefined) accParts.push(`ABC: ${(pa.triple * 100).toFixed(1)}%`);
     accParts.push(`Overall: ${(pa.overall * 100).toFixed(1)}%`);
     pdf.text(`Proportional Accuracy — ${accParts.join('  |  ')}`, PAGE_W / 2, y + 3, { align: 'center' });

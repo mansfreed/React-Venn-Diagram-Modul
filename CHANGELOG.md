@@ -2,6 +2,21 @@
 
 All notable changes to the Venn Diagram Lab project.
 
+## [1.9.5] — 2026-03-27
+
+### Added
+- **Single set accuracy** in Proportional Accuracy display: A, B, C individual accuracy percentages now shown alongside pairwise (AB, AC, BC) and triple (ABC) values in sidebar and PDF report
+- **ABC triple accuracy in sidebar**: The triple intersection accuracy now displays between pairwise and Overall rows with color-coded percentage
+
+### Fixed
+- **PDF Report crash on proportional models**: Fixed "SVG image load failed" error caused by duplicate `viewBox` attribute in `rawSvgAttrs` and double-wrapped XML comment in generated SVG
+- **ABC region label placement**: The full intersection (ABC) count label now placed at the geometric center of the three circle centers instead of grid-sampled edge position
+- **Grid sampling resolution**: Proportional model centroid sampling increased from 60x60 to 120x120 for better label placement accuracy
+
+### Changed
+- **Overall accuracy formula**: Now averages all components (single A/B/C + pairwise AB/AC/BC + triple ABC) instead of only pairwise values
+- **Welcome dialog text**: Removed "CSV" reference, updated button labels
+
 ## [1.9.4] — 2026-03-26
 
 ### Added

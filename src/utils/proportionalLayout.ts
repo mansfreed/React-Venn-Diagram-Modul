@@ -11,6 +11,7 @@ export interface ProportionalCircle {
 }
 
 export interface ProportionalAccuracy {
+  single: Map<string, number>;    // "A" → 1.0 (circle area vs target area)
   pairwise: Map<string, number>;  // "AB" → 0.992
   triple?: number;
   overall: number;
@@ -89,7 +90,7 @@ export function solve2SetLayout(
         { letter: 'A', cx: canvasSize * 0.4, cy: canvasSize / 2, r: 50 },
         { letter: 'B', cx: canvasSize * 0.6, cy: canvasSize / 2, r: 50 },
       ],
-      accuracy: { pairwise: new Map([['AB', 1]]), overall: 1 },
+      accuracy: { single: new Map([['A', 1], ['B', 1]]), pairwise: new Map([['AB', 1]]), overall: 1 },
     };
   }
 
@@ -116,7 +117,7 @@ export function solve2SetLayout(
       { letter: 'A', cx: cx - d / 2, cy, r: rA },
       { letter: 'B', cx: cx + d / 2, cy, r: rB },
     ],
-    accuracy: { pairwise: new Map([['AB', accuracy]]), overall: accuracy },
+    accuracy: { single: new Map([['A', 1], ['B', 1]]), pairwise: new Map([['AB', accuracy]]), overall: (1 + 1 + accuracy) / 3 },
   };
 }
 
@@ -232,13 +233,14 @@ export function solve3SetLayout(
       : actualTripleArea === 0 && targetTripleArea === 0 ? 1 : 0;
   }
 
+  const single = new Map([['A', 1.0], ['B', 1.0], ['C', 1.0]]);
   const pairwise = new Map([['AB', accAB], ['AC', accAC], ['BC', accBC]]);
-  const items = [accAB, accAC, accBC];
+  const items = [1, 1, 1, accAB, accAC, accBC];
   if (tripleAcc !== undefined) items.push(tripleAcc);
   const overall = items.reduce((a, b) => a + b, 0) / items.length;
 
   return {
     circles,
-    accuracy: { pairwise, triple: tripleAcc, overall },
+    accuracy: { single, pairwise, triple: tripleAcc, overall },
   };
 }

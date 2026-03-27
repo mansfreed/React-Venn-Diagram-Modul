@@ -2,7 +2,7 @@
 
 Interactive viewer and editor for Venn diagrams — from 2-set to 9-set, covering all known construction methods. Built with React, TypeScript, and Vite.
 
-**Version:** 1.9.4 | **Models:** 44 SVG diagrams + proportional | **License:** MIT
+**Version:** 1.9.5 | **Models:** 44 SVG diagrams + proportional | **License:** MIT
 
 ## Features
 
