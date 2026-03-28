@@ -1,0 +1,28 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+type: software
+title: "Venn Diagram Lab"
+version: 1.9.6
+date-released: 2026-04-11
+url: "https://www.orthologfindertool.com/venn-lab/"
+repository-code: "https://github.com/ZoliQua/React-Venn-Diagram-Lab"
+license: MIT
+authors:
+  - family-names: Dul
+    given-names: Zoltán
+    orcid: "https://orcid.org/0000-0002-9523-3450"
+  - family-names: Csikász-Nagy
+    given-names: Attila
+    orcid: "https://orcid.org/0000-0002-2919-5601"
+  - family-names: Thomas
+    given-names: "N. Shaun B."
+  - family-names: Si Ammour
+    given-names: Azeddine
+    orcid: "https://orcid.org/0000-0002-5504-4444"
+keywords:
+  - Venn diagram
+  - set visualization
+  - bioinformatics
+  - hypergeometric test
+  - UpSet plot
+  - data analysis
