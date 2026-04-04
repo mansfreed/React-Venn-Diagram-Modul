@@ -2,7 +2,7 @@
 
 Interactive viewer and editor for Venn diagrams — from 2-set to 9-set, covering all known construction methods. Built with React, TypeScript, and Vite.
 
-**Version:** 1.9.5 | **Models:** 44 SVG diagrams + proportional | **License:** MIT
+**Version:** 1.13.0 | **Models:** 44 SVG diagrams + proportional | **License:** MIT
 
 ## Features
 
@@ -62,6 +62,7 @@ Interactive viewer and editor for Venn diagrams — from 2-set to 9-set, coverin
 - Two data formats: **Binary** (0/1 per cell) and **Aggregated** (item names per column)
 - Configurable row/item delimiters, header detection, column selection, row filtering
 - Per-set color picker, shape opacity slider, font controls for names and title
+- **Auto-capped name font size** based on longest column name (16+ chars → 12 px, 20+ → 10 px, 24+ → 9 px, 28+ → 8 px); never increases a smaller user setting
 - Cut View with **Heatmap** color mode (customizable 3-point color scale + legend position)
 - Collapsible sidebar sections (File Info, Model, Column Mapping, View, Export)
 - Right panel toggle: **Properties** (region info, items, unlock) / **Statistics** (Jaccard, Dice, enrichment)
@@ -71,11 +72,16 @@ Interactive viewer and editor for Venn diagrams — from 2-set to 9-set, coverin
 - Auto-calculate on model selection (no manual Calculate button needed)
 - **Find Item** search: global cross-region search with match highlighting and region navigation
 - **In-region filter**: filter items within a selected region with highlighted matches
+- **Copy region items to clipboard** (alongside Export); single-letter regions get separate buttons for Exclusive and All Items incl. intersections
 - UpSet Plot sub-mode available after calculation (max 20 intersections in print export)
+- **Enrichment Plots**: collapsible section with Bar, Lollipop, and Heatmap plots of the pairwise hypergeometric results; metric toggle (−log₁₀(FDR) vs Fold Enrichment); per-plot SVG export
+- **Plot editor**: click any enrichment plot thumbnail to open a dedicated editor in the left sidebar (colours, fonts, background, visibility toggles). Per-plot style state; Back to Diagram returns to the previous view
+- Statistical Methods reference built into the Help dialog (Jaccard, Dice, Overlap Coefficient, hypergeometric enrichment, Fold Enrichment, Benjamini–Hochberg FDR)
 - Export: **SVG / PNG / JPG** image export + **Regions Summary TSV** + **Item Matrix TSV**
-- **PDF Report**: Multi-page A4 report with data overview, pie chart, Venn diagram, UpSet plot, Network diagram with significant edges, full statistical tables (Jaccard, Dice, Enrichment), and methodology explanations
+- **Report PDF**: Multi-page A4 report with data overview, pie chart, Venn diagram, UpSet plot, Network diagram with significant edges, full statistical tables (Jaccard, Dice, Enrichment), three enrichment plots, and methodology explanations
+- **Full Report (zip)**: single download bundling the PDF, TSVs, standalone SVGs, a 3-sheet Excel workbook (`enrichment_statistics_{n}-sets.xlsx`), the three enrichment stat SVGs, and a `README.txt` with provenance + the full *About This Report* text. 0–100% progress bar in the dialog
 - Export individual region items via right panel
-- Sample datasets: binary (streaming platforms) and aggregated (gene sets)
+- Sample datasets: binary (streaming platforms, cancer drivers, MSigDB hallmark collections) and aggregated (gene sets)
 - Supports up to **9 sets** (A through I)
 - TSV exports escape spreadsheet-style formula prefixes in exported text cells while preserving the in-app values
 
@@ -91,6 +97,15 @@ Interactive viewer and editor for Venn diagrams — from 2-set to 9-set, coverin
 - Custom in-app explanatory SVG illustrations plus a retained primary-source image from Venn's 1880 paper
 - References section with clickable local PDF links in the built app
 
+### Guided Tour
+- Fourth welcome-screen card alongside View / Edit / Data
+- **12-step coach-mark walkthrough** of Data mode using the pre-loaded Cancer Drivers sample (COSMIC, OncoKB, IntOGen, Vogelstein) on a 4-set Edwards diagram
+- Covers: Open → File Info → Model → Column Mapping → View cycle (Layer / Cut / UpSet / Network) → Properties with the full ABCD intersection selected → Statistics tab → Enrichment Plots card (auto-cycles Bar → Lollipop → Heatmap, then scrolls to the pairwise stats tables) → Plot editor highlighted on the Heatmap → Report PDF / Full Report (zip)
+- **Replay** button on the two auto-cycle steps (View cycle, Plot editor cycle)
+- Progress dots, Back / Skip / Next + keyboard (←/→/Enter/ESC) navigation; ESC always exits safely to the welcome screen
+- Also launchable from the Help dialog in any mode (*Getting Started → Start the tour*)
+- 9 unobtrusive `data-tour="..."` DOM anchors make tour selectors stable across future UI refactors
+
 ## Security Notes
 
 - `index.html` defines a restrictive Content Security Policy that keeps the current GA consent loader, local assets, and `blob:` / `data:` export paths working.
@@ -104,22 +119,30 @@ Interactive viewer and editor for Venn diagrams — from 2-set to 9-set, coverin
 │   ├── version.ts             Version constant
 │   ├── models.ts              44-model catalog + fetch utilities
 │   ├── components/            UI components
-│   │   ├── Toolbar.tsx        Top bar (mode switcher, zoom, tools)
+│   │   ├── Toolbar.tsx        Top bar (mode switcher, zoom, tools, Report PDF / Full Report (zip))
 │   │   ├── Canvas.tsx         SVG rendering + interaction
 │   │   ├── CutViewCanvas.tsx  Region-based rendering (Cut View)
 │   │   ├── UpsetPlot.tsx      UpSet plot SVG rendering
 │   │   ├── NetworkPlot.tsx    Force-directed network graph
-│   │   ├── PdfReportDialog.tsx PDF report generation dialog
-│   │   ├── PasteImportDialog.tsx Paste gene lists import
-│   │   ├── UrlImportDialog.tsx  URL data import with validation
-│   │   ├── SampleDataDialog.tsx Sample dataset selector
-│   │   ├── ViewerSidebar.tsx  Model selector + region list
-│   │   ├── ViewerInfoPanel.tsx Region info display
-│   │   ├── SummaryDialog.tsx  Gallery dialog + SOURCES table
-│   │   ├── AboutVennDialog.tsx Educational welcome-screen dialog
-│   │   ├── Sidebar.tsx        Editor layer tree
-│   │   ├── PropertyPanel.tsx  Editor property editor
-│   │   └── ...                Other editor components
+│   │   ├── EnrichmentPlots.tsx       Enrichment plots card (right panel thumbnails)
+│   │   ├── EnrichmentPlotEditor.tsx  Left-sidebar plot style editor
+│   │   ├── EnrichmentPlotCanvas.tsx  Central canvas in plot-edit mode
+│   │   ├── PdfReportDialog.tsx       PDF report generation dialog
+│   │   ├── ZipReportDialog.tsx       Full zip bundle dialog (PDF + TSVs + SVGs + XLSX)
+│   │   ├── TourOverlay.tsx           Guided tour overlay (coach marks + progress)
+│   │   ├── PasteImportDialog.tsx     Paste gene lists import
+│   │   ├── UrlImportDialog.tsx       URL data import with validation
+│   │   ├── SampleDataDialog.tsx      Sample dataset selector
+│   │   ├── ViewerSidebar.tsx         Model selector + region list
+│   │   ├── ViewerInfoPanel.tsx       Region info display (Properties tab)
+│   │   ├── DataSummaryPanel.tsx      Statistics tab (Overview + Enrichment Plots + pairwise tables)
+│   │   ├── SummaryDialog.tsx         Gallery dialog + SOURCES table
+│   │   ├── AboutVennDialog.tsx       Educational welcome-screen dialog
+│   │   ├── WelcomeDialog.tsx         Welcome screen (View / Edit / Data / Tour cards)
+│   │   ├── HelpDialog.tsx            Mode-specific Help (with Start-tour button)
+│   │   ├── Sidebar.tsx               Editor layer tree
+│   │   ├── PropertyPanel.tsx         Editor property editor
+│   │   └── ...                       Other editor components
 │   ├── hooks/                 React hooks
 │   │   ├── useSvgDocument.ts  Document state + undo/redo
 │   │   ├── useRegionDetection.ts Hit-testing + label-based detection
@@ -132,7 +155,15 @@ Interactive viewer and editor for Venn diagrams — from 2-set to 9-set, coverin
 │   │   ├── csvParser.ts       CSV/TSV parser, binary & aggregated Venn calculation
 │   │   ├── exportData.ts      TSV export (Region Summary + Item Matrix)
 │   │   ├── upsetData.ts       UpSet data conversion + sorting
-│   │   ├── pdfReport.ts       PDF report generation (jsPDF)
+│   │   ├── pdfReport.ts       PDF report generation (jsPDF, lazy-loaded)
+│   │   ├── zipReport.ts       Full zip bundle builder (jszip + exceljs, lazy-loaded)
+│   │   ├── reportArtefacts.ts Shared SVG artefact builder (PDF + zip)
+│   │   ├── aboutReport.ts     ABOUT_REPORT_SECTIONS (shared by PDF last page and zip README)
+│   │   ├── statistics.ts      Pairwise Jaccard / Dice / hypergeometric + BH FDR
+│   │   ├── enrichmentPlotSvg.ts    Bar / Lollipop / Heatmap SVG generators (style-aware)
+│   │   ├── enrichmentPlotStyle.ts  EnrichmentPlotStyle type + DEFAULT_PLOT_STYLE
+│   │   ├── tourSteps.ts       Declarative TOUR_STEPS + TourAction union
+│   │   ├── tourMock.ts        Tour dataset config (Cancer Drivers sample)
 │   │   ├── svgToImage.ts      SVG-to-PNG capture utility
 │   │   ├── upsetSvgBuilder.ts Print-optimized UpSet SVG builder
 │   │   ├── networkData.ts     Network data model + force layout algorithm
@@ -331,12 +362,14 @@ Requires Python 3 with `shapely` installed.
 | Framework | React 19 |
 | Language | TypeScript 5.9 |
 | Build | Vite 8 |
-| Testing | Vitest 4 |
-| Styling | Custom CSS (dark theme) |
+| Testing | Vitest 4 (612 tests) |
+| Styling | Custom CSS (dark + light theme) |
 | SVG | Native DOM API |
+| PDF export | jsPDF (lazy-loaded) |
+| Zip / Excel export | jszip + exceljs (lazy-loaded) |
 | Region computation | Python + Shapely |
 
-No external UI libraries — pure React + custom CSS.
+No external UI libraries — pure React + custom CSS. Heavy export libraries (jsPDF, jszip, exceljs) are lazy-loaded on demand so the main bundle stays lean.
 
 ## Author
 
