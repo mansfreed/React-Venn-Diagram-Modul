@@ -1794,7 +1794,7 @@ export default function App() {
               rotateShapes={rotateShapes}
               resizeShapes={resizeShapes}
               onToggleMoveShapes={() => { setMoveShapes(m => !m); setRotateShapes(false); setResizeShapes(false); }}
-              onToggleRotateShapes={() => { setRotateShapes(r => !r); setMoveShapes(false); setRotateShapes(false); }}
+              onToggleRotateShapes={() => { setRotateShapes(r => !r); setMoveShapes(false); setResizeShapes(false); }}
               onToggleResizeShapes={() => { setResizeShapes(r => !r); setMoveShapes(false); setRotateShapes(false); }}
               textTool={textTool ?? undefined}
               onSetTextTool={setTextTool}

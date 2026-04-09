@@ -15,7 +15,7 @@ export interface AboutReportSection {
 export const ABOUT_REPORT_SECTIONS: AboutReportSection[] = [
   {
     title: 'Venn Diagram Lab',
-    text: 'Venn Diagram Lab is an interactive tool for visualizing set relationships using Venn diagrams. It supports 2 to 9 overlapping sets across 44 diagram models, covering all major construction methods (Venn, Edwards, Anderson, Carroll, Bannier-Bodin, Grunbaum, Mamakani, and SUMO-Venn). Users can import their own datasets in CSV, TSV, GMT, or GMX format, map data columns to diagram sets, and generate intersection counts automatically. The tool calculates both exclusive counts (items belonging to exactly one specific combination of sets) and inclusive counts (all items in a given set, regardless of overlap).',
+    text: 'Venn Diagram Lab is an interactive tool for visualizing set relationships using Venn diagrams. It supports 2 to 9 overlapping sets across 44 diagram models, covering all major construction methods (Venn, Edwards, Anderson, Carroll, Bannier-Bodin, Grunbaum, Mamakani, and SUMO-Venn). Users can import their own datasets in CSV, TSV, GMT, or GMX format, map data columns to diagram sets, and generate intersection counts automatically. The tool calculates both exclusive counts (items belonging to exactly one specific combination of sets) and inclusive counts (items contained in every set of a given combination, regardless of whether they also appear in other sets).',
   },
   {
     title: 'Plots',

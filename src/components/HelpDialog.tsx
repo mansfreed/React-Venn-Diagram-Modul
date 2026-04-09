@@ -118,6 +118,12 @@ const HELP: Record<AppMode, HelpPage> = {
         ],
       },
       {
+        heading: 'Main',
+        items: [
+          { content: 'The toolbar mode dropdown includes a Main option in every mode; it returns to the welcome screen without resetting loaded data or the SVG being edited.' },
+        ],
+      },
+      {
         heading: 'Summary & Credits',
         items: [
           { content: 'Click "List all Venn Diagram Models" on the welcome screen or the ☰ icon in the toolbar to open the full gallery with SVG previews, grouped by set count, with source publication links.' },
@@ -217,6 +223,12 @@ const HELP: Record<AppMode, HelpPage> = {
           },
         ],
       },
+      {
+        heading: 'Main',
+        items: [
+          { content: 'The toolbar mode dropdown includes a Main option in every mode; it returns to the welcome screen without resetting loaded data or the SVG being edited.' },
+        ],
+      },
     ],
   },
   data: {
@@ -231,7 +243,7 @@ const HELP: Record<AppMode, HelpPage> = {
         ],
       },
       {
-        heading: 'Data Import',
+        heading: '1. Data Import',
         subgroups: [
           {
             heading: 'Four Import Methods',
@@ -264,7 +276,7 @@ const HELP: Record<AppMode, HelpPage> = {
         ],
       },
       {
-        heading: 'Model Selection',
+        heading: '2. Model Selection',
         subgroups: [
           {
             heading: 'Model Browser',
@@ -292,18 +304,38 @@ const HELP: Record<AppMode, HelpPage> = {
         ],
       },
       {
-        heading: 'Column Mapping & Calculation',
-        items: [
-          { content: '3. COLUMN MAPPING: map columns to sets A–I with color pickers and dropdowns. Names trimmed to 32 characters.' },
-          { content: 'Shape and bullet opacity slider (synced).' },
-          { content: 'Calculation is automatic: triggers on model selection and column changes. No manual Calculate button needed.' },
-          { content: 'Long set names (>8 characters) automatically reduce the name font size to 14px.' },
-          { content: 'Move Names / Move Numbers: drag text labels to reposition them on the diagram. Use Ctrl+Z to undo moves.' },
-          { content: 'Reset to Defaults: button at the bottom of the View section restores all visual settings (fonts, colors, opacity) to their original values.' },
+        heading: '3. Column Mapping & Calculation',
+        subgroups: [
+          {
+            heading: 'Column Mapping',
+            items: [
+              { content: 'Map columns to sets A–I with color pickers and dropdowns. Names trimmed to 32 characters.' },
+              { content: 'Shape and bullet opacity slider (synced).' },
+            ],
+          },
+          {
+            heading: 'Automatic Calculation',
+            items: [
+              { content: 'Calculation is automatic: triggers on model selection and column changes. No manual Calculate button needed.' },
+            ],
+          },
+          {
+            heading: 'Group Names & Numbers',
+            items: [
+              { content: 'Long column names automatically reduce the Group-names font size: 17-19 chars -> 12 px, 20-23 chars -> 10 px, 24-27 chars -> 9 px, 28+ chars -> 8 px. Never increases a smaller user setting.' },
+              { content: 'Move Names / Move Numbers: drag text labels to reposition them on the diagram. Use Ctrl+Z to undo moves.' },
+            ],
+          },
+          {
+            heading: 'Reset to Defaults',
+            items: [
+              { content: 'Button at the bottom of the View section restores all visual settings (fonts, colors, opacity) to their original values.' },
+            ],
+          },
         ],
       },
       {
-        heading: '4. View Options',
+        heading: '4.1 View Options',
         subgroups: [
           {
             heading: 'Layer / Cut / UpSet / Network',
@@ -346,7 +378,7 @@ const HELP: Record<AppMode, HelpPage> = {
         ],
       },
       {
-        heading: 'Right Panel',
+        heading: '4.2 Right Panel',
         subgroups: [
           {
             heading: 'Find Item (Global Search)',
@@ -361,7 +393,7 @@ const HELP: Record<AppMode, HelpPage> = {
             items: [
               { content: 'Region info: label, sets, expression, value. Exclusive and inclusive item lists.' },
               { content: 'In-region filter: search bar appears when >10 items, filters with highlighted matches.' },
-              { content: 'Save SVG and Unlock buttons. Export Region Items for selected region.' },
+              { content: 'Save SVG and Unlock buttons. Each items list has Export (downloads as .txt) and Copy (clipboard) buttons; single-letter regions get separate button pairs for Exclusive Items and All Items incl. intersections.' },
             ],
           },
           {
@@ -381,23 +413,61 @@ const HELP: Record<AppMode, HelpPage> = {
       },
       {
         heading: '5. Export',
-        items: [
-          { content: 'SVG: exports the currently active view (Layer, Cut, UpSet, or Network diagram).' },
-          { content: 'PNG / JPG: diagram export at 2× retina quality with white background.' },
-          { content: 'Regions Summary (TSV): all 2^n-1 regions with counts, percentages, and item lists.' },
-          { content: 'Item Matrix (TSV): per-item binary membership table with region labels.' },
-          { content: 'Report (PDF): multi-page A4 report with data overview, pie chart, set sizes table, Venn diagram, UpSet plot, Network diagram, statistics tables, and methodology explanations.' },
-          { content: 'All TSV files are BOM-prefixed UTF-8 for Excel compatibility.' },
+        subgroups: [
+          {
+            heading: 'Image / Diagram',
+            items: [
+              { content: 'SVG: exports the currently active view (Layer, Cut, UpSet, or Network diagram).' },
+              { content: 'PNG / JPG: diagram export at 2× retina quality with white background.' },
+            ],
+          },
+          {
+            heading: 'Data (TSV)',
+            items: [
+              { content: 'Regions Summary (TSV): all 2^n-1 regions with counts, percentages, and item lists.' },
+              { content: 'Item Matrix (TSV): per-item binary membership table with region labels.' },
+              { content: 'All TSV files are BOM-prefixed UTF-8 for Excel compatibility.' },
+            ],
+          },
+          {
+            heading: 'Reports',
+            items: [
+              { content: 'Report PDF: multi-page A4 report with data overview, pie chart, set sizes table, Venn diagram, UpSet plot, Network diagram, statistics tables, three enrichment plots, and methodology explanations.' },
+              { content: 'Full Report (zip): single download bundling the PDF, TSVs, standalone SVGs, a 3-sheet Excel workbook, the three enrichment stat SVGs, and a README.txt with provenance and the full About This Report text. Progress bar in the dialog.' },
+            ],
+          },
         ],
       },
       {
         heading: 'Toolbar',
+        subgroups: [
+          {
+            heading: 'File Actions',
+            items: [
+              { content: 'Open: dialog with Load Sample Data, Upload Custom File, Paste Lists, Load from URL.' },
+              { content: 'Save: downloads diagram as SVG with calculated data (active view).' },
+              { content: 'Close: resets all data and returns to empty starting state.' },
+            ],
+          },
+          {
+            heading: 'Reports',
+            items: [
+              { content: 'Report PDF: generates and downloads a multi-page PDF report (requires calculated data).' },
+              { content: 'Full Report (zip): bundles the PDF together with TSVs, standalone SVGs, an XLSX workbook, and a README.' },
+            ],
+          },
+          {
+            heading: 'Display',
+            items: [
+              { content: 'Theme: sun/moon button toggles dark/light mode. Preference is saved.' },
+            ],
+          },
+        ],
+      },
+      {
+        heading: 'Main',
         items: [
-          { content: 'Open: dialog with Load Sample Data, Upload Custom File, Paste Lists, Load from URL.' },
-          { content: 'Save: downloads diagram as SVG with calculated data (active view).' },
-          { content: 'Close: resets all data and returns to empty starting state.' },
-          { content: 'Report: generates and downloads a multi-page PDF report (requires calculated data).' },
-          { content: 'Theme: sun/moon button toggles dark/light mode. Preference is saved.' },
+          { content: 'The toolbar mode dropdown includes a Main option in every mode; it returns to the welcome screen without resetting loaded data or the SVG being edited.' },
         ],
       },
     ],

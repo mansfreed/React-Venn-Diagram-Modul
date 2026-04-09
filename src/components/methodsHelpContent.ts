@@ -40,7 +40,7 @@ export const METHODS_HELP: MethodEntry[] = [
     name: 'Fold Enrichment',
     formula: 'FE = (|A \u2229 B| \u00B7 N) / (|A| \u00B7 |B|)',
     description: 'Ratio of the observed intersection to the size expected under independence given the background N. Values above 1 indicate over-representation and values below 1 indicate under-representation.',
-    range: '0 (no overlap) to N (complete overlap); 1 = expected by chance',
+    range: '0 (no overlap); 1 = expected by chance; no fixed upper bound (depends on set sizes)',
   },
   {
     id: 'bh_fdr',

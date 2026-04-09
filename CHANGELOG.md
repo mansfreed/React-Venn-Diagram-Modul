@@ -2,6 +2,19 @@
 
 All notable changes to the Venn Diagram Lab project.
 
+## [1.13.2] — 2026-04-22
+
+### Fixed
+- **Rotate Shape tool in Edit mode**: the `onToggleRotateShapes` handler incorrectly called `setRotateShapes(false)` as its third action, cancelling the toggle it had just issued. The rotate tool was consequently impossible to activate. Third action now correctly resets `setResizeShapes(false)` for mutual exclusion.
+- **Help dialog — Data mode staleness**: the Column Mapping note referred to the v1.9.x 14 px auto-scaling rule; updated to document the v1.10.1 per-length cap (17-19 → 12 px, 20-23 → 10 px, 24-27 → 9 px, 28+ → 8 px). Export and Toolbar subgroups now document Report PDF and Full Report (zip) separately. Properties subgroup now documents the Copy button and the per-list button pairs on single-letter regions.
+- **Help dialog — Main option** documented in all three modes.
+- **Fold Enrichment range** in Statistical Methods corrected: there is no fixed upper bound; the range shown previously implied an incorrect theoretical maximum of N.
+- **About This Report — inclusive count definition** rephrased: "all items in a given set" was accurate only for single-letter region labels. Replaced by "items contained in every set of a given combination, regardless of whether they also appear in other sets."
+
+### Changed
+- `README.md` version bumped to 1.13.2.
+- `CITATION.cff` version bumped from 1.9.6 (2026-04-11) to 1.13.2 (2026-04-22).
+
 ## [1.13.1] — 2026-04-05
 
 ### Added
