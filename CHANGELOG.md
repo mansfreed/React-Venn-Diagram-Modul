@@ -2,7 +2,7 @@
 
 All notable changes to the Venn Diagram Lab project.
 
-## [1.13.5] — 2026-04-23
+## [1.13.5] — 2026-04-12
 
 ### Fixed
 - **PDF report overview wording**: replaced the ambiguous `Total items in the file` label with separate rows for source data rows, background universe, and items assigned to Venn regions. This prevents aggregated GMT/GMX/paste imports from reporting the longest padded column as an item count.
@@ -11,7 +11,7 @@ All notable changes to the Venn Diagram Lab project.
 - **Release metadata consistency**: aligned `src/version.ts`, `package.json`, `package-lock.json`, `README.md`, and `CITATION.cff` to version `1.13.5`.
 
 ### Changed
-- **Generated model provenance**: repository-generated models without external publications are now explicitly labelled as `Repository-generated (no external source)` in the gallery and README model table.
+- **Generated model provenance**: repository-generated models without external publications are now explicitly labelled as `Generated (no external source)` in the gallery and README model table. Edwards 8-set and 9-set models are labelled `Generated based on Edwards, 1989` to reflect their construction-from-principle origin.
 - **Publication reproducibility documentation**: added a README section with the reviewed environment, verification commands, and an archival GitHub release / DOI workflow.
 
 ## [1.13.4] — 2026-04-10
@@ -30,7 +30,7 @@ All notable changes to the Venn Diagram Lab project.
 - **Tour description** — "90-second" phrasing replaced with "short" in the welcome card, the Help dialog call-to-action, and the first tour step. The actual tour length (~2 minutes for readers who finish every step) is no longer implied to be shorter than it is.
 - `README.md` and `CITATION.cff` bumped to 1.13.4.
 
-## [1.13.2] — 2026-04-22
+## [1.13.2] — 2026-04-09
 
 ### Fixed
 - **Rotate Shape tool in Edit mode**: the `onToggleRotateShapes` handler incorrectly called `setRotateShapes(false)` as its third action, cancelling the toggle it had just issued. The rotate tool was consequently impossible to activate. Third action now correctly resets `setResizeShapes(false)` for mutual exclusion.

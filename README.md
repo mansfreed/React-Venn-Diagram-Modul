@@ -2,7 +2,16 @@
 
 Interactive viewer and editor for Venn diagrams — from 2-set to 9-set, covering all known construction methods. Built with React, TypeScript, and Vite.
 
-**Version:** 1.13.5 | **Models:** 44 SVG diagrams + proportional | **License:** MIT
+[![Version](https://img.shields.io/badge/version-1.13.5-blue.svg)](CHANGELOG.md)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.19510813.svg)](https://doi.org/10.5281/zenodo.19510813)
+[![Models](https://img.shields.io/badge/models-44_SVG_+_proportional-green.svg)](#diagram-models)
+[![React](https://img.shields.io/badge/React-19-61dafb.svg?logo=react&logoColor=white)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178c6.svg?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Vite](https://img.shields.io/badge/Vite-8-646cff.svg?logo=vite&logoColor=white)](https://vite.dev/)
+[![Tests](https://img.shields.io/badge/tests-623_passing-brightgreen.svg)](#development)
+
+<img width="1728" height="962" alt="Main page" src="https://github.com/user-attachments/assets/e6153bf1-b399-41e3-b6c8-b464626e32a7" />
 
 ## Features
 
@@ -22,11 +31,15 @@ Interactive viewer and editor for Venn diagrams — from 2-set to 9-set, coverin
 - Right panel shows: region label, involved sets with colors, intersection expression
 - Left panel shows: collapsible region list grouped by depth (Single, 2-way, 3-way, ...)
 
+<img width="1728" height="964" alt="Venn Diagram Lab - Layer View" src="https://github.com/user-attachments/assets/13a2e2be-c50e-4bd9-b146-873d1c006b22" />
+
 ### View Mode — Cut View
 - Renders **pre-computed intersection region paths** (generated via Shapely Boolean operations)
 - Each of the 2^n - 1 regions is a separate SVG `<path>` element with direct mouse events
 - Hover highlights the region, dims others, shows white outline and centered label
 - Two color modes: **Depth** (dark-to-warm by intersection depth) and **Heatmap** (RdBu diverging scale by count values)
+
+<img width="1726" height="963" alt="Venn Diagram Lab - Cut View" src="https://github.com/user-attachments/assets/9defe099-cbe4-4e8d-9f65-fe265d359ace" />
 
 ### View Mode — UpSet Plot
 - **UpSet plot** visualization showing intersection sizes as vertical bars above a dot matrix
@@ -37,6 +50,8 @@ Interactive viewer and editor for Venn diagrams — from 2-set to 9-set, coverin
 - Color modes: **Depth** (blue-to-red by member count), **Heatmap**, or **Custom** single color
 - Adjustable minimum count threshold filter
 
+<img width="1726" height="963" alt="Venn Diagram Lab - UpSet Plot" src="https://github.com/user-attachments/assets/ff37ff12-cca9-4560-82e9-fffb407f51d5" />
+
 ### View Mode — Network Diagram
 - **Force-directed network graph** of pairwise set relationships
 - Nodes sized by set cardinality, colored by standard Venn colors, draggable
@@ -45,6 +60,8 @@ Interactive viewer and editor for Venn diagrams — from 2-set to 9-set, coverin
 - Click node → select set region; click edge → select intersection region in right panel
 - Filters: significant edges only, minimum weight threshold
 - Dark/White background toggle
+
+<img width="1728" height="964" alt="Venn Diagram Lab - Network mode" src="https://github.com/user-attachments/assets/00e4ca7d-5b82-410b-87c7-b7aef415e055" />
 
 ### Edit Mode
 - Open/Save SVG files
@@ -223,7 +240,7 @@ All 44 models use a standardized SVG structure. See [VENN-DIAGRAM-SVG-SPECIFICAT
 | `venn-2-set.svg` | Classic two-circle | Venn, 1880 |
 | `venn-2a-set-edwards.svg` | Edwards construction | Edwards, 1996 |
 | `venn-2e-set-carroll-triangle.svg` | Carroll triangle | Carroll, 2000 |
-| `venn-2e-set-rectangle.svg` | Rectangle layout | Repository-generated (no external source) |
+| `venn-2e-set-rectangle.svg` | Rectangle layout | Generated (no external source) |
 
 ### 3-Set (7 regions)
 | File | Type | Source |
@@ -231,8 +248,8 @@ All 44 models use a standardized SVG structure. See [VENN-DIAGRAM-SVG-SPECIFICAT
 | `venn-3-set.svg` | Classic three-circle | Venn, 1880 |
 | `venn-3a-set-edwards.svg` | Edwards construction | Edwards, 1996 |
 | `venn-3b-set-anderson.svg` | Anderson construction | Anderson, 1988 |
-| `venn-3e-set-rectangles.svg` | Rectangles | Repository-generated (no external source) |
-| `venn-3e-set-rectangle-curved.svg` | Curved rectangles | Repository-generated (no external source) |
+| `venn-3e-set-rectangles.svg` | Rectangles | Generated (no external source) |
+| `venn-3e-set-rectangle-curved.svg` | Curved rectangles | Generated (no external source) |
 | `venn-3e-set-carroll-triangle.svg` | Carroll triangle | Carroll, 2000 |
 
 ### 4-Set (15 regions)
@@ -241,8 +258,8 @@ All 44 models use a standardized SVG structure. See [VENN-DIAGRAM-SVG-SPECIFICAT
 | `venn-4-set.svg` | Classic overlapping ellipses | Venn, 1880 |
 | `venn-4a-set-edwards.svg` | Edwards construction | Edwards, 1996 |
 | `venn-4b-set-anderson.svg` | Anderson construction | Anderson, 1988 |
-| `venn-4e-set-euler.svg` | Euler diagram variant | Repository-generated (no external source) |
-| `venn-4e-set-rectangle.svg` | Rectangle layout | Repository-generated (no external source) |
+| `venn-4e-set-euler.svg` | Euler diagram variant | Generated (no external source) |
+| `venn-4e-set-rectangle.svg` | Rectangle layout | Generated (no external source) |
 | `venn-4e-set-carroll-triangle.svg` | Carroll triangle | Carroll, 2000 |
 | `venn-4f-set.svg` | Original Venn construction | Venn, 1880 |
 
@@ -253,9 +270,9 @@ All 44 models use a standardized SVG structure. See [VENN-DIAGRAM-SVG-SPECIFICAT
 | `venn-5a-set-edwards.svg` | Edwards construction | Edwards, 1996 |
 | `venn-5b-set-anderson.svg` | Anderson construction | Anderson, 1988 |
 | `venn-5d-set-bannier.svg` | Bannier-Bodin variant | Bannier & Bodin, 2017 |
-| `venn-5e-set.svg` | Organic/freeform | Repository-generated (no external source) |
+| `venn-5e-set.svg` | Organic/freeform | Generated (no external source) |
 | `venn-5e-set-carroll-triangle.svg` | Carroll triangle | Carroll, 2000 |
-| `venn-5e-set-euler.svg` | Euler diagram (21/31 regions) | Repository-generated (no external source) |
+| `venn-5e-set-euler.svg` | Euler diagram (21/31 regions) | Generated (no external source) |
 | `venn-5f-set.svg` | Original Venn construction | Venn, 1880 |
 
 ### 6-Set (63 regions)
@@ -285,13 +302,13 @@ All 44 models use a standardized SVG structure. See [VENN-DIAGRAM-SVG-SPECIFICAT
 | File | Type | Source |
 |------|------|--------|
 | `venn-8-set.svg` | SUMO-Venn construction | SUMO-Venn |
-| `venn-8a-set-edwards.svg` | Edwards construction | Edwards, 1996 |
+| `venn-8a-set-edwards.svg` | Edwards construction | Generated based on Edwards, 1989 |
 | `venn-8d-set-bannier.svg` | Bannier-Bodin variant | Bannier & Bodin, 2017 |
 
 ### 9-Set (511 regions)
 | File | Type | Source |
 |------|------|--------|
-| `venn-9a-set-edwards.svg` | Edwards construction | Edwards, 1996 |
+| `venn-9a-set-edwards.svg` | Edwards construction | Generated based on Edwards, 1989 |
 
 ## Publications
 
@@ -390,7 +407,7 @@ Requires Python 3 with `shapely` installed.
 | Framework | React 19 |
 | Language | TypeScript 5.9 |
 | Build | Vite 8 |
-| Testing | Vitest 4 (622 tests) |
+| Testing | Vitest 4 (623 tests) |
 | Styling | Custom CSS (dark + light theme) |
 | SVG | Native DOM API |
 | PDF export | jsPDF (lazy-loaded) |
