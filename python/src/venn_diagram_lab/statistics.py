@@ -12,8 +12,8 @@ from dataclasses import dataclass
 from itertools import combinations
 
 import numpy as np
-import pandas as pd  # type: ignore[import-untyped]
-from scipy.stats import false_discovery_control, hypergeom  # type: ignore[import-untyped]
+import pandas as pd
+from scipy.stats import false_discovery_control, hypergeom
 
 
 def jaccard(size_a: int, size_b: int, intersection: int) -> float:
@@ -96,12 +96,20 @@ _THRESHOLD_HIGHLY_SIGNIFICANT = 0.001
 
 @dataclass(frozen=True)
 class StatisticsResult:
-    """Container for the five pairwise metric tables produced by compute_pairwise.
+    """Container for the five pairwise metric tables produced by :func:`compute_pairwise`.
 
-    All four similarity/enrichment matrices are square (N x N) DataFrames indexed
-    and columned by set names -- easy to feed into a heatmap renderer. The
+    All four similarity/enrichment matrices are square (NxN) DataFrames indexed
+    and columned by set names — easy to feed into a heatmap renderer. The
     hypergeometric table is long-form (one row per pair) because each row carries
     multiple columns (intersection, expected, p_value, p_adjusted, flags).
+
+    Attributes:
+        jaccard: NxN Jaccard similarity matrix.
+        dice: NxN Sørensen-Dice coefficient matrix.
+        overlap_coefficient: NxN overlap coefficient (Szymkiewicz-Simpson).
+        fold_enrichment: NxN fold-enrichment matrix.
+        hypergeometric: Long-form table with set_a, set_b, intersection, expected,
+            p_value, p_adjusted (Benjamini-Hochberg), significant, highly_significant.
     """
 
     jaccard: pd.DataFrame

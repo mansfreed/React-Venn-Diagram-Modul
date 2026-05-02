@@ -14,7 +14,7 @@ authors = [
 ]
 keywords = ["venn", "diagram", "set", "intersection", "bioinformatics", "visualization", "upset"]
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 4 - Beta",
     "Intended Audience :: Science/Research",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
@@ -57,9 +57,10 @@ vdl = "venn_diagram_lab.cli:app"
 
 [project.urls]
 Homepage = "https://github.com/ZoliQua/Venn-Diagram-Lab"
+Documentation = "https://github.com/ZoliQua/Venn-Diagram-Lab/tree/main/python#readme"
 Repository = "https://github.com/ZoliQua/Venn-Diagram-Lab"
+Changelog = "https://github.com/ZoliQua/Venn-Diagram-Lab/blob/main/python/CHANGELOG.md"
 Issues = "https://github.com/ZoliQua/Venn-Diagram-Lab/issues"
-Changelog = "https://github.com/ZoliQua/Venn-Diagram-Lab/blob/main/CHANGELOG.md"
 
 [tool.hatch.version]
 path = "src/venn_diagram_lab/version.py"

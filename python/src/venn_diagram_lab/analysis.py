@@ -10,23 +10,43 @@ import json
 from dataclasses import dataclass
 from functools import cached_property, lru_cache
 from importlib import resources
+from os import PathLike
 from pathlib import Path
 from typing import TYPE_CHECKING
 
 from venn_diagram_lab.errors import IncompatibleModelError, UnknownModelError
 from venn_diagram_lab.io import Dataset
 
+# Anything Path() accepts. Avoids importing every variant at every call site.
+PathInput = str | PathLike[str]
+
 if TYPE_CHECKING:
+    from collections.abc import Mapping
+
+    from venn_diagram_lab.render.image import MplImage
+    from venn_diagram_lab.render.network import EdgeMetric
+    from venn_diagram_lab.render.svg import SvgImage
+    from venn_diagram_lab.render.upset import ColorMode, SortBy
     from venn_diagram_lab.statistics import StatisticsResult
 
 
 @dataclass(frozen=True)
 class RegionData:
-    """One region in a Venn diagram (bitmask = 1 means "set 0 only", 0b11 = "sets 0 AND 1").
+    """One region in a Venn diagram.
 
-    Both exclusive and inclusive item lists are kept because the web tool
-    surfaces both: "exclusive" = items in exactly these sets, "inclusive" =
-    items in at least these sets.
+    Bitmask convention: bit ``i`` set means "in set with index ``i``"
+    (e.g. ``0b001`` = "set 0 only", ``0b011`` = "sets 0 AND 1"). Both
+    exclusive and inclusive item lists are kept because the web tool
+    surfaces both: "exclusive" = items in exactly these sets,
+    "inclusive" = items in at least these sets.
+
+    Attributes:
+        bitmask: Region bitmask (1..2^n - 1).
+        label: Human-readable label like ``"AB"`` or ``"ABC"``.
+        set_indices: Indices of the sets in this region.
+        set_names: Names of the sets in this region.
+        exclusive_items: Items present in exactly these sets.
+        inclusive_items: Items present in at least these sets.
     """
 
     bitmask: int
@@ -47,13 +67,12 @@ class RegionData:
 
 @dataclass(frozen=True)
 class ModelInfo:
-    """Metadata about a bundled model.
+    """Metadata about a bundled SVG model.
 
-    Attributes
-    ----------
-    name : canonical identifier (filename stem, e.g. "venn-5a-set-edwards").
-    set_count : number of sets the model supports (2 through 9).
-    display_name : human-readable label from the JSON `name` field.
+    Attributes:
+        name: Canonical identifier (filename stem, e.g. ``"venn-5a-set-edwards"``).
+        set_count: Number of sets the model supports (2 through 9).
+        display_name: Human-readable label from the JSON ``name`` field.
     """
 
     name: str
@@ -90,7 +109,12 @@ def _model_index() -> dict[str, ModelInfo]:
 
 
 def list_models() -> list[ModelInfo]:
-    """Return all bundled models, sorted by (set_count, name)."""
+    """Return all bundled models, sorted by ``(set_count, name)``.
+
+    Returns:
+        List of :class:`ModelInfo` objects covering the 44 bundled SVG
+        templates plus the ``proportional`` synthetic generator.
+    """
     return sorted(_model_index().values(), key=lambda m: (m.set_count, m.name))
 
 
@@ -182,8 +206,40 @@ _PROPORTIONAL_APPROXIMATE_SET_COUNT = 3
 
 @dataclass(frozen=True)
 class RegionResult:
-    """Result of analyze(). Bundles the input dataset, chosen model, region map,
-    and a lazy StatisticsResult.
+    """Result of :func:`analyze`. Bundles dataset, chosen model, region map,
+    set sizes, and a lazy :attr:`statistics` property.
+
+    Attributes:
+        dataset: The input Dataset.
+        model: Resolved model name (e.g. ``"venn-4-set"`` or ``"proportional"``).
+        regions: Dict ``bitmask -> RegionData`` for every non-empty region.
+            Bitmask convention: bit ``i`` set means "in set with index ``i``"
+            in ``dataset.set_names``.
+        set_sizes: Map ``set_name -> inclusive size`` (number of items in
+            that set, regardless of membership in others).
+        is_approximate: ``True`` only for the proportional 3-set layout
+            where exact areas can't be achieved with circles.
+
+    Methods:
+        statistics: Lazy :class:`StatisticsResult` (Jaccard, Dice, OC, FE, hypergeometric).
+        effective_universe(): Hypergeometric N (``dataset.universe_size`` when set,
+            else |union of items in regions|). Used by ``statistics`` and the TSV writers.
+        render_venn(**opts): Render the Venn diagram as an SvgImage.
+        render_upset(**opts): Render the UpSet plot as an MplImage.
+        render_network(**opts): Render the set-relationship network as an MplImage.
+        to_pdf_report(path, **opts): Write a multi-page PDF report.
+        to_region_summary_tsv(path): Write the webapp's Region Summary TSV.
+        to_matrix_tsv(path): Write the webapp's Item Matrix TSV.
+        to_statistics_tsv(path): Write the webapp's pairwise Statistics TSV.
+
+    Example:
+        >>> from venn_diagram_lab import load_sample, analyze
+        >>> result = analyze(load_sample("dataset_real_cancer_drivers_4"))
+        >>> result.set_sizes
+        {'Vogelstein': 138, 'COSMIC_CGC': 581, 'OncoKB': 1231, 'IntOGen': 633}
+        >>> result.effective_universe()
+        20000
+        >>> result.to_pdf_report("report.pdf")
     """
 
     dataset: Dataset
@@ -211,7 +267,7 @@ class RegionResult:
 
         n = len(self.dataset.set_names)
         if n < _MIN_SETS_FOR_STATISTICS:
-            import pandas as pd  # type: ignore[import-untyped]  # noqa: PLC0415
+            import pandas as pd  # noqa: PLC0415
 
             from venn_diagram_lab.statistics import StatisticsResult  # noqa: PLC0415
 
@@ -246,48 +302,101 @@ class RegionResult:
             universe_size=universe,
         )
 
-    def render_venn(self, **opts):  # type: ignore[no-untyped-def]
+    def render_venn(
+        self,
+        *,
+        model: str | None = None,
+        set_names: Mapping[str, str] | None = None,
+        colors: Mapping[str, str] | None = None,
+        title: str | None = None,
+        show_names: bool = True,
+        show_counts: bool = True,
+    ) -> SvgImage:
         """Render this result's diagram and return an SvgImage.
 
-        Accepts the same kwargs as render.svg.render_venn_svg (model, set_names,
-        colors, title, show_names, show_counts).
+        See :func:`venn_diagram_lab.render.svg.render_venn_svg` for parameter docs.
         """
         # Local import -- keeps render.svg an opt-in import (cycle-free).
         from venn_diagram_lab.render.svg import render_venn_svg  # noqa: PLC0415
 
-        return render_venn_svg(self, **opts)
+        return render_venn_svg(
+            self,
+            model=model,
+            set_names=set_names,
+            colors=colors,
+            title=title,
+            show_names=show_names,
+            show_counts=show_counts,
+        )
 
-    def render_upset(self, **opts):  # type: ignore[no-untyped-def]
+    def render_upset(
+        self,
+        *,
+        max_columns: int = 20,
+        sort_by: SortBy = "size",
+        threshold: int | None = None,
+        color_mode: ColorMode = "depth",
+        colors: Mapping[str, str] | None = None,
+    ) -> MplImage:
         """Render this result as an UpSet plot and return an MplImage.
 
-        Accepts the same kwargs as render.upset.render_upset (max_columns,
-        sort_by, threshold, color_mode, colors).
+        See :func:`venn_diagram_lab.render.upset.render_upset` for parameter docs.
         """
         from venn_diagram_lab.render.upset import render_upset  # noqa: PLC0415
 
-        return render_upset(self, **opts)
+        return render_upset(
+            self,
+            max_columns=max_columns,
+            sort_by=sort_by,
+            threshold=threshold,
+            color_mode=color_mode,
+            colors=colors,
+        )
 
-    def render_network(self, **opts):  # type: ignore[no-untyped-def]
+    def render_network(
+        self,
+        *,
+        edge_metric: EdgeMetric = "intersection",
+        seed: int = 42,
+        significance_threshold: float = 0.05,
+        node_color_map: Mapping[str, str] | None = None,
+    ) -> MplImage:
         """Render this result as a force-directed network and return an MplImage.
 
-        Accepts the same kwargs as render.network.render_network (edge_metric,
-        seed, significance_threshold, node_color_map).
+        See :func:`venn_diagram_lab.render.network.render_network` for parameter docs.
         """
         from venn_diagram_lab.render.network import render_network  # noqa: PLC0415
 
-        return render_network(self, **opts)
+        return render_network(
+            self,
+            edge_metric=edge_metric,
+            seed=seed,
+            significance_threshold=significance_threshold,
+            node_color_map=node_color_map,
+        )
 
-    def to_pdf_report(self, path, **opts) -> None:  # type: ignore[no-untyped-def]
+    def to_pdf_report(
+        self,
+        path: PathInput,
+        *,
+        title: str | None = None,
+        include_network: bool = True,
+        include_about: bool = True,
+    ) -> None:
         """Write a multi-page PDF report to disk.
 
-        Accepts the same kwargs as render.pdf.render_pdf_report (title,
-        include_network, include_about).
+        See :func:`venn_diagram_lab.render.pdf.render_pdf_report` for parameter docs.
         """
         from venn_diagram_lab.render.pdf import render_pdf_report  # noqa: PLC0415
 
-        render_pdf_report(self, path, **opts)
+        render_pdf_report(
+            self, Path(path),
+            title=title,
+            include_network=include_network,
+            include_about=include_about,
+        )
 
-    def to_region_summary_tsv(self, path) -> None:  # type: ignore[no-untyped-def]
+    def to_region_summary_tsv(self, path: PathInput) -> None:
         """Write the Region Summary TSV (matches the webapp's Export Region Summary).
 
         Columns: Region, Sets, Depth, Exclusive_Count, Inclusive_Count, Exclusive_Pct, Items
@@ -345,7 +454,7 @@ class RegionResult:
         ])
         Path(path).write_text("\n".join([header, *(r[2] for r in rows)]), encoding="utf-8")
 
-    def to_statistics_tsv(self, path) -> None:  # type: ignore[no-untyped-def]
+    def to_statistics_tsv(self, path: PathInput) -> None:
         """Write the pairwise Statistics TSV (matches DataSummaryPanel.handleExportStats).
 
         Columns: Set_A, Set_B, Name_A, Name_B, Size_A, Size_B, Intersection, Union,
@@ -436,7 +545,7 @@ class RegionResult:
         rows.sort(key=lambda r: r[0])
         Path(path).write_text("\n".join([_stats_header, *(r[1] for r in rows)]), encoding="utf-8")
 
-    def to_matrix_tsv(self, path) -> None:  # type: ignore[no-untyped-def]
+    def to_matrix_tsv(self, path: PathInput) -> None:
         """Write the Item Matrix TSV (matches the webapp's Export Matrix).
 
         Columns: Item, <SetName_A>, <SetName_B>, ..., Region
@@ -520,13 +629,29 @@ def _resolve_model(model: str, set_count: int) -> str:
 
 
 def analyze(dataset: Dataset, model: str = "auto") -> RegionResult:
-    """Compute Venn-diagram regions for a dataset using the named model.
+    """Compute the Venn region map for a Dataset and bind it to a model.
 
-    Parameters
-    ----------
-    dataset : input Dataset (loaded via io.load_*).
-    model : model identifier (filename stem, e.g. "venn-3-set"); pass "auto" to
-        let the package pick the first model matching the dataset's set count.
+    Args:
+        dataset: Loaded Dataset (from one of the ``load_*`` functions or
+            ``Dataset.from_dict``).
+        model: Model identifier. ``"auto"`` picks the canonical model for
+            the dataset's set count (alphabetical first match), e.g.
+            4 sets -> ``venn-4-set``. ``"proportional"`` requests an
+            area-proportional layout (only supports 2-3 sets). Otherwise
+            pass an explicit name from ``list_models()``.
+
+    Returns:
+        RegionResult with the per-region item membership, set sizes, and a
+        lazy :attr:`RegionResult.statistics` property.
+
+    Example:
+        >>> from venn_diagram_lab import load_sample, analyze
+        >>> ds = load_sample("dataset_real_cancer_drivers_4")
+        >>> result = analyze(ds, model="auto")
+        >>> result.model
+        'venn-4-set'
+        >>> result.regions[0b0001].label  # only-set-A region
+        'A'
     """
     n = len(dataset.set_names)
     canonical = _resolve_model(model, n)

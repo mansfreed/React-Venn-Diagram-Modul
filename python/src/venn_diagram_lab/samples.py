@@ -13,11 +13,23 @@ from __future__ import annotations
 
 from importlib import resources
 from pathlib import Path
+from typing import Literal, TypedDict
 
 from venn_diagram_lab.io import Dataset, load_csv, load_tsv
 
+
+class _SampleMeta(TypedDict):
+    """Per-sample metadata. The companion ``SAMPLES`` table in
+    ``scripts/generate-parity-fixtures.mts`` mirrors this — keep them in sync.
+    """
+
+    ext: Literal["csv", "tsv"]
+    mode: Literal["binary", "aggregated"]
+    prefix_cols: int
+
+
 # Per-sample metadata (format, mode). Keep this in sync with the files in data/.
-_SAMPLE_REGISTRY: dict[str, dict] = {
+_SAMPLE_REGISTRY: dict[str, _SampleMeta] = {
     "dataset_mock_gene_sets": {"ext": "csv", "mode": "aggregated", "prefix_cols": 1},
     "dataset_mock_streaming_platforms": {"ext": "csv", "mode": "binary", "prefix_cols": 2},
     "dataset_real_cancer_drivers_4": {"ext": "tsv", "mode": "binary", "prefix_cols": 1},
@@ -33,12 +45,44 @@ def _samples_dir() -> Path:
 
 
 def list_samples() -> list[str]:
-    """Return the bundled sample identifiers (sorted)."""
+    """Return the names of bundled sample datasets, sorted.
+
+    Returns:
+        List of sample identifiers (e.g. ``"dataset_real_cancer_drivers_4"``)
+        suitable for passing to :func:`load_sample`.
+
+    Example:
+        >>> from venn_diagram_lab import list_samples
+        >>> list_samples()
+        ['dataset_mock_gene_sets', 'dataset_mock_streaming_platforms', ...]
+    """
     return sorted(_SAMPLE_REGISTRY.keys())
 
 
 def load_sample(name: str) -> Dataset:
-    """Load a bundled sample by name. Use list_samples() to see available IDs."""
+    """Load a bundled sample dataset by name.
+
+    Sample datasets ship inside the wheel under ``_data/samples/`` and cover
+    biological (cancer drivers, MSigDB pathways) and mock (streaming
+    platforms, gene sets) use cases. Use :func:`list_samples` to enumerate.
+
+    Args:
+        name: Sample identifier from :func:`list_samples`.
+
+    Returns:
+        Dataset with the appropriate format and mode applied automatically.
+
+    Raises:
+        KeyError: If ``name`` is not in the bundled registry.
+        FileNotFoundError: If the data file is missing (run
+            ``python python/scripts/sync_data.py`` to populate ``_data``).
+
+    Example:
+        >>> from venn_diagram_lab import load_sample, analyze
+        >>> ds = load_sample("dataset_real_cancer_drivers_4")
+        >>> analyze(ds).model
+        'venn-4-set'
+    """
     if name not in _SAMPLE_REGISTRY:
         raise KeyError(
             f"{name!r} is not a known sample. Available: {list_samples()}"

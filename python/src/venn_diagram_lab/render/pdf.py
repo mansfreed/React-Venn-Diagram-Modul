@@ -14,6 +14,9 @@ from matplotlib.figure import Figure
 from venn_diagram_lab.version import __version__
 
 if TYPE_CHECKING:
+    import pandas as pd
+    from matplotlib.axes import Axes
+
     from venn_diagram_lab.analysis import RegionResult
 
 # US Letter landscape, in inches.
@@ -105,8 +108,13 @@ def _figure_to_png_bytes(fig: Figure, *, dpi: int = _DPI) -> bytes:
 
 def _svg_string_to_png_bytes(svg: str, *, dpi: int = _DPI) -> bytes:
     """Convert an SVG string to PNG bytes via cairosvg."""
-    import cairosvg  # type: ignore[import-untyped]  # noqa: PLC0415
-    return cairosvg.svg2png(bytestring=svg.encode("utf-8"), dpi=dpi)
+    import cairosvg  # noqa: PLC0415
+
+    # cairosvg.svg2png(write_to=None) returns bytes; the stub-less return type is Any.
+    raw = cairosvg.svg2png(bytestring=svg.encode("utf-8"), dpi=dpi)
+    if not isinstance(raw, bytes):  # safety: cairosvg may return None on misuse
+        raise TypeError(f"cairosvg.svg2png returned {type(raw).__name__}, expected bytes")
+    return raw
 
 
 def _build_venn_upset_page(result: RegionResult) -> Figure:
@@ -168,7 +176,9 @@ def _format_p(p: float) -> str:
     return f"{p:.3f}"
 
 
-def _build_table_axes(fig: Figure, rect: tuple[float, float, float, float], title: str):
+def _build_table_axes(
+    fig: Figure, rect: tuple[float, float, float, float], title: str,
+) -> Axes:
     """Add a transparent axes at `rect` with the given title rendered above it."""
     ax = fig.add_axes(rect)
     ax.set_axis_off()
@@ -178,7 +188,7 @@ def _build_table_axes(fig: Figure, rect: tuple[float, float, float, float], titl
 
 def _draw_square_metric_table(
     fig: Figure,
-    df,
+    df: pd.DataFrame,
     *,
     rect: tuple[float, float, float, float],
     title: str,
@@ -206,7 +216,7 @@ def _draw_square_metric_table(
 
 def _draw_hypergeometric_table(
     fig: Figure,
-    df,
+    df: pd.DataFrame,
     *,
     rect: tuple[float, float, float, float],
     title: str,
@@ -434,6 +444,13 @@ def render_pdf_report(
 ) -> None:
     """Compose all pages into a multi-page PDF report.
 
+    The report structure (US Letter landscape):
+    - Page 1: dataset overview — pie chart + set-size table.
+    - Page 2: Venn diagram (left) + UpSet plot (right).
+    - Page 3+: pairwise statistics (Jaccard, Dice, Hypergeometric+BH-FDR).
+    - Optional: set-relationship network page.
+    - Optional: methodology / About page.
+
     Parameters
     ----------
     result : RegionResult from analyze()
@@ -441,6 +458,12 @@ def render_pdf_report(
     title : optional override for the page-1 title
     include_network : if False, skip the network page
     include_about : if False, skip the methodology page
+
+    Returns
+    -------
+    None
+        Writes the PDF to *path*. All intermediate matplotlib figures are
+        closed automatically after saving.
     """
     from matplotlib.backends.backend_pdf import PdfPages  # noqa: PLC0415  # lazy, ~400 KB
 

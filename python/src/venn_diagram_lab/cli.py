@@ -12,9 +12,9 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
-from venn_diagram_lab.analysis import analyze, list_models
+from venn_diagram_lab.analysis import RegionResult, analyze, list_models
 from venn_diagram_lab.errors import VennDiagramError
-from venn_diagram_lab.io import load_csv, load_gmt, load_gmx, load_tsv
+from venn_diagram_lab.io import Dataset, load_csv, load_gmt, load_gmx, load_tsv
 from venn_diagram_lab.samples import list_samples, load_sample
 from venn_diagram_lab.version import __version__
 
@@ -67,7 +67,12 @@ def cmd_list_samples() -> None:
     _console.print(table)
 
 
-def _load_dataset(input_path: Path, *, format_override: FormatLiteral | None, mode: ModeLiteral):
+def _load_dataset(
+    input_path: Path,
+    *,
+    format_override: FormatLiteral | None,
+    mode: ModeLiteral,
+) -> Dataset:
     """Load a dataset based on the file extension or explicit format override."""
     fmt: FormatLiteral
     if format_override is not None:
@@ -98,7 +103,7 @@ def _load_dataset(input_path: Path, *, format_override: FormatLiteral | None, mo
     return load_gmx(input_path)
 
 
-def _print_summary(result) -> None:
+def _print_summary(result: RegionResult) -> None:
     """Print a quick text summary of the analysis result."""
     table = Table(title="Analysis Summary")
     table.add_column("Set", style="cyan")
@@ -131,7 +136,14 @@ def _resolve_output_paths(
     )
 
 
-def _write_outputs(result, venn, upset, network, pdf, statistics_tsv) -> None:
+def _write_outputs(
+    result: RegionResult,
+    venn: Path | None,
+    upset: Path | None,
+    network: Path | None,
+    pdf: Path | None,
+    statistics_tsv: Path | None,
+) -> None:
     """Write all requested output files; raises Exit(1) on VennDiagramError."""
     try:
         if venn is not None:
@@ -161,7 +173,7 @@ def _write_outputs(result, venn, upset, network, pdf, statistics_tsv) -> None:
 
 
 def _emit_outputs(
-    result,
+    result: RegionResult,
     *,
     output_dir: Path | None,
     venn: Path | None,

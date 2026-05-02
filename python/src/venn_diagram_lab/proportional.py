@@ -397,8 +397,21 @@ def generate_proportional_svg(
 ) -> str:
     """Generate an area-proportional SVG for a 2- or 3-set RegionResult.
 
-    Returns the raw SVG string (matching the format of the 44 templated models:
-    ShapeA-I, NameA-I, Count_*, CountSUM_*, Bullet*).
+    Circle sizes and inter-circle distances are solved analytically (2-set)
+    or by triangulation (3-set) so that overlap areas match the requested
+    intersection counts. The returned SVG matches the 44-model format:
+    ShapeA-I, NameA-I, Count_*, CountSUM_*, Bullet* elements are all present.
+
+    Args:
+        result: RegionResult from :func:`venn_diagram_lab.analyze`.
+        width: Canvas width in pixels (default 600).
+        height: Canvas height in pixels (default 600).
+
+    Returns:
+        Raw SVG string ready to wrap in :class:`SvgImage` or write to disk.
+
+    Raises:
+        IncompatibleModelError: If the dataset has more than 3 sets.
     """
     n = len(result.dataset.set_names)
     if n < _MIN_SETS or n > _MAX_SETS:

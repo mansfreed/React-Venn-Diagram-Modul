@@ -10,12 +10,12 @@ from itertools import combinations
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from lxml import etree  # type: ignore[import-untyped]
+from lxml import etree
 
 from venn_diagram_lab.errors import UnknownModelError
 
 if TYPE_CHECKING:
-    from lxml.etree import _Element  # type: ignore[import-untyped]
+    from lxml.etree import _Element
 
     from venn_diagram_lab.analysis import RegionResult
 
@@ -26,7 +26,15 @@ _LETTERS = "ABCDEFGHI"
 
 @dataclass(frozen=True)
 class SvgImage:
-    """Wrapper around a serialised SVG string with save/Jupyter helpers."""
+    """SVG image emitted by :func:`render_venn_svg`.
+
+    Attributes:
+        svg: The SVG document as a string.
+
+    Methods:
+        save(path): Write to disk; format auto-detected from extension
+            (``.svg``, ``.png``, ``.pdf``). PNG/PDF go through cairosvg.
+    """
 
     svg: str
 
@@ -51,17 +59,17 @@ class SvgImage:
             p.write_text(self.svg, encoding="utf-8")
             return
         if ext in {".png", ".pdf"}:
-            import cairosvg  # type: ignore[import-untyped]  # noqa: PLC0415  # lazy import — cairosvg is a heavy native dep
+            import cairosvg  # noqa: PLC0415  # lazy import — cairosvg is a heavy native dep
             # cairosvg's `dpi` only affects SVGs with physical units (mm/cm); for
             # pixel-unit SVGs we must use `scale` to control output resolution.
             # We map dpi to scale relative to the standard screen baseline of 96 dpi.
             scale = dpi / 96.0
             if ext == ".png":
-                cairosvg.svg2png(  # type: ignore[import-untyped]
+                cairosvg.svg2png(
                     bytestring=self.svg.encode("utf-8"), write_to=str(p), scale=scale
                 )
             else:
-                cairosvg.svg2pdf(  # type: ignore[import-untyped]
+                cairosvg.svg2pdf(
                     bytestring=self.svg.encode("utf-8"), write_to=str(p), scale=scale
                 )
             return
@@ -149,7 +157,7 @@ def _count_ids_for_set_count(n: int) -> list[str]:
     return [f"Count_{label}" for label in labels]
 
 
-def _apply_counts(root: _Element, result, *, show: bool) -> None:
+def _apply_counts(root: _Element, result: RegionResult, *, show: bool) -> None:
     """Write (or blank) all Count_* and CountSUM_* text elements.
 
     Extracted to keep render_venn_svg's branch count within ruff PLR0912 limit.

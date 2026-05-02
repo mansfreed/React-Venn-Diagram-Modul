@@ -2,7 +2,7 @@ name: Python notebook tests
 
 on:
   push:
-    branches: [main]
+    branches: [main, "feature/**"]
     paths:
       - "python/**"
       - ".github/workflows/python-notebook-test.yml"

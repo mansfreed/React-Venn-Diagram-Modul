@@ -23,23 +23,24 @@ MAX_SETS = 9
 class Dataset:
     """In-memory representation of a Venn-diagram input.
 
-    Attributes
-    ----------
-    set_names : ordered set identifiers (preserving the order they appeared in the source).
-    items : map set name -> set of item identifiers (e.g. gene symbols, titles).
-    source_path : original file path if the dataset was loaded from disk; None for
-        in-memory or sample-derived datasets.
-    format : source format (csv / tsv / gmt / gmx). For in-memory datasets the
-        default is "csv" -- callers that care about format may override.
-    item_order : first-seen insertion order across all sets, mirroring JS Set/Map semantics.
-        Empty tuple is the legacy default for callers that don't populate it (e.g. older
-        tests). All bundled loaders (load_csv/tsv/gmt/gmx) and from_dict populate it.
-    universe_size : explicit hypergeometric universe size from the source file, if known.
-        Binary CSV/TSV loaders populate this with the row count (matches the React
-        webapp's ``csv.rows.length`` semantics for binary mode -- includes all-zero rows
-        which represent items in the file's universe but in none of the selected sets).
-        Aggregated / GMT / GMX / from_dict leave it as None, signalling
-        "compute as |union of items|" downstream.
+    Attributes:
+        set_names: Ordered set identifiers (preserving the order they
+            appeared in the source).
+        items: Map ``set_name -> set of item identifiers`` (gene symbols,
+            titles, etc.).
+        source_path: Original file path if loaded from disk; ``None`` for
+            in-memory or sample-derived datasets.
+        format: Source format (``csv``/``tsv``/``gmt``/``gmx``). For in-memory
+            datasets the default is ``csv``; callers that care about format
+            may override.
+        item_order: First-seen insertion order across all sets, mirroring JS
+            ``Set``/``Map`` semantics. Empty tuple when not populated (legacy
+            callers). All bundled loaders and ``from_dict`` populate it.
+        universe_size: Hypergeometric universe N from the source file, when
+            known. Binary CSV/TSV loaders set this to the row count
+            (matching the React webapp's ``csv.rows.length``); other formats
+            leave it ``None``, signalling "compute as |union of items|"
+            downstream.
     """
 
     set_names: list[str]
@@ -287,21 +288,36 @@ def load_csv(
     delimiter: str | None = None,
     prefix_cols: int = 1,
 ) -> Dataset:
-    """Load a CSV (or any delimited) file into a Dataset.
+    """Load a delimited file into a :class:`Dataset`.
 
-    Parameters
-    ----------
-    path:
-        Path to the file.
-    binary:
-        True for one-row-per-item with 0/1 columns; False for the
-        aggregated layout (each column is a set, cells contain item names).
-    delimiter:
-        Explicit delimiter override; if None, auto-detect.
-    prefix_cols:
-        Number of leading columns treated as item metadata in binary mode
-        (default 1). Column 0 is the item id; extra prefix columns are skipped.
-        Ignored in aggregated mode.
+    Auto-detects the delimiter from ``,``, ``;``, ``<tab>``, and ``<space>``
+    if not given. Supports two layouts:
+
+    * **Binary mode** (default): one row per item, with 0/1 columns marking
+      membership in each set. The first column (or first ``prefix_cols``
+      columns) is item metadata; remaining columns are sets.
+    * **Aggregated mode** (``binary=False``): each column is a set, and cells
+      contain item identifiers. Empty cells are ignored.
+
+    Args:
+        path: Path to the file (str or Path).
+        binary: Treat the file as binary 0/1 (default) or aggregated.
+        delimiter: Explicit delimiter. ``None`` auto-detects.
+        prefix_cols: Number of leading metadata columns in binary mode
+            (default 1, meaning column 0 is the item id). Ignored when
+            ``binary=False``.
+
+    Returns:
+        Dataset with ``set_names``, ``items``, and ``item_order`` populated.
+        ``universe_size`` is the row count for binary files; ``None`` otherwise.
+
+    Example:
+        >>> from venn_diagram_lab import load_csv
+        >>> ds = load_csv("genes.csv", binary=True)
+        >>> ds.set_names
+        ['SetA', 'SetB', 'SetC']
+        >>> len(ds.items["SetA"])
+        42
     """
     text, src = _read_text(path)
     delim = delimiter if delimiter is not None else _detect_delimiter(text)
@@ -313,15 +329,44 @@ def load_csv(
 
 
 def load_tsv(path: Path | str, *, binary: bool = True, prefix_cols: int = 1) -> Dataset:
-    """Load a tab-separated file (forces delimiter='\\t', format='tsv')."""
+    """Load a tab-separated file into a :class:`Dataset`.
+
+    Equivalent to ``load_csv(path, binary=binary, delimiter='\\t',
+    prefix_cols=prefix_cols)``.
+
+    Args:
+        path: Path to the .tsv file.
+        binary: Binary 0/1 mode (default) or aggregated (cells = item names).
+        prefix_cols: Leading metadata columns in binary mode (default 1).
+
+    Returns:
+        Dataset.
+
+    Example:
+        >>> from venn_diagram_lab import load_tsv
+        >>> ds = load_tsv("cancer_drivers.tsv", binary=True)
+        >>> ds.universe_size  # source row count
+        20000
+    """
     return load_csv(path, binary=binary, delimiter="\t", prefix_cols=prefix_cols)
 
 
 def load_gmt(path: Path | str) -> Dataset:
-    """Load a GMT (Gene Matrix Transposed) file.
+    """Load a GMT (Gene Matrix Transposed) file into a :class:`Dataset`.
 
-    GMT layout: one row per set, tab-separated:
-        set_name<TAB>description<TAB>item1<TAB>item2<TAB>...
+    Each line is one set: ``set_name<TAB>description<TAB>item1<TAB>item2<TAB>...``.
+
+    Args:
+        path: Path to the .gmt file.
+
+    Returns:
+        Dataset.
+
+    Example:
+        >>> from venn_diagram_lab import load_gmt
+        >>> ds = load_gmt("hallmark.gmt")
+        >>> ds.set_names[:3]
+        ['HALLMARK_HYPOXIA', 'HALLMARK_APOPTOSIS', 'HALLMARK_INFLAMMATORY_RESPONSE']
     """
     text, src = _read_text(path)
     lines = [
@@ -375,12 +420,21 @@ def load_gmt(path: Path | str) -> Dataset:
 
 
 def load_gmx(path: Path | str) -> Dataset:
-    """Load a GMX (Gene Matrix) file.
+    """Load a GMX file (transposed GMT) into a :class:`Dataset`.
 
-    GMX layout (tab-separated, column-oriented):
-        Row 1: set names
-        Row 2: descriptions (ignored for analysis)
-        Row 3+: items, one per row, columns are sets; empty cells allowed.
+    Row 0 = set names, row 1 = descriptions, rows 2+ = items column-aligned.
+
+    Args:
+        path: Path to the .gmx file.
+
+    Returns:
+        Dataset.
+
+    Example:
+        >>> from venn_diagram_lab import load_gmx
+        >>> ds = load_gmx("pathways.gmx")
+        >>> sum(len(items) for items in ds.items.values())
+        1234
     """
     text, src = _read_text(path)
     lines = [

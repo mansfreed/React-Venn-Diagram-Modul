@@ -133,6 +133,13 @@ def render_upset(
     colors : Mapping[str, str] | None
         Label-to-hex mapping used when color_mode="custom".
         Labels not present fall back to "#cccccc".
+
+    Returns
+    -------
+    MplImage
+        Three-panel figure: intersection-size bars (top), dot matrix (middle),
+        per-set total-size bars (left). Wrap in a notebook cell or call
+        ``.save(path)`` to export.
     """
     data = upset_data_from_region_result(result)
     sorter = sort_by_size if sort_by == "size" else sort_by_degree

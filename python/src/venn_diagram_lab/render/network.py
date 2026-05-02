@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Literal
 
 import matplotlib.pyplot as plt
-import networkx as nx  # type: ignore[import-untyped]
+import networkx as nx
 
 from venn_diagram_lab.render.image import MplImage
 
@@ -143,7 +143,24 @@ def render_network(
 ) -> MplImage:
     """Render the set-overlap network as a matplotlib figure.
 
-    Layout: networkx spring_layout (Fruchterman-Reingold) seeded for determinism.
+    Nodes represent sets (sized by inclusive cardinality); edges represent
+    pairwise overlaps (thickness proportional to the chosen metric; blue for
+    FDR-significant edges, grey otherwise). Layout uses networkx
+    Fruchterman-Reingold spring_layout seeded for determinism.
+
+    Args:
+        result: RegionResult from :func:`venn_diagram_lab.analyze`.
+        edge_metric: Edge weight source — ``"intersection"``, ``"jaccard"``,
+            ``"fold_enrichment"``, or ``"overlap_coefficient"``.
+        seed: Random seed for the spring layout (default 42).
+        significance_threshold: FDR p_adjusted threshold for edge color
+            (default 0.05; edges below are drawn in blue).
+        node_color_map: Optional per-letter (A-I) hex color override for
+            nodes. Unspecified letters default to yellow (``"#FFF200"``).
+
+    Returns:
+        MplImage wrapping a square matplotlib figure. Call ``.save(path)``
+        to export as PNG, PDF, or SVG.
     """
     data = build_network_data(result, metric=edge_metric)
 
