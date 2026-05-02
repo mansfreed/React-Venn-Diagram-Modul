@@ -28,6 +28,7 @@ from venn_diagram_lab.io import (
     load_gmx,
     load_tsv,
 )
+from venn_diagram_lab.render.svg import SvgImage, render_venn_svg
 from venn_diagram_lab.samples import list_samples, load_sample
 from venn_diagram_lab.statistics import StatisticsResult
 from venn_diagram_lab.version import __version__
@@ -40,6 +41,7 @@ __all__ = [
     "RegionData",
     "RegionResult",
     "StatisticsResult",
+    "SvgImage",
     "UnknownModelError",
     "VennDiagramError",
     "__version__",
@@ -51,4 +53,5 @@ __all__ = [
     "load_gmx",
     "load_sample",
     "load_tsv",
+    "render_venn_svg",
 ]

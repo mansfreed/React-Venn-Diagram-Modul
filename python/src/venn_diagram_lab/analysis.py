@@ -234,6 +234,17 @@ class RegionResult:
             universe_size=universe,
         )
 
+    def render_venn(self, **opts):  # type: ignore[no-untyped-def]
+        """Render this result's diagram and return an SvgImage.
+
+        Accepts the same kwargs as render.svg.render_venn_svg (model, set_names,
+        colors, title, show_names, show_counts).
+        """
+        # Local import -- keeps render.svg an opt-in import (cycle-free).
+        from venn_diagram_lab.render.svg import render_venn_svg  # noqa: PLC0415
+
+        return render_venn_svg(self, **opts)
+
 
 # ---------------------------------------------------------------------------
 # Model resolution + public entry point

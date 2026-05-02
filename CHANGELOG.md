@@ -11,6 +11,7 @@ All notable changes to the Venn Diagram Lab project.
 ### Python (alpha — not on PyPI)
 - 2026-05-01 (0.1.0): Phase 0 -- package skeleton (pyproject.toml, version.py, sync_data.py, smoke tests, CI workflow). No functional code.
 - 2026-05-01 (0.2.0): Phase 1 -- Core. New modules: io (load_csv/tsv/gmt/gmx + Dataset), statistics (jaccard, dice, overlap_coefficient, hypergeometric, BH-FDR, fold_enrichment, StatisticsResult, compute_pairwise), analysis (analyze, RegionResult, RegionData, list_models, ModelInfo), samples (load_sample, list_samples). Public API exposed via venn_diagram_lab.__init__. ~100 unit + integration tests, ported from the web tool's csvParser/statistics test suites for numerical parity.
+- 2026-05-02 (0.3.0): Phase 2 -- Render-1. New module `render/svg.py` with `SvgImage` dataclass + `render_venn_svg(result, **opts)` that templates the 44 bundled model SVGs (Count_*, CountSUM_*, NameA-I, Title, Bullet*/Shape* colors). `SvgImage.save(path)` auto-detects `.svg` / `.png` / `.pdf` (cairosvg). New `RegionResult.render_venn(**opts)` delegate. ~45 tests including all-44-models smoke + render-then-reparse round-trip.
 
 ## [1.13.5] — 2026-04-12
 

@@ -42,3 +42,10 @@ def test_dunder_all_lists_public_symbols() -> None:
         "__version__",
     }
     assert expected.issubset(set(vdl.__all__))
+
+
+def test_render_symbols_exposed_at_top_level() -> None:
+    assert vdl.SvgImage
+    assert callable(vdl.render_venn_svg)
+    assert "SvgImage" in vdl.__all__
+    assert "render_venn_svg" in vdl.__all__
