@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import io
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -12,6 +13,9 @@ import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
 
 from venn_diagram_lab.version import __version__
+
+# Minimum set count for pairwise statistics (need at least 2 sets to form a pair).
+_MIN_SETS_FOR_STATS = 2
 
 if TYPE_CHECKING:
     import pandas as pd
@@ -44,56 +48,199 @@ _UPSET_WIDTH = 0.46
 _UPSET_HEIGHT = 0.9
 
 
+_LETTERS = "ABCDEFGHI"
+_NAME_FULL_MAX = 30   # truncate to 30 chars + "*" footnote
+_NAME_SHORT_MAX = 10  # short form: first 10 chars + " (X)"
+
+
+def _format_timestamp() -> str:
+    """Format current UTC time as '3 May 2026 10:23:53' (no zero-padded day)."""
+    now = datetime.now(timezone.utc)
+    day = now.strftime("%d").lstrip("0")
+    return f"{day} {now.strftime('%B %Y %H:%M:%S')} UTC"
+
+
+def _short_name(name: str, letter: str) -> str:
+    """Mirror web tool's trimmedNames: first 10 chars + ' (X)'."""
+    short = name[:_NAME_SHORT_MAX] if len(name) > _NAME_SHORT_MAX else name
+    return f"{short} ({letter})"
+
+
+def _overview_metadata_rows(result: RegionResult) -> list[tuple[str, str]]:
+    """Return the 11-field Data Overview rows in the web tool's order.
+
+    Mirrors src/utils/pdfReport.ts overviewRows. For aggregated/from_dict
+    datasets without a `universe_size`, falls back to |union of items|.
+    """
+    n = len(result.dataset.set_names)
+    letters = _LETTERS[:n]
+    full_label = "".join(letters)
+    full_mask = (1 << n) - 1
+    core_region = result.regions.get(full_mask)
+    core_count = core_region.exclusive_count if core_region else 0
+
+    largest_label = ""
+    largest_count = 0
+    empty_regions = 0
+    filled_regions = 0
+    for mask in range(1, 1 << n):
+        label = "".join(letters[i] for i in range(n) if mask & (1 << i))
+        region = result.regions.get(mask)
+        count = region.exclusive_count if region else 0
+        if count > largest_count:
+            largest_count = count
+            largest_label = label
+        if count == 0:
+            empty_regions += 1
+        else:
+            filled_regions += 1
+    total_regions = (1 << n) - 1
+
+    universe = result.effective_universe()
+    items_assigned = sum(r.exclusive_count for r in result.regions.values())
+
+    source_path = result.dataset.source_path
+    source_file = source_path.rsplit("/", 1)[-1] if source_path else "(in-memory)"
+
+    # Source data rows = csv.rows.length on web side. For binary CSV/TSV we
+    # have it as universe_size; for aggregated/GMT/GMX/from_dict we expose
+    # |unique items| from item_order as a close approximation.
+    if result.dataset.universe_size is not None:
+        source_data_rows = result.dataset.universe_size
+    else:
+        source_data_rows = len(result.dataset.item_order)
+
+    return [
+        ("Date", _format_timestamp()),
+        ("Source file", source_file),
+        ("Source data rows", str(source_data_rows)),
+        ("Background universe", str(universe)),
+        ("Items assigned to Venn regions", str(items_assigned)),
+        ("Number of sets", str(n)),
+        ("Total regions", str(total_regions)),
+        (f"Core intersection ({full_label})", str(core_count)),
+        ("Largest exclusive region", f"{largest_label} ({largest_count})"),
+        ("Filled regions", f"{filled_regions} / {total_regions}"),
+        ("Empty regions", f"{empty_regions} / {total_regions}"),
+    ]
+
+
+def _set_sizes_rows(result: RegionResult) -> tuple[list[list[str]], list[str]]:
+    """Return (table_rows, truncated_full_names) for the 7-column Set Sizes table.
+
+    Columns: Set, Name, Name (short), Size, Exclusive, Inclusive, %.
+    "Inclusive" here means items in this set AND in at least one other (= size - exclusive),
+    matching the web tool's terminology in the same table.
+    """
+    n = len(result.dataset.set_names)
+    letters = _LETTERS[:n]
+    inclusive_total = sum(result.set_sizes[name] for name in result.dataset.set_names)
+
+    rows: list[list[str]] = []
+    truncated: list[str] = []
+    for i, name in enumerate(result.dataset.set_names):
+        letter = letters[i]
+        size = result.set_sizes[name]
+        only_mask = 1 << i
+        only_region = result.regions.get(only_mask)
+        excl = only_region.exclusive_count if only_region else 0
+        incl = size - excl
+        pct = f"{(size / inclusive_total * 100):.1f}%" if inclusive_total > 0 else "0%"
+
+        if len(name) > _NAME_FULL_MAX:
+            full_display = name[:_NAME_FULL_MAX] + "*"
+            truncated.append(f"{letter}: {name}")
+        else:
+            full_display = name
+
+        rows.append([
+            letter, full_display, _short_name(name, letter),
+            str(size), str(excl), str(incl), pct,
+        ])
+    return rows, truncated
+
+
 def _build_overview_page(result: RegionResult, *, title: str | None = None) -> Figure:
-    """Page 1: dataset metadata + Set Sizes pie chart + per-set table."""
+    """Page 1: Data Overview block + Set Sizes pie + 7-column table.
+
+    Layout mirrors src/utils/pdfReport.ts page 1 (top to bottom):
+      Title -> Subtitle -> Data Overview (label/value list)
+      -> Set Sizes section heading -> pie chart -> table -> footnote.
+    """
     fig = plt.figure(figsize=(_PAGE_WIDTH, _PAGE_HEIGHT))
-    fig.suptitle(title or "Venn Diagram Lab Report", fontsize=16, fontweight="bold")
 
     n = len(result.dataset.set_names)
-    sizes = [result.set_sizes[name] for name in result.dataset.set_names]
+    set_names = list(result.dataset.set_names)
+    letters = _LETTERS[:n]
+    sizes = [result.set_sizes[name] for name in set_names]
     colors = list(_DEFAULT_COLORS[:n])
 
-    # Pie chart on left.
-    ax_pie = fig.add_axes((0.05, 0.15, 0.45, 0.7))
-    ax_pie.pie(
-        sizes,
-        labels=list(result.dataset.set_names),
-        colors=colors,
-        autopct="%1.0f%%",
-        startangle=90,
-    )
-    ax_pie.set_title("Set sizes")
+    # ── Title (centered) ──
+    fig.text(0.5, 0.95, title or "Data Report", ha="center",
+             fontsize=20, fontweight="bold", color=(0.08, 0.08, 0.24))
+    # Subtitle: model display
+    fig.text(0.5, 0.91, f"Model: {result.model}",
+             ha="center", fontsize=10, color="#666666")
 
-    # Metadata on top right.
-    ax_meta = fig.add_axes((0.55, 0.55, 0.4, 0.3))
-    ax_meta.set_axis_off()
-    universe = result.effective_universe()
-    n_regions = len(result.regions)
-    metadata_lines = [
-        f"Model: {result.model}",
-        f"Sets: {n}",
-        f"Items in universe: {universe}",
-        f"Non-empty regions: {n_regions}",
-        f"Approximate fit: {result.is_approximate}",
-    ]
-    ax_meta.text(0.0, 1.0, "Overview", fontsize=14, fontweight="bold", va="top")
-    for i, line in enumerate(metadata_lines, start=1):
-        ax_meta.text(0.0, 1.0 - i * 0.18, line, fontsize=11, va="top")
+    # ── Data Overview (left half) ──
+    ax_overview = fig.add_axes((0.05, 0.40, 0.40, 0.50))
+    ax_overview.set_axis_off()
+    ax_overview.text(0.0, 1.0, "Data Overview",
+                     fontsize=13, fontweight="bold", color=(0.08, 0.08, 0.24),
+                     transform=ax_overview.transAxes)
+    # Underline (visual rule)
+    ax_overview.plot([0.0, 1.0], [0.965, 0.965], transform=ax_overview.transAxes,
+                     color="#cccccc", linewidth=0.5)
+    rows = _overview_metadata_rows(result)
+    line_pitch = 0.072  # 11 rows x 0.072 ~ 0.79 of axes height
+    for i, (label, value) in enumerate(rows):
+        y = 0.92 - i * line_pitch
+        ax_overview.text(0.0, y, f"{label}:", fontsize=9, color="#404040",
+                         transform=ax_overview.transAxes)
+        ax_overview.text(0.50, y, value, fontsize=9, fontweight="bold", color="#202020",
+                         transform=ax_overview.transAxes)
 
-    # Table of set sizes on bottom right.
-    ax_table = fig.add_axes((0.55, 0.15, 0.4, 0.35))
+    # ── Set Sizes pie chart (right half, top) ──
+    ax_pie = fig.add_axes((0.55, 0.40, 0.40, 0.45))
+    pie_labels = [_short_name(name, letters[i]) for i, name in enumerate(set_names)]
+    ax_pie.pie(sizes, labels=pie_labels, colors=colors,
+               autopct="%1.1f%%", startangle=90,
+               textprops={"fontsize": 8})
+    ax_pie.set_title("Set sizes", fontsize=11, fontweight="bold")
+
+    # ── Set Sizes table (bottom span) ──
+    table_rows, truncated = _set_sizes_rows(result)
+    ax_table = fig.add_axes((0.05, 0.08, 0.90, 0.28))
     ax_table.set_axis_off()
-    table_data = [["Set", "Items"]] + [
-        [name, str(result.set_sizes[name])]
-        for name in result.dataset.set_names
-    ]
-    table = ax_table.table(cellText=table_data, loc="center", cellLoc="left")
+    ax_table.text(0.0, 1.05, "Set Sizes",
+                  fontsize=13, fontweight="bold", color=(0.08, 0.08, 0.24),
+                  transform=ax_table.transAxes)
+    ax_table.plot([0.0, 1.0], [1.04, 1.04], transform=ax_table.transAxes,
+                  color="#cccccc", linewidth=0.5)
+    headers = ["Set", "Name", "Name (short)", "Size", "Exclusive", "Inclusive", "%"]
+    table = ax_table.table(
+        cellText=table_rows, colLabels=headers,
+        loc="upper left", cellLoc="left",
+        colWidths=[0.05, 0.30, 0.20, 0.10, 0.10, 0.10, 0.10],
+    )
     table.auto_set_font_size(False)
-    table.set_fontsize(10)
-    for col_idx in range(len(table_data[0])):
-        cell = table[0, col_idx]
-        cell.set_text_props(fontweight="bold")
-        cell.set_facecolor("#dddddd")
+    table.set_fontsize(9)
+    table.scale(1.0, 1.4)
+    # Style header row: bold + grey background
+    for col_idx in range(len(headers)):
+        header_cell = table[0, col_idx]
+        header_cell.set_text_props(fontweight="bold")
+        header_cell.set_facecolor("#dddddd")
+    # Right-align numeric columns (Size, Exclusive, Inclusive, %)
+    for row_idx in range(1, len(table_rows) + 1):
+        for col_idx in (3, 4, 5, 6):
+            table[row_idx, col_idx].set_text_props(ha="right")
+
+    # ── Truncated names footnote ──
+    if truncated:
+        footnote = "* Names truncated for display. Full names: " + ", ".join(truncated) + "."
+        fig.text(0.05, 0.05, footnote, fontsize=6, style="italic", color="#888888",
+                 wrap=True)
 
     return fig
 
@@ -379,35 +526,238 @@ def _build_about_page() -> Figure:
     return fig
 
 
-def _build_statistics_pages(result: RegionResult) -> list[Figure]:
-    """Return one or three Figure objects carrying the pairwise statistics tables.
+# Long-form pair-table column widths (sum to 1.0).
+_PAIR_W_LABEL = 0.32
+_PAIR_W_NUM = 0.10
 
-    For 2-6 sets: one combined page with Jaccard (top-left), Dice (top-right),
-    and Hypergeometric+FDR (bottom) tables.
-    For 7-9 sets: three separate pages, one per table, to avoid crowding.
+# Highlight colors mirroring the web tool's table backgrounds.
+_JAC_HIGH = "#e8f5e9"   # jaccard >= JAC_HIGH_THRESHOLD (green)
+_JAC_LOW = "#fce4ec"    # jaccard <= JAC_LOW_THRESHOLD (pink)
+_ENR_VERY = "#e8f5e9"   # fdr < HIGHLY_SIG_THRESHOLD (green)
+_ENR_SOME = "#fff8e1"   # fdr < SIG_THRESHOLD (light yellow)
+_BG_DEFAULT = "#ffffff"
+
+# Jaccard highlight thresholds (match web tool).
+_JAC_HIGH_THRESHOLD = 0.7
+_JAC_LOW_THRESHOLD = 0.1
+
+# Three-tier significance thresholds (match web tool's sigLabel).
+_SIG_VERY_THRESHOLD = 0.001
+_SIG_MID_THRESHOLD = 0.01
+
+# One-page-vs-split heuristic: max fraction of page height for stacked tables.
+_ONE_PAGE_FILL_LIMIT = 0.80
+_PER_ROW_HEIGHT = 0.024
+
+
+def _sig_label(fdr: float) -> str:
+    """Three-tier significance label matching the web tool."""
+    if fdr < _SIG_VERY_THRESHOLD:
+        return "***"
+    if fdr < _SIG_MID_THRESHOLD:
+        return "**"
+    if fdr < _SIG_THRESHOLD:
+        return "*"
+    return "ns"
+
+
+def _draw_pair_table(
+    fig: Figure,
+    rect: tuple[float, float, float, float],
+    title: str,
+    headers: list[str],
+    cell_text: list[list[str]],
+    col_widths: list[float],
+    *,
+    aligns: list[str] | None = None,
+    row_bg_colors: list[str | None] | None = None,
+    fontsize: int = 8,
+) -> None:
+    """Draw one long-form pair table inside `rect`.
+
+    Mirrors the web tool's drawTable helper used by Pairwise Jaccard / Dice /
+    Enrichment sections — single header row + body rows, optional per-row
+    background highlight (e.g. green for high Jaccard, yellow for FDR < 0.05).
     """
+    ax = fig.add_axes(rect)
+    ax.set_axis_off()
+    ax.text(0.0, 1.05, title,
+            fontsize=11, fontweight="bold", color=(0.08, 0.08, 0.24),
+            transform=ax.transAxes)
+    ax.plot([0.0, 1.0], [1.04, 1.04], transform=ax.transAxes,
+            color="#cccccc", linewidth=0.5)
+
+    cell_colours = None
+    if row_bg_colors is not None:
+        cell_colours = [
+            [bg if bg is not None else _BG_DEFAULT] * len(headers)
+            for bg in row_bg_colors
+        ]
+
+    table = ax.table(
+        cellText=cell_text,
+        colLabels=headers,
+        cellColours=cell_colours,
+        loc="upper left",
+        cellLoc="left",
+        colWidths=col_widths,
+    )
+    table.auto_set_font_size(False)
+    table.set_fontsize(fontsize)
+    table.scale(1.0, 1.3)
+
+    # Header styling.
+    for col_idx in range(len(headers)):
+        header_cell = table[0, col_idx]
+        header_cell.set_text_props(fontweight="bold")
+        header_cell.set_facecolor("#dddddd")
+
+    # Per-column alignment.
+    if aligns is not None:
+        for row_idx in range(1, len(cell_text) + 1):
+            for col_idx, align in enumerate(aligns):
+                table[row_idx, col_idx].set_text_props(ha=align)
+
+
+def _pair_label(set_a: str, set_b: str, set_names: list[str], letters: str) -> str:
+    """Format 'NameA (A) - NameB (B)' for a hypergeometric row."""
+    a_letter = letters[set_names.index(set_a)]
+    b_letter = letters[set_names.index(set_b)]
+    return f"{_short_name(set_a, a_letter)} - {_short_name(set_b, b_letter)}"
+
+
+@dataclass(frozen=True)
+class _PairRow:
+    """One pair-row of derived stats — keeps mypy happy across the 3 section builders."""
+    pair: str
+    intersection: int
+    union: int
+    jaccard: float
+    overlap: float
+    dice: float
+    expected: float
+    fold_enrichment: float
+    p_value: float
+    fdr: float
+
+
+def _pair_rows(result: RegionResult) -> list[_PairRow]:
+    """Build the per-pair derived rows from the hypergeometric long-form table."""
+    set_names = list(result.dataset.set_names)
+    n = len(set_names)
+    letters = _LETTERS[:n]
     stats = result.statistics
+    out: list[_PairRow] = []
+    for _, row in stats.hypergeometric.iterrows():
+        a_name = str(row["set_a"])
+        b_name = str(row["set_b"])
+        size_a = result.set_sizes[a_name]
+        size_b = result.set_sizes[b_name]
+        inter = int(row["intersection"])
+        out.append(_PairRow(
+            pair=_pair_label(a_name, b_name, set_names, letters),
+            intersection=inter,
+            union=size_a + size_b - inter,
+            jaccard=float(stats.jaccard.loc[a_name, b_name]),
+            overlap=float(stats.overlap_coefficient.loc[a_name, b_name]),
+            dice=float(stats.dice.loc[a_name, b_name]),
+            expected=float(row["expected"]),
+            fold_enrichment=float(stats.fold_enrichment.loc[a_name, b_name]),
+            p_value=float(row["p_value"]),
+            fdr=float(row["p_adjusted"]),
+        ))
+    return out
+
+
+def _jaccard_section(rows: list[_PairRow]) -> tuple[
+    str, list[str], list[list[str]], list[float], list[str], list[str | None],
+]:
+    """(title, headers, cell_text, col_widths, aligns, row_bg)."""
+    headers = ["Pair", "Inter", "Union", "Jaccard", "Overlap"]
+    widths = [_PAIR_W_LABEL, 0.10, 0.12, 0.13, 0.13]
+    aligns = ["left", "right", "right", "right", "right"]
+    text = [[r.pair, str(r.intersection), str(r.union),
+             f"{r.jaccard:.4f}", f"{r.overlap:.4f}"] for r in rows]
+    bg: list[str | None] = [
+        _JAC_HIGH if r.jaccard >= _JAC_HIGH_THRESHOLD
+        else _JAC_LOW if r.jaccard <= _JAC_LOW_THRESHOLD
+        else None
+        for r in rows
+    ]
+    return "Pairwise Jaccard Index", headers, text, widths, aligns, bg
+
+
+def _dice_section(rows: list[_PairRow]) -> tuple[
+    str, list[str], list[list[str]], list[float], list[str], list[str | None],
+]:
+    """(title, headers, cell_text, col_widths, aligns, row_bg)."""
+    headers = ["Pair", "Dice"]
+    widths = [0.55, 0.15]
+    aligns = ["left", "right"]
+    text = [[r.pair, f"{r.dice:.4f}"] for r in rows]
+    return "Sørensen-Dice Index", headers, text, widths, aligns, [None] * len(rows)
+
+
+def _enrichment_section(rows: list[_PairRow]) -> tuple[
+    str, list[str], list[list[str]], list[float], list[str], list[str | None],
+]:
+    """(title, headers, cell_text, col_widths, aligns, row_bg)."""
+    headers = ["Pair", "Obs", "Exp", "FE", "p-value", "FDR", "Sig"]
+    widths = [0.28, 0.07, 0.09, 0.09, 0.13, 0.13, 0.07]
+    aligns = ["left", "right", "right", "right", "right", "right", "center"]
+    text = [[r.pair, str(r.intersection),
+             f"{r.expected:.1f}", f"{r.fold_enrichment:.2f}",
+             _format_p(r.p_value), _format_p(r.fdr), _sig_label(r.fdr)]
+            for r in rows]
+    bg: list[str | None] = [
+        _ENR_VERY if r.fdr < _SIG_VERY_THRESHOLD
+        else _ENR_SOME if r.fdr < _SIG_THRESHOLD
+        else None
+        for r in rows
+    ]
+    return "Intersection Enrichment (Hypergeometric Test)", headers, text, widths, aligns, bg
+
+
+def _build_statistics_pages(result: RegionResult) -> list[Figure]:
+    """Return Figure(s) carrying the three long-form pairwise tables, stacked.
+
+    Mirrors src/utils/pdfReport.ts page 'Statistics':
+      * Pairwise Jaccard Index (Pair, Inter, Union, Jaccard, Overlap)
+      * Sorensen-Dice Index (Pair, Dice)
+      * Intersection Enrichment (Pair, Obs, Exp, FE, p-value, FDR, Sig)
+
+    For small pair counts all three fit on one page; for many pairs each table
+    gets its own page to avoid crowding.
+    """
     n = len(result.dataset.set_names)
+    if n < _MIN_SETS_FOR_STATS:
+        return []
+
+    rows = _pair_rows(result)
+    sections = [_jaccard_section(rows), _dice_section(rows), _enrichment_section(rows)]
+    n_pairs = len(rows)
     pages: list[Figure] = []
 
-    if n <= _STATS_ONE_PAGE_MAX_SETS:
+    one_page = n_pairs * 3 * _PER_ROW_HEIGHT < _ONE_PAGE_FILL_LIMIT
+    if one_page:
         fig = plt.figure(figsize=(_PAGE_WIDTH, _PAGE_HEIGHT))
-        fig.suptitle("Pairwise Statistics", fontsize=14, fontweight="bold")
-        _draw_square_metric_table(fig, stats.jaccard, rect=_COMBINED_JACCARD_RECT, title="Jaccard")
-        _draw_square_metric_table(fig, stats.dice, rect=_COMBINED_DICE_RECT, title="Dice")
-        _draw_hypergeometric_table(
-            fig, stats.hypergeometric, rect=_COMBINED_HYP_RECT, title="Hypergeometric (BH-FDR)"
-        )
+        fig.suptitle("Statistics", fontsize=15, fontweight="bold", y=0.97)
+        section_h = 0.06 + n_pairs * _PER_ROW_HEIGHT
+        gap = 0.025
+        top = 0.92
+        for idx, (title, headers, text, widths, aligns, bg) in enumerate(sections):
+            bottom = top - (idx + 1) * section_h - idx * gap
+            _draw_pair_table(fig, (0.05, bottom, 0.90, section_h),
+                             title, headers, text, widths,
+                             aligns=aligns, row_bg_colors=bg, fontsize=8)
         pages.append(fig)
     else:
-        for table_name, table_df, drawer in (
-            ("Jaccard", stats.jaccard, _draw_square_metric_table),
-            ("Dice", stats.dice, _draw_square_metric_table),
-            ("Hypergeometric (BH-FDR)", stats.hypergeometric, _draw_hypergeometric_table),
-        ):
+        for title, headers, text, widths, aligns, bg in sections:
             fig = plt.figure(figsize=(_PAGE_WIDTH, _PAGE_HEIGHT))
-            fig.suptitle(f"Pairwise Statistics - {table_name}", fontsize=14, fontweight="bold")
-            drawer(fig, table_df, rect=_FULL_PAGE_RECT, title=table_name)
+            fig.suptitle("Statistics", fontsize=15, fontweight="bold", y=0.97)
+            _draw_pair_table(fig, (0.05, 0.05, 0.90, 0.86),
+                             title, headers, text, widths,
+                             aligns=aligns, row_bg_colors=bg, fontsize=8)
             pages.append(fig)
 
     return pages

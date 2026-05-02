@@ -22,13 +22,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # macOS + Windows hit cairosvg's libcairo runtime lookup failure even
-        # after brew/system installs (Python's ctypes.util.find_library() can't
-        # see the bundled dylib/dll on hosted runners). Linux-only for now;
-        # Phase 9 (PyPI release) will revisit -- likely via pycairo dep or
-        # explicit DYLD_LIBRARY_PATH setup. The package WORKS on macOS/Windows
-        # locally with the right system deps; this is a CI-environment gap.
-        os: [ubuntu-latest]
+        os: [ubuntu-latest, macos-latest, windows-latest]
         python-version: ["3.10", "3.11", "3.12"]
     steps:
       - name: Checkout
@@ -40,7 +34,25 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Install system deps for cairosvg (Linux)
+        if: runner.os == 'Linux'
         run: sudo apt-get update && sudo apt-get install -y libcairo2-dev libpango-1.0-0 libpangocairo-1.0-0
+
+      - name: Install system deps for cairosvg (macOS)
+        if: runner.os == 'macOS'
+        run: brew install cairo pango
+
+      - name: Install GTK3 runtime for cairosvg (Windows)
+        if: runner.os == 'Windows'
+        # Hosted Windows runners have no system cairo. The official GTK3-Runtime
+        # installer (tschoonj) bundles libcairo-2.dll + pango DLLs. Add the bin
+        # directory to GITHUB_PATH so subsequent steps (and pytest's subprocess
+        # tests via vdl.exe) inherit it. choco's "gtk-runtime" installs GTK2 only.
+        shell: pwsh
+        run: |
+          $url = 'https://github.com/tschoonj/GTK-for-Windows-Runtime-Environment-Installer/releases/download/2022-01-04/gtk3-runtime-3.24.31-2022-01-04-ts-win64.exe'
+          Invoke-WebRequest -Uri $url -OutFile gtk3-installer.exe
+          Start-Process -FilePath ./gtk3-installer.exe -ArgumentList '/S' -Wait
+          Add-Content $env:GITHUB_PATH 'C:\Program Files\GTK3-Runtime Win64\bin'
 
       - name: Sync data into _data
         run: python python/scripts/sync_data.py
@@ -57,4 +69,12 @@ jobs:
         run: mypy --config-file python/pyproject.toml python/src/venn_diagram_lab/
 
       - name: Pytest
-        run: pytest python/tests/ -v
+        env:
+          # macOS hosted runners are ARM64; brew installs cairo at /opt/homebrew/lib.
+          # Python's ctypes.util.find_library('cairo') doesn't search there by default.
+          # DYLD_FALLBACK_LIBRARY_PATH is allowed under SIP (DYLD_LIBRARY_PATH is not).
+          DYLD_FALLBACK_LIBRARY_PATH: ${{ runner.os == 'macOS' && '/opt/homebrew/lib:/usr/local/lib' || '' }}
+        # Notebook tests run in python-notebook-test.yml (separate cron workflow).
+        # Excluded here because the cairo write-to-BytesIO path fails on Windows
+        # with CAIRO_STATUS_WRITE_ERROR even with GTK3 runtime installed.
+        run: pytest python/tests/ -v -m "not slow"

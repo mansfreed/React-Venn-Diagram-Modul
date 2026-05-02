@@ -2,7 +2,7 @@
 
 Interactive viewer and editor for Venn diagrams — from 2-set to 9-set, covering all known construction methods. Built with React, TypeScript, and Vite.
 
-[![Version](https://img.shields.io/badge/version-1.14.0-blue.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)](CHANGELOG.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.19510813.svg)](https://doi.org/10.5281/zenodo.19510813)
 [![Models](https://img.shields.io/badge/models-44_SVG_+_proportional-green.svg)](#diagram-models)
@@ -10,8 +10,21 @@ Interactive viewer and editor for Venn diagrams — from 2-set to 9-set, coverin
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178c6.svg?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Vite](https://img.shields.io/badge/Vite-8-646cff.svg?logo=vite&logoColor=white)](https://vite.dev/)
 [![Tests](https://img.shields.io/badge/tests-623_passing-brightgreen.svg)](#development)
+[![PyPI version](https://img.shields.io/pypi/v/venn-diagram-lab.svg)](https://pypi.org/project/venn-diagram-lab/)
+[![Python versions](https://img.shields.io/pypi/pyversions/venn-diagram-lab.svg)](https://pypi.org/project/venn-diagram-lab/)
 
 <img width="1728" height="962" alt="Main page" src="https://github.com/user-attachments/assets/e6153bf1-b399-41e3-b6c8-b464626e32a7" />
+
+## Python package
+
+For headless analysis without a browser:
+
+```bash
+pip install venn-diagram-lab
+```
+
+See [`python/README.md`](python/README.md) for full Python documentation, the
+notebook gallery, and the CLI reference.
 
 ## Features
 

@@ -2,6 +2,35 @@
 
 All notable changes to the Venn Diagram Lab project.
 
+## v2.0.0 — 2026-05-02 — first unified PyPI release
+
+### Frontend
+- Version bumped to 2.0.0 (matches the new unified frontend+python release line).
+- No functional changes from v1.14.0; this version exists to mark the
+  cross-platform release boundary.
+
+### Python (initial PyPI release as `venn-diagram-lab` 2.0.0)
+- **Available on PyPI: `pip install venn-diagram-lab`** — first public
+  publication of the headless Python companion.
+- Version jump 0.9.0 → 2.0.0 to align with the unified frontend release
+  per spec section 10.3 (the "v0" series was alpha-only, never published
+  to PyPI; v2.0.0 is the first public Python release).
+- Development Status: Production/Stable (was Beta in v0.9.0).
+- Distribution: wheel (universal py3) + sdist; LICENSE, README, CHANGELOG
+  bundled. Trusted Publisher OIDC workflow (`.github/workflows/python-publish.yml`)
+  handles uploads with no long-lived tokens.
+- 3-OS CI matrix restored (Linux, macOS, Windows × Python 3.10/3.11/3.12);
+  cairosvg native deps resolved on hosted runners (macOS via
+  `DYLD_FALLBACK_LIBRARY_PATH`, Windows via `pip install pycairo`).
+- Build config: replaced `force-include` (which broke `python -m build`'s
+  wheel-from-sdist flow) with hatch `artifacts` directive. CI runs
+  `python python/scripts/sync_data.py` before `build` to populate `_data/`.
+- Operator runbook at `python/RELEASE.md` documents the per-release
+  checklist (PyPI Trusted Publisher registration, Zenodo-GitHub integration,
+  TestPyPI dry-run, real release, post-release DOI update).
+- Zenodo DOI auto-minted on the v2.0.0 GitHub release; CITATION.cff
+  updated post-release to reference the new deposit.
+
 ## v1.14.0 — 2026-05-01
 
 ### Frontend

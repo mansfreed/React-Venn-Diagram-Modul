@@ -5,8 +5,8 @@
 [![Python versions](https://img.shields.io/pypi/pyversions/venn-diagram-lab.svg)](https://pypi.org/project/venn-diagram-lab/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Headless Python companion to the [Venn Diagram Lab web tool](https://github.com/ZoliQua/Venn-Diagram-Lab).
-Build, render, and statistically analyse Venn / Euler / UpSet diagrams from CSV / TSV / GMT / GMX
+Headless Python companion to the [Venn Diagram Lab web tool](https://www.venndiagramlab.org/).
+Build, render, and statistically analyse Venn / UpSet diagrams from CSV / TSV / GMT / GMX
 inputs — same 44 SVG models, same intersection/Jaccard/hypergeometric statistics, same PDF report
 layout — but in a notebook, a Snakemake rule, or a CI job, with no browser involved.
 
@@ -188,8 +188,8 @@ MIT — see [`LICENSE`](LICENSE).
 If you use this package in research, please cite the web tool and the package:
 
 ```
-Dul Z. (2026). Venn Diagram Lab — interactive Venn / Euler / UpSet diagrams.
-https://github.com/ZoliQua/Venn-Diagram-Lab
+Dul Z. (2026). Venn Diagram Lab — interactive Venn / UpSet diagrams.
+https://www.venndiagramlab.org/
 ```
 
 A Zenodo DOI will be issued with the v2.0.0 PyPI release (Phase 9).

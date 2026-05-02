@@ -1,0 +1,116 @@
+name: Publish Python package to PyPI
+
+on:
+  push:
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+"          # final releases -> PyPI
+      - "v[0-9]+.[0-9]+.[0-9]+-rc[0-9]+" # release candidates -> TestPyPI
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "Publish target"
+        required: true
+        type: choice
+        options: [testpypi, pypi]
+        default: testpypi
+
+jobs:
+  build:
+    name: Build wheel + sdist
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # full history for hatch version inspection
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install system deps for cairosvg
+        run: sudo apt-get update && sudo apt-get install -y libcairo2-dev libpango-1.0-0 libpangocairo-1.0-0
+
+      - name: Install build tooling
+        run: |
+          python -m pip install --upgrade pip
+          pip install build twine
+
+      - name: Sync bundled data
+        run: python python/scripts/sync_data.py
+
+      - name: Verify version matches tag
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          PKG_VERSION=$(python -c "import sys; sys.path.insert(0, 'python/src'); from venn_diagram_lab.version import __version__; print(__version__)")
+          echo "Tag version:    $TAG_VERSION"
+          echo "Package version: $PKG_VERSION"
+          # Strip rc suffix from tag for comparison: v2.0.0-rc1 -> 2.0.0rc1 (PEP 440 form)
+          TAG_PEP440=$(echo "$TAG_VERSION" | sed 's/-rc/rc/')
+          if [ "$TAG_PEP440" != "$PKG_VERSION" ]; then
+            echo "::error::Tag version ($TAG_PEP440) does not match package version ($PKG_VERSION)"
+            exit 1
+          fi
+
+      - name: Build distributions
+        run: python -m build python/ --outdir python/dist
+
+      - name: twine check
+        run: twine check python/dist/*
+
+      - name: Upload distributions as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-distributions
+          path: python/dist/*
+          if-no-files-found: error
+          retention-days: 7
+
+  publish-testpypi:
+    name: Publish to TestPyPI
+    needs: build
+    if: |
+      (github.event_name == 'push' && contains(github.ref, '-rc')) ||
+      (github.event_name == 'workflow_dispatch' && inputs.target == 'testpypi')
+    runs-on: ubuntu-latest
+    environment:
+      name: testpypi
+      url: https://test.pypi.org/p/venn-diagram-lab
+    permissions:
+      id-token: write  # OIDC token for trusted publishing
+    steps:
+      - name: Download distributions
+        uses: actions/download-artifact@v4
+        with:
+          name: python-distributions
+          path: dist/
+
+      - name: Publish to TestPyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
+          skip-existing: true
+
+  publish-pypi:
+    name: Publish to PyPI
+    needs: build
+    if: |
+      (github.event_name == 'push' && !contains(github.ref, '-rc')) ||
+      (github.event_name == 'workflow_dispatch' && inputs.target == 'pypi')
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/venn-diagram-lab
+    permissions:
+      id-token: write  # OIDC token for trusted publishing
+    steps:
+      - name: Download distributions
+        uses: actions/download-artifact@v4
+        with:
+          name: python-distributions
+          path: dist/
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
