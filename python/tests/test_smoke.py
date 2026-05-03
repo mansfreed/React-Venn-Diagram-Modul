@@ -27,9 +27,6 @@ def test_version_format_is_pep440() -> None:
 
 
 def test_version_is_v2() -> None:
-    """v2.0.0 is the first unified PyPI release (frontend + python share major version).
-
-    Accepts release-candidate suffixes (e.g. 2.0.0rc2) used during TestPyPI dry-runs.
-    """
+    """v2.x.x is the unified PyPI release line (frontend + python share major version)."""
     v = venn_diagram_lab.__version__
-    assert v == "2.0.0" or v.startswith("2.0.0rc"), f"unexpected version: {v}"
+    assert v.startswith("2."), f"unexpected version: {v}"
