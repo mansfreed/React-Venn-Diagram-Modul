@@ -1,8 +1,8 @@
 # venn-diagram-lab
 
 [![CI](https://github.com/ZoliQua/Venn-Diagram-Lab/actions/workflows/python-test.yml/badge.svg)](https://github.com/ZoliQua/Venn-Diagram-Lab/actions/workflows/python-test.yml)
-[![PyPI version](https://img.shields.io/pypi/v/venn-diagram-lab.svg)](https://pypi.org/project/venn-diagram-lab/)
-[![Python versions](https://img.shields.io/pypi/pyversions/venn-diagram-lab.svg)](https://pypi.org/project/venn-diagram-lab/)
+[![PyPI version](https://img.shields.io/pypi/v/venn-diagram-lab.svg?v=2)](https://pypi.org/project/venn-diagram-lab/)
+[![Python versions](https://img.shields.io/pypi/pyversions/venn-diagram-lab.svg?v=2)](https://pypi.org/project/venn-diagram-lab/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 Headless Python companion to the [Venn Diagram Lab web tool](https://www.venndiagramlab.org/).

@@ -10,8 +10,8 @@ Interactive viewer and editor for Venn diagrams — from 2-set to 9-set, coverin
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178c6.svg?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Vite](https://img.shields.io/badge/Vite-8-646cff.svg?logo=vite&logoColor=white)](https://vite.dev/)
 [![Tests](https://img.shields.io/badge/tests-623_passing-brightgreen.svg)](#development)
-[![PyPI version](https://img.shields.io/pypi/v/venn-diagram-lab.svg)](https://pypi.org/project/venn-diagram-lab/)
-[![Python versions](https://img.shields.io/pypi/pyversions/venn-diagram-lab.svg)](https://pypi.org/project/venn-diagram-lab/)
+[![PyPI version](https://img.shields.io/pypi/v/venn-diagram-lab.svg?v=2)](https://pypi.org/project/venn-diagram-lab/)
+[![Python versions](https://img.shields.io/pypi/pyversions/venn-diagram-lab.svg?v=2)](https://pypi.org/project/venn-diagram-lab/)
 
 <img width="1728" height="962" alt="Main page" src="https://github.com/user-attachments/assets/e6153bf1-b399-41e3-b6c8-b464626e32a7" />
 

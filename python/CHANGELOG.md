@@ -7,6 +7,12 @@ summarises the Python-only changes.
 
 [root]: https://github.com/ZoliQua/Venn-Diagram-Lab/blob/main/CHANGELOG.md
 
+## v2.0.2 — 2026-05-03 — Cache-bust PyPI badges in README
+
+Patch release. Adds `?v=2` query string to the `pypi/v/` and `pypi/pyversions/` shields.io badge URLs so PyPI's Camo image proxy fetches the freshly-published badge instead of the stale "package or version not found" image cached when v2.0.0 was first uploaded.
+
+No code changes. No public-API changes.
+
 ## v2.0.1 — 2026-05-03 — Citation + DOI in PyPI page README
 
 Patch release. Embeds the v2.0.0 Zenodo DOI ([10.5281/zenodo.20000599](https://doi.org/10.5281/zenodo.20000599)) into the package README so the PyPI project page renders the correct citation block + DOI badge. (The v2.0.0 wheel was built before Zenodo minted the DOI, so its METADATA shipped a placeholder line.)
