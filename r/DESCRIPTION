@@ -43,7 +43,9 @@ Suggests:
     knitr,
     rmarkdown,
     rprojroot,
-    pdftools
+    pdftools,
+    broom,
+    tibble
 VignetteBuilder: knitr
 biocViews: Visualization, GeneSetEnrichment, Software
 Encoding: UTF-8
