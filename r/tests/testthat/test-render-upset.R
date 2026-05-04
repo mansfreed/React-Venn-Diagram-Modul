@@ -161,3 +161,14 @@ test_that("render_upset works on bundled cancer drivers sample", {
     p <- render_upset(res, sort_by = "degree", color_mode = "heatmap")
     expect_true(inherits(p, "ggplot") || inherits(p, "patchwork"))
 })
+
+test_that(".warn_if_oldrel_complex_upset warns on R < 4.6", {
+    expect_warning(
+        .warn_if_oldrel_complex_upset(r_version = numeric_version("4.5.3")),
+        regexp = "ComplexUpset"
+    )
+})
+
+test_that(".warn_if_oldrel_complex_upset is silent on R >= 4.6", {
+    expect_silent(.warn_if_oldrel_complex_upset(r_version = numeric_version("4.6.0")))
+})

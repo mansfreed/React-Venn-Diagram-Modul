@@ -10,6 +10,26 @@
 NULL
 
 #' @noRd
+# Emit a runtime warning when run on R < 4.6 about the ComplexUpset 1.3.3
+# incompatibility with ggplot2 4.0+. The bug causes both render_upset() and
+# to_pdf_report() (which embeds an UpSet panel) to fail with
+# "axis.title.x must be element_text" during patchwork compose / print.
+# Tracking upstream issue: https://github.com/krassowski/complex-upset/issues/213
+.warn_if_oldrel_complex_upset <- function(r_version = getRversion()) {
+    if (r_version < "4.6") {
+        warning(
+            "ComplexUpset 1.3.3 (current CRAN release) is broken with ggplot2 4.0+ ",
+            "on R < 4.6 -- this rendering call may fail with ",
+            "'axis.title.x must be element_text'. ",
+            "Workarounds: (a) upgrade to R >= 4.6, OR (b) install dev ComplexUpset via ",
+            "remotes::install_github('krassowski/complex-upset'). ",
+            "Tracking: https://github.com/krassowski/complex-upset/issues/213",
+            call. = FALSE
+        )
+    }
+}
+
+#' @noRd
 .upset_data_from_region_result <- function(result) {
     n <- length(result@dataset@set_names)
     letters_chars <- strsplit(.LETTERS_VDL, "", fixed = TRUE)[[1L]][seq_len(n)]
@@ -110,6 +130,7 @@ render_upset <- function(result,
                           colors = NULL) {
     sort_by    <- match.arg(sort_by)
     color_mode <- match.arg(color_mode)
+    .warn_if_oldrel_complex_upset()
 
     data <- .upset_data_from_region_result(result)
     sorter <- if (sort_by == "size") .sort_by_size else .sort_by_degree

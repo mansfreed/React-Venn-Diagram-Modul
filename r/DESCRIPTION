@@ -33,12 +33,17 @@ Imports:
     ggplot2,
     ComplexUpset,
     ggraph,
-    tidygraph
+    tidygraph,
+    grDevices,
+    rsvg,
+    patchwork,
+    gridExtra
 Suggests:
     testthat (>= 3.0.0),
     knitr,
     rmarkdown,
-    rprojroot
+    rprojroot,
+    pdftools
 VignetteBuilder: knitr
 biocViews: Visualization, GeneSetEnrichment, Software
 Encoding: UTF-8
