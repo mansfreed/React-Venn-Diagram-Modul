@@ -45,7 +45,8 @@ Suggests:
     rprojroot,
     pdftools,
     broom,
-    tibble
+    tibble,
+    dplyr
 VignetteBuilder: knitr
 biocViews: Visualization, GeneSetEnrichment, Software
 Encoding: UTF-8
