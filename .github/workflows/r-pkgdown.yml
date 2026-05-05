@@ -11,8 +11,6 @@ on:
 jobs:
   pkgdown:
     runs-on: ubuntu-latest
-    # Phase 0: deploy disabled. Phase 8 enables by removing this guard.
-    if: false
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
     permissions:

@@ -13,9 +13,6 @@ on:
 jobs:
   BiocCheck:
     runs-on: ubuntu-latest
-    # Phase 0: BiocCheck has known warnings on skeleton packages. Allow failure
-    # until Phase 8 (Polish + docs) makes it blocking.
-    continue-on-error: true
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
     steps:
