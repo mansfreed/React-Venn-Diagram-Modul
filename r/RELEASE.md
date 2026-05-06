@@ -19,7 +19,7 @@ release Zenodo sees will be archived and assigned a fresh DOI.
 
 ### 2. Bioconductor support site (one-time, already done in Phase 8)
 
-Maintainer email `ssdbtc@gmail.com` is registered at
+Maintainer email `zoltan.dul@gmail.com` is registered at
 https://support.bioconductor.org/ and `vennDiagramLab` is added to Watched
 Tags in the maintainer profile. BiocCheck verifies this automatically.
 
@@ -68,7 +68,7 @@ For subsequent releases (v2.0.1, v2.0.2, ...):
 3. Commit:
    ```bash
    cd /Users/Zoli/Code/Orthologs/2-venn-diagram
-   git -c user.name="Zoltán Dul" -c user.email="ssdbtc@gmail.com" \
+   git -c user.name="Zoltán Dul" -c user.email="zoltan.dul@gmail.com" \
        commit -am "chore(r): bump to 2.0.Y for next CRAN release"
    git push origin main
    ```
@@ -196,7 +196,7 @@ After the GitHub release in step D fires, Zenodo automatically:
 1. Archives the source tarball at the release tag.
 2. Mints a fresh DOI under the same Zenodo "concept" (parent DOI =
    `10.5281/zenodo.20000599`).
-3. Emails the maintainer (`ssdbtc@gmail.com`) with the new version-specific
+3. Emails the maintainer (`zoltan.dul@gmail.com`) with the new version-specific
    DOI within ~5-10 minutes.
 
 **Verify:**
@@ -207,7 +207,7 @@ After the GitHub release in step D fires, Zenodo automatically:
    ```bash
    cd /Users/Zoli/Code/Orthologs/2-venn-diagram
    # Edit CITATION.cff: doi: "10.5281/zenodo.<new_id>"
-   git -c user.name="Zoltán Dul" -c user.email="ssdbtc@gmail.com" \
+   git -c user.name="Zoltán Dul" -c user.email="zoltan.dul@gmail.com" \
        commit -am "docs: update Zenodo DOI for vennDiagramLab R v2.0.0"
    git push origin main
    ```

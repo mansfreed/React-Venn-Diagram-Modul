@@ -26,7 +26,7 @@ None — this is a new package.
 
 `vennDiagramLab` is the R companion to the
 [`venn-diagram-lab` Python package](https://pypi.org/project/venn-diagram-lab/)
-(v2.0.2 on PyPI) and the [Venn Diagram Lab web
+(v2.0.3 on PyPI) and the [Venn Diagram Lab web
 tool](https://www.venndiagramlab.org/). The three implementations share the
 same SVG model library and produce byte-equivalent TSV outputs (verified by
 12 parity tests against shared golden fixtures).
