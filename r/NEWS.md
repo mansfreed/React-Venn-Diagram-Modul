@@ -1,5 +1,21 @@
 # vennDiagramLab — NEWS
 
+## v2.0.1 — 2026-05-06 — Pre-submission feedback fix (Marci)
+
+Patch release fixing a packaging bug that broke `analyze()` for users installing via `remotes::install_github()`.
+
+### Fixed
+
+* **`analyze()` no longer fails with `"no file found"` after `remotes::install_github(..., subdir = "r")`.** Root cause: the bundled 44 SVG templates, 44 region JSONs, and 5 sample datasets under `r/inst/extdata/` were gitignored; only the directory structure (via `.gitkeep` files) was tracked. The local developer populated them by running `Rscript r/data-raw/sync_data.R` before `R CMD build`, so the CRAN / Bioconductor tarballs would have shipped them — but `remotes::install_github()` builds from the git tree, where those files were absent. The result: install succeeds, but `system.file("extdata", "models", "json", package = "vennDiagramLab", mustWork = TRUE)` returns `""`, and the first `analyze()` call throws the cryptic `mustWork` error.
+
+  The fix tracks the synced data files in git (root `.gitignore` updated), so `install_github` now produces a working install out of the box. The synced files are regenerated and committed as part of the release workflow; the `r/data-raw/sync_data.R` script remains the single source of truth.
+
+### Changed
+
+* `.models_json_dir()` (internal) replaced the cryptic `mustWork = TRUE` error with an actionable message walking the user through the clone + sync + `R CMD INSTALL` workflow as a fallback. This branch is now defensive — the gitignore fix removed the trigger — but mis-built installs (hand-edited package directories, missing rebuilds after a model change) will still see a useful message instead of `"no file found"`.
+
+No public-API changes. No new features.
+
 ## v2.0.0 — 2026-05-04
 
 First public release. Headless companion to the [Venn Diagram Lab web tool](https://www.venndiagramlab.org/) and the [Python `venn-diagram-lab` package](https://pypi.org/project/venn-diagram-lab/), targeting CRAN + Bioconductor.

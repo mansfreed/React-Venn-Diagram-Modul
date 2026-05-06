@@ -41,18 +41,21 @@ models/svg/archive/
 .vercel
 docs/
 
-# R package — synced data files (directories + .gitkeep stay tracked)
-# Override the project-level `samples/` rule above for the R package's bundled samples dir
+# R package — synced data files
+# Override the project-level `samples/` rule above for the R package's bundled samples dir.
+# The 44 SVG templates, 44 region JSONs, and 5 sample datasets in inst/extdata/
+# are now TRACKED in git so that `remotes::install_github()` produces a working
+# install (otherwise analyze() / load_sample() / render_venn_svg() fail because
+# system.file("extdata", ...) returns "" — bug surfaced 2026-05-06). Re-sync
+# after webapp data changes via `Rscript r/data-raw/sync_data.R` and commit.
 !r/inst/extdata/samples/
-r/inst/extdata/models/svg/*.svg
-r/inst/extdata/models/json/*.json
-r/inst/extdata/samples/*.csv
-r/inst/extdata/samples/*.tsv
 # R build artifacts
 r/.Rproj.user/
 r/.Rcheck/
 r/*.Rcheck/
 r/*.tar.gz
+vennDiagramLab_*.tar.gz
+vennDiagramLab.Rcheck/
 .Rhistory
 .RData
 .Ruserdata

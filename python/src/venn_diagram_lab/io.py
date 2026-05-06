@@ -406,8 +406,12 @@ def load_gmt(path: Path | str) -> Dataset:
         )
     if len(set_names) > MAX_SETS:
         raise InvalidDatasetError(
-            f"GMT file has {len(set_names)} sets; max supported is {MAX_SETS}. "
-            "Filter the file before loading."
+            f"GMT file has {len(set_names)} sets; the current version supports "
+            f"at most {MAX_SETS} (limited by the bundled Venn templates, which "
+            "cover 2-9 sets). Filter the file to <= 9 sets before loading. "
+            "UpSet rendering for >9 sets without going through analyze() is on "
+            "the roadmap for a future release; track it at "
+            "https://github.com/ZoliQua/Venn-Diagram-Lab/issues."
         )
 
     return Dataset(
@@ -451,7 +455,12 @@ def load_gmx(path: Path | str) -> Dataset:
         raise InvalidDatasetError(f"GMX file must have at least {MIN_SETS} columns")
     if len(set_names) > MAX_SETS:
         raise InvalidDatasetError(
-            f"GMX file has {len(set_names)} sets; max supported is {MAX_SETS}."
+            f"GMX file has {len(set_names)} sets; the current version supports "
+            f"at most {MAX_SETS} (limited by the bundled Venn templates, which "
+            "cover 2-9 sets). Filter the file to <= 9 sets before loading. "
+            "UpSet rendering for >9 sets without going through analyze() is on "
+            "the roadmap for a future release; track it at "
+            "https://github.com/ZoliQua/Venn-Diagram-Lab/issues."
         )
 
     items: dict[str, set[str]] = {name: set() for name in set_names}

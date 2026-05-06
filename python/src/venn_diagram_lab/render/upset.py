@@ -155,6 +155,13 @@ def render_upset(
         s: sum(i.size for i in data.intersections if s in i.members)
         for s in sets
     }
+    # Map single-letter ids ("A", "B", …) back to the dataset's real set names
+    # so the y-axis matrix labels and the returned `legend` field are
+    # human-readable. The intersection labels on the x-axis (e.g. "AB", "ABC")
+    # stay letter-based — they would be unreadable as concatenated full names.
+    real_names = list(result.dataset.set_names)
+    legend = dict(zip(sets, real_names, strict=True))
+    ytick_labels = [f"{letter} — {name}" for letter, name in legend.items()]
 
     n_cols = len(intersections)
     n_sets = len(sets)
@@ -204,7 +211,7 @@ def render_upset(
                 zorder=1,
             )
     ax_dot.set_yticks(range(n_sets))
-    ax_dot.set_yticklabels(sets)
+    ax_dot.set_yticklabels(ytick_labels)
     ax_dot.set_xticks(range(n_cols))
     ax_dot.set_xticklabels(labels, rotation=45, ha="right", fontsize=8)  # matplotlib styling
     ax_dot.set_xlim(-0.5, n_cols - 0.5)
@@ -220,4 +227,7 @@ def render_upset(
     # Use the constrained layout engine instead of tight_layout — the GridSpec
     # composition is incompatible with tight_layout and emits a UserWarning.
     fig.set_layout_engine("constrained")
-    return MplImage(fig=fig)
+    # Detach from pyplot's state machine so Jupyter's inline backend does not
+    # auto-display the figure on top of MplImage._repr_png_ (double-render).
+    plt.close(fig)
+    return MplImage(fig=fig, legend=legend)

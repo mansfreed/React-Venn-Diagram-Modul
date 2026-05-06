@@ -4,8 +4,27 @@ NULL
 .LETTERS_VDL <- "ABCDEFGHI"
 
 # Internal: locate the bundled inst/extdata/models/json/ directory.
+# Friendly error if the directory is missing — typically happens when the
+# package is installed from a source tree that has not yet run
+# `Rscript r/data-raw/sync_data.R` (the bundled SVG / JSON / sample files
+# are generated assets — they are tracked in git as of 2026-05-06, so this
+# branch only triggers for unusual setups, e.g. a hand-edited install).
 .models_json_dir <- function() {
-    system.file("extdata", "models", "json", package = "vennDiagramLab", mustWork = TRUE)
+    p <- system.file("extdata", "models", "json", package = "vennDiagramLab")
+    if (!nzchar(p) || !dir.exists(p)) {
+        stop(
+            "Bundled region JSON directory missing from the installed ",
+            "vennDiagramLab package. This usually means the package was ",
+            "built from a source tree without running the data sync. To fix:\n",
+            "  git clone https://github.com/ZoliQua/Venn-Diagram-Lab.git\n",
+            "  cd Venn-Diagram-Lab\n",
+            "  Rscript r/data-raw/sync_data.R\n",
+            "  R CMD INSTALL r/\n",
+            "Or, once on CRAN: install.packages('vennDiagramLab').",
+            call. = FALSE
+        )
+    }
+    p
 }
 
 #' List all bundled Venn diagram models

@@ -7,6 +7,30 @@ summarises the Python-only changes.
 
 [root]: https://github.com/ZoliQua/Venn-Diagram-Lab/blob/main/CHANGELOG.md
 
+## v2.0.3 — 2026-05-06 — Pre-submission feedback fixes (Marci)
+
+Patch release addressing the three Python bugs surfaced during pre-submission testing of the v2.0.2 wheel.
+
+### Fixed
+
+- **`render_upset` and `render_network` no longer double-render in Jupyter notebooks.** Both render functions now call `plt.close(fig)` immediately before wrapping the Figure in `MplImage`. This detaches the figure from `pyplot`'s state machine, so the IPython inline backend no longer auto-displays it in addition to `MplImage._repr_png_`. SVG renders (`render_venn_svg`) were never affected — they don't go through matplotlib.
+- **`render_upset` y-axis matrix now shows real set names, not just internal letter ids.** Previously the y-tick labels displayed the internal `"A"`, `"B"`, … abbreviations; the dataset's `set_names` (e.g. `"Vogelstein"`) were thrown away. The y-tick labels now render as `f"{letter} — {name}"` (e.g. `"A — Vogelstein"`), preserving the letter for cross-reference with the x-axis intersection labels (`"AB"`, `"ABC"`) while making the set identities directly readable. Long names may overflow the left panel; trim them upstream if that is a concern.
+- **`load_gmt` / `load_gmx` >9-set error messages are now actionable.** The terse "max supported is 9. Filter the file before loading." message is replaced with one that explains the bundled-template rationale (44 templates cover 2-9 sets) and points at the roadmap issue tracker for a future >9-set UpSet-only path.
+
+### Added
+
+- **`MplImage.legend`**: a frozen `Mapping[str, str]` field (default empty) carrying the `letter -> real_name` mapping that the renderer used internally. `render_upset` and `render_network` populate it from `result.dataset.set_names`. Programmatic consumers (notebooks, downstream tools) can use it to resolve `"AB"`-style intersection labels back to real set names without re-deriving the letter alphabet themselves.
+
+### Tests
+
+- Five new regression tests: `MplImage.legend` populated, y-tick labels include real names, figure detached from `pyplot.get_fignums()`. Suite is now 335 passing + 6 xfailed.
+
+### Known follow-ups (deferred to v2.1)
+
+- Marci also asked for the *deep* fix: `load_gmt` / `load_gmx` accepting >9 sets so that `render_upset` can be called on them via an `analyze()`-bypassing path. That's an architecture refactor (a new `upset_data_from_dataset()` that doesn't require region computation) and lands as a feature in the next minor release. The error-message improvement above is a pure patch-release bridge.
+
+No breaking API changes.
+
 ## v2.0.2 — 2026-05-03 — Cache-bust PyPI badges in README
 
 Patch release. Adds `?v=2` query string to the `pypi/v/` and `pypi/pyversions/` shields.io badge URLs so PyPI's Camo image proxy fetches the freshly-published badge instead of the stale "package or version not found" image cached when v2.0.0 was first uploaded.

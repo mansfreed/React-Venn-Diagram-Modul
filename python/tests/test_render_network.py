@@ -141,3 +141,31 @@ class TestRegionResultRenderNetwork:
         img = result.render_network(edge_metric="jaccard", seed=7)
         assert isinstance(img, MplImage)
         plt.close(img.fig)
+
+
+class TestRenderNetworkLegendAndDetach:
+    """Regression tests mirroring the upset.py fixes — render_network now also
+    populates ``MplImage.legend`` (letter -> real name) and detaches the figure
+    from pyplot's state machine to prevent Jupyter double-render.
+    """
+
+    def test_legend_populated_with_letter_to_name_mapping(self) -> None:
+        ds = Dataset.from_dict({
+            "Vogelstein": {"BRCA1", "TP53"},
+            "OncoKB":     {"TP53", "MYC"},
+        })
+        result = analyze(ds, model="venn-2-set")
+        img = render_network(result)
+        assert img.legend == {"A": "Vogelstein", "B": "OncoKB"}
+        plt.close(img.fig)
+
+    def test_figure_is_detached_from_pyplot(self) -> None:
+        ds = Dataset.from_dict({"A": {"x"}, "B": {"x", "y"}})
+        result = analyze(ds, model="venn-2-set")
+        img = render_network(result)
+        assert img.fig.number not in plt.get_fignums()
+        # Figure still usable after detach.
+        import io
+        buf = io.BytesIO()
+        img.fig.savefig(buf, format="png")
+        assert buf.getvalue().startswith(b"\x89PNG")

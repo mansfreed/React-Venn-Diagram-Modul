@@ -163,6 +163,7 @@ def render_network(
         to export as PNG, PDF, or SVG.
     """
     data = build_network_data(result, metric=edge_metric)
+    legend = {n.id: n.label for n in data.nodes}
 
     g: nx.Graph = nx.Graph()
     for node in data.nodes:
@@ -210,4 +211,7 @@ def render_network(
     )
 
     fig.tight_layout()
-    return MplImage(fig=fig)
+    # Detach from pyplot's state machine so Jupyter's inline backend does not
+    # auto-display the figure on top of MplImage._repr_png_ (double-render).
+    plt.close(fig)
+    return MplImage(fig=fig, legend=legend)

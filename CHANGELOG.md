@@ -2,6 +2,24 @@
 
 All notable changes to the Venn Diagram Lab project.
 
+## 2026-05-06 — Pre-submission feedback patches (Python v2.0.3 + R v2.0.1)
+
+Patch round bundling pre-submission test feedback from Marci. No frontend / web tool changes — the React app stays on v2.0.0.
+
+### Python (`venn-diagram-lab` v2.0.2 → v2.0.3)
+
+- **Fixed: `render_upset` and `render_network` no longer double-render in Jupyter notebooks.** Both now `plt.close(fig)` before returning to detach from `pyplot`'s state machine; `MplImage._repr_png_` is the only display path.
+- **Fixed: `render_upset` y-axis matrix shows real set names instead of letter ids.** y-tick labels now render as `"A — Vogelstein"` (letter preserved for x-axis intersection cross-reference, real name added for readability).
+- **Added: `MplImage.legend`** field (`Mapping[str, str]`, default empty) — letter → real-name dict populated by `render_upset` and `render_network`. Programmatic consumers can resolve `"AB"`-style intersection labels back to set names without re-deriving the alphabet.
+- **Improved:** `load_gmt` / `load_gmx` >9-set error messages explain the bundled-template rationale + point at the issue tracker for the planned >9-set UpSet-only path (deferred to v2.1).
+- 5 new regression tests; full suite now 335 passing + 6 xfailed.
+
+### R (`vennDiagramLab` v2.0.0 → v2.0.1)
+
+- **Fixed: `analyze()` no longer fails with `"no file found"` after `remotes::install_github(..., subdir = "r")`.** Root cause: the bundled 44 SVG templates, 44 region JSONs, and 5 sample datasets under `r/inst/extdata/` were gitignored — the local developer populated them via `Rscript r/data-raw/sync_data.R` before `R CMD build`, so CRAN / Bioconductor tarballs would have shipped them, but `install_github` builds from the git tree and the data was absent. Fix: track the synced data files in git (root `.gitignore` updated). `r/data-raw/sync_data.R` remains the single source of truth; regenerate + commit on every release.
+- **Improved:** internal `.models_json_dir()` swapped its cryptic `mustWork = TRUE` error for an actionable message walking the user through the clone + sync + `R CMD INSTALL` workflow as a defensive fallback.
+- All 592 R testthat tests still pass.
+
 ## v2.0.0 — 2026-05-02 — first unified PyPI release
 
 ### Frontend

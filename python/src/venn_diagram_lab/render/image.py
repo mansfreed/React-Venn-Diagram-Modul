@@ -3,12 +3,17 @@
 from __future__ import annotations
 
 import io
-from dataclasses import dataclass
+from collections.abc import Mapping
+from dataclasses import dataclass, field
 from pathlib import Path
+from types import MappingProxyType
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from matplotlib.figure import Figure
+
+
+_EMPTY_LEGEND: Mapping[str, str] = MappingProxyType({})
 
 
 @dataclass(frozen=True)
@@ -20,6 +25,11 @@ class MplImage:
 
     Attributes:
         fig: The underlying :class:`matplotlib.figure.Figure`.
+        legend: Mapping from internal letter id (``"A"``, ``"B"``, …) to the
+            real set name (e.g. ``"Vogelstein"``). Populated by ``render_upset``
+            and ``render_network`` so callers can resolve the letter labels
+            shown in intersection / matrix tick text. Empty for renderers that
+            don't use letter abbreviations.
 
     Methods:
         save(path): Write to disk; supports ``.png``, ``.pdf``, ``.svg``.
@@ -27,6 +37,7 @@ class MplImage:
     """
 
     fig: Figure
+    legend: Mapping[str, str] = field(default_factory=lambda: _EMPTY_LEGEND)
 
     def save(self, path: Path | str, *, dpi: int = 300) -> None:
         """Write the figure to disk.

@@ -184,3 +184,60 @@ class TestRegionResultRenderUpset:
         img = result.render_upset(max_columns=5, color_mode="heatmap")
         assert isinstance(img, MplImage)
         plt.close(img.fig)
+
+
+class TestRenderUpsetLegendAndLabels:
+    """Regression tests for the bug where the y-axis matrix labels showed the
+    internal letter ids ('A', 'B', ...) instead of the dataset's real set
+    names, and the returned MplImage had no way to recover the mapping. The
+    fix puts ``letter — real_name`` on the y-ticks AND populates
+    ``MplImage.legend`` with the letter -> name dict.
+    """
+
+    def test_legend_populated_with_letter_to_name_mapping(self) -> None:
+        ds = Dataset.from_dict({
+            "Vogelstein": {"BRCA1", "TP53"},
+            "OncoKB":     {"TP53", "MYC"},
+        })
+        result = analyze(ds, model="venn-2-set")
+        img = render_upset(result)
+        assert img.legend == {"A": "Vogelstein", "B": "OncoKB"}
+        plt.close(img.fig)
+
+    def test_yticks_show_real_names_not_just_letters(self) -> None:
+        ds = Dataset.from_dict({
+            "Vogelstein": {"BRCA1", "TP53"},
+            "OncoKB":     {"TP53", "MYC"},
+        })
+        result = analyze(ds, model="venn-2-set")
+        img = render_upset(result)
+        ax_dot = img.fig.axes[1]  # middle panel
+        labels = [t.get_text() for t in ax_dot.get_yticklabels()]
+        assert any("Vogelstein" in label for label in labels)
+        assert any("OncoKB" in label for label in labels)
+        # Letters should still appear so users can cross-reference with the
+        # x-axis intersection labels (e.g. "AB").
+        assert any(label.startswith("A") for label in labels)
+        plt.close(img.fig)
+
+
+class TestRenderUpsetClosesFigure:
+    """Regression test for the bug where render_upset returned a figure that
+    was still tracked by pyplot's state machine, causing Jupyter's inline
+    backend to display the figure once on its own and once via
+    ``MplImage._repr_png_`` — i.e. the plot was rendered twice in notebooks.
+    The fix calls ``plt.close(fig)`` before returning, removing the figure
+    from pyplot's manager while leaving the Figure object usable.
+    """
+
+    def test_figure_is_detached_from_pyplot(self) -> None:
+        ds = Dataset.from_dict({"A": {"x"}, "B": {"x", "y"}})
+        result = analyze(ds, model="venn-2-set")
+        img = render_upset(result)
+        # plt.get_fignums() returns numbers of figures pyplot is tracking.
+        assert img.fig.number not in plt.get_fignums()
+        # The Figure object itself is still usable (savefig, etc.).
+        import io
+        buf = io.BytesIO()
+        img.fig.savefig(buf, format="png")
+        assert buf.getvalue().startswith(b"\x89PNG")
