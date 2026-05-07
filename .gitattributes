@@ -1,0 +1,21 @@
+# Force LF line endings for byte-parity-sensitive data files.
+#
+# The R + Python parity tests compare raw bytes against golden TSV fixtures
+# under python/tests/fixtures/expected/. On Windows, git's default
+# `core.autocrlf=true` would silently convert LF → CRLF on checkout, breaking
+# the byte comparisons. Pinning these extensions to LF here keeps the working
+# tree identical across platforms.
+*.tsv text eol=lf
+*.csv text eol=lf
+*.gmt text eol=lf
+*.gmx text eol=lf
+
+# Bundled JSON region data + SVG model templates — also byte-sensitive
+# (the rendered SVGs are byte-compared against golden fixtures in some tests).
+*.json text eol=lf
+*.svg text eol=lf
+
+# R sources + tests — LF for cross-platform consistency.
+*.R text eol=lf
+*.Rmd text eol=lf
+*.Rd text eol=lf
