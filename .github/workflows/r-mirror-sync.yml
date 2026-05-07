@@ -31,18 +31,36 @@ jobs:
           # github-actions[bot] (which has no access to the mirror repo).
           persist-credentials: false
 
-      - name: Subtree split + force-push to mirror
+      - name: Subtree split + Bioc version override + force-push to mirror
         env:
           MIRROR_PAT: ${{ secrets.MIRROR_PAT }}
+          # Bioc's package submission bot rejects anything that doesn't follow
+          # the x.99.z first-submission convention (becomes 1.0.0 upon release,
+          # then x.y.z on the Bioc release cycle). CRAN accepts our normal
+          # 2.0.x versioning. To keep both happy, the mirror DESCRIPTION's
+          # Version field is rewritten to BIOC_VERSION on every sync.
+          # Bump this when Bioc accepts (e.g. 0.99.0 → 1.0.0 → 1.1.0 ...).
+          BIOC_VERSION: "0.99.0"
         run: |
           set -euo pipefail
           if [ -z "$MIRROR_PAT" ]; then
             echo "::error::MIRROR_PAT secret is not set. Create a PAT with repo scope and add it under repo settings → Secrets → Actions."
             exit 1
           fi
+
           SHA=$(git subtree split --prefix=r main)
           echo "Subtree HEAD: $SHA"
+
+          # Apply Bioc-version override in a worktree without touching main.
+          git worktree add /tmp/split "$SHA"
+          pushd /tmp/split > /dev/null
+          sed -i "s|^Version: .*|Version: ${BIOC_VERSION}|" DESCRIPTION
+          git -c user.name="Zoltán Dul" -c user.email="zoltan.dul@gmail.com" \
+              commit -am "chore: pin Version to ${BIOC_VERSION} for Bioconductor submission (mirror override; CRAN keeps the 2.x track)"
+          NEW_SHA=$(git rev-parse HEAD)
+          popd > /dev/null
+
           git push --force \
             "https://x-access-token:${MIRROR_PAT}@github.com/ZoliQua/vennDiagramLab.git" \
-            "${SHA}:refs/heads/main"
-          echo "Mirror sync complete."
+            "${NEW_SHA}:refs/heads/main"
+          echo "Mirror sync complete (Version: ${BIOC_VERSION})."
