@@ -8,6 +8,17 @@
 .FORMULA_PREFIX_RE <- "^[\t\r ]*[=+@-]"
 
 #' @noRd
+# Binary write — preserves byte-for-byte identity across platforms. cat() on
+# Windows opens the connection in text mode and converts "\n" → "\r\n", which
+# breaks our byte-parity tests (golden fixtures use "\n" only, matching the
+# Python writer + the React webapp's TSV exports).
+.write_bytes <- function(x, path) {
+    con <- file(path, open = "wb")
+    on.exit(close(con))
+    writeBin(charToRaw(x), con)
+}
+
+#' @noRd
 .escape_spreadsheet_cell <- function(value) {
     if (grepl(.FORMULA_PREFIX_RE, value, perl = FALSE)) {
         paste0("'", value)
@@ -132,7 +143,7 @@ setMethod("to_region_summary_tsv", "RegionResult", function(result, path) {
     header <- "Region\tSets\tDepth\tExclusive_Count\tInclusive_Count\tExclusive_Pct\tItems"
     body <- vapply(rows, `[[`, character(1L), "line")
     out <- paste(c(header, body), collapse = "\n")
-    cat(out, file = path)   # cat() does NOT add a trailing newline (matches Python's write_text)
+    .write_bytes(out, path)   # cat() does NOT add a trailing newline (matches Python's write_text)
     invisible(path)
 })
 
@@ -196,7 +207,7 @@ setMethod("to_matrix_tsv", "RegionResult", function(result, path) {
     }
 
     out <- paste(out_lines, collapse = "\n")
-    cat(out, file = path)
+    .write_bytes(out, path)
     invisible(path)
 })
 
@@ -246,7 +257,7 @@ setMethod("to_statistics_tsv", "RegionResult", function(result, path) {
 
     n <- length(result@dataset@set_names)
     if (n < .MIN_SETS_FOR_STATISTICS) {
-        cat(stats_header, file = path)
+        .write_bytes(stats_header, path)
         return(invisible(path))
     }
 
@@ -296,7 +307,7 @@ setMethod("to_statistics_tsv", "RegionResult", function(result, path) {
     }
 
     out <- paste(out_lines, collapse = "\n")
-    cat(out, file = path)
+    .write_bytes(out, path)
     invisible(path)
 })
 
