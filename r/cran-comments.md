@@ -1,11 +1,29 @@
 ## Resubmission
 
-This is a resubmission. v2.0.1 was pretested by win-builder and failed with
-12 byte-parity tests on Windows due to text-mode line-ending conversion in
-the TSV writers (`cat(out, file = path)` converts "\n" → "\r\n" on Windows;
-the parity tests + Python golden fixtures use "\n" only). v2.0.2 fixes this
-by opening the destination file in binary ("wb") mode via a new
-`.write_bytes()` helper. No public-API changes.
+This is a resubmission of v2.0.3, which addresses CRAN auto-check feedback
+from the v2.0.2 incoming pretest:
+
+1. **Overall checktime 41 min > 10 min on Windows** (the auto-rejection trigger):
+   slow integration tests in `test-render-pdf.R`, `test-render-svg.R`,
+   `test-render-upset.R`, `test-render-network.R`, and
+   `test-parity-with-webapp.R` now call `testthat::skip_on_cran()` at the
+   top of every `test_that()` block. The full 590+ test suite continues to
+   run on the package's GitHub Actions CI matrix (5 cells: Linux release/
+   devel/oldrel + macOS + Windows release), where `NOT_CRAN=true` is unset.
+   On CRAN, only fast unit tests (~50 cases) execute, bringing checktime
+   well under 10 minutes.
+
+2. **Possibly misspelled words in DESCRIPTION** (NOTE on Windows + Debian):
+   GMX, Jaccard, TSV, UpSet, ggplot, tidygraph — all are technical terms,
+   package names, or acronyms documented in the package's `inst/WORDLIST`.
+
+History:
+* v2.0.1: pretest rejected on Windows due to a CRLF byte-parity bug in
+  `cat(..., file = path)` text-mode write.
+* v2.0.2: the CRLF fix landed; rejected by 41-min overall checktime.
+* v2.0.3 (this submission): adds `skip_on_cran()` to slow tests.
+
+No public-API changes.
 
 ## Test environments
 

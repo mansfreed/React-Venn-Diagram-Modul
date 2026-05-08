@@ -1,4 +1,5 @@
 test_that(".is_venn_model returns TRUE for venn-* names and FALSE for others", {
+    skip_on_cran()
     expect_true(.is_venn_model("venn-2-set"))
     expect_true(.is_venn_model("venn-5-set-grunbaum"))
     expect_false(.is_venn_model("names-bar"))
@@ -6,6 +7,7 @@ test_that(".is_venn_model returns TRUE for venn-* names and FALSE for others", {
 })
 
 test_that(".load_template returns the bundled SVG text for a known model", {
+    skip_on_cran()
     text <- .load_template("venn-2-set")
     expect_type(text, "character")
     expect_length(text, 1L)
@@ -14,11 +16,13 @@ test_that(".load_template returns the bundled SVG text for a known model", {
 })
 
 test_that(".load_template errors on unknown model", {
+    skip_on_cran()
     expect_error(.load_template("not-a-real-model"), class = "UnknownModelError")
     expect_error(.load_template("names-bar"),         class = "UnknownModelError")
 })
 
 test_that(".find_by_id locates an element regardless of namespace", {
+    skip_on_cran()
     text <- .load_template("venn-2-set")
     doc <- xml2::read_xml(text)
     el <- .find_by_id(doc, "ShapeA")
@@ -27,12 +31,14 @@ test_that(".find_by_id locates an element regardless of namespace", {
 })
 
 test_that(".find_by_id returns NULL when id is absent", {
+    skip_on_cran()
     text <- .load_template("venn-2-set")
     doc <- xml2::read_xml(text)
     expect_null(.find_by_id(doc, "NoSuchId"))
 })
 
 test_that(".set_text overwrites the text of the element with the given id", {
+    skip_on_cran()
     text <- .load_template("venn-2-set")
     doc <- xml2::read_xml(text)
     .set_text(doc, "NameA", "MyAlphaSet")
@@ -41,12 +47,14 @@ test_that(".set_text overwrites the text of the element with the given id", {
 })
 
 test_that(".set_text is a no-op when the id is absent", {
+    skip_on_cran()
     text <- .load_template("venn-2-set")
     doc <- xml2::read_xml(text)
     expect_silent(.set_text(doc, "NoSuchId", "irrelevant"))
 })
 
 test_that(".replace_fill_color updates the inline style fill attribute", {
+    skip_on_cran()
     text <- .load_template("venn-2-set")
     doc <- xml2::read_xml(text)
     .replace_fill_color(doc, "ShapeA", "#FF00FF")
@@ -56,17 +64,20 @@ test_that(".replace_fill_color updates the inline style fill attribute", {
 })
 
 test_that(".replace_fill_color is a no-op when the id is absent", {
+    skip_on_cran()
     text <- .load_template("venn-2-set")
     doc <- xml2::read_xml(text)
     expect_silent(.replace_fill_color(doc, "NoSuchId", "#FF00FF"))
 })
 
 test_that(".count_ids_for_set_count enumerates Count_<label> ids for n=2", {
+    skip_on_cran()
     ids <- .count_ids_for_set_count(2L)
     expect_setequal(ids, c("Count_A", "Count_B", "Count_AB"))
 })
 
 test_that(".count_ids_for_set_count counts grow as 2^n - 1 for n in 4..9", {
+    skip_on_cran()
     for (n in 4L:9L) {
         ids <- .count_ids_for_set_count(n)
         expect_length(ids, 2L ^ n - 1L)
@@ -74,6 +85,7 @@ test_that(".count_ids_for_set_count counts grow as 2^n - 1 for n in 4..9", {
 })
 
 test_that("all 44 bundled venn templates load and round-trip through xml2", {
+    skip_on_cran()
     skip_if_not(dir.exists(.models_svg_dir()), "extdata/models/svg not synced")
     venn_models <- list_models()
     venn_models <- venn_models[startsWith(venn_models$name, "venn"), ]
@@ -88,6 +100,7 @@ test_that("all 44 bundled venn templates load and round-trip through xml2", {
 })
 
 test_that(".count_ids_for_set_count enumerates 7 ids for n=3", {
+    skip_on_cran()
     ids <- .count_ids_for_set_count(3L)
     # Single-letter (3) + 2-letter combos (3) + 3-letter (1) = 7
     expect_length(ids, 7L)
@@ -95,6 +108,7 @@ test_that(".count_ids_for_set_count enumerates 7 ids for n=3", {
 })
 
 test_that(".apply_counts writes the right counts onto a 2-set template", {
+    skip_on_cran()
     text <- .load_template("venn-2-set")
     doc <- xml2::read_xml(text)
     ds <- methods::new("VennDataset",
@@ -115,6 +129,7 @@ test_that(".apply_counts writes the right counts onto a 2-set template", {
 })
 
 test_that(".apply_counts blanks all counts when show = FALSE", {
+    skip_on_cran()
     text <- .load_template("venn-2-set")
     doc <- xml2::read_xml(text)
     ds <- methods::new("VennDataset",
@@ -131,6 +146,7 @@ test_that(".apply_counts blanks all counts when show = FALSE", {
 })
 
 test_that("render_venn_svg returns a valid SVG with counts and names from a 2-set result", {
+    skip_on_cran()
     ds <- methods::new("VennDataset",
         set_names = c("Alpha", "Beta"),
         items = list(Alpha = c("g1", "g2"), Beta = c("g2", "g3")),
@@ -158,6 +174,7 @@ test_that("render_venn_svg returns a valid SVG with counts and names from a 2-se
 })
 
 test_that("render_venn_svg honors set_names override (per-letter mapping)", {
+    skip_on_cran()
     ds <- methods::new("VennDataset",
         set_names = c("Alpha", "Beta"),
         items = list(Alpha = c("g1"), Beta = c("g2")),
@@ -173,6 +190,7 @@ test_that("render_venn_svg honors set_names override (per-letter mapping)", {
 })
 
 test_that("render_venn_svg honors colors override", {
+    skip_on_cran()
     ds <- methods::new("VennDataset",
         set_names = c("A", "B"),
         items = list(A = c("g1"), B = c("g2")),
@@ -189,6 +207,7 @@ test_that("render_venn_svg honors colors override", {
 })
 
 test_that("render_venn_svg honors title override", {
+    skip_on_cran()
     ds <- methods::new("VennDataset",
         set_names = c("A", "B"),
         items = list(A = c("g1"), B = c("g2")),
@@ -202,6 +221,7 @@ test_that("render_venn_svg honors title override", {
 })
 
 test_that("render_venn_svg honors show_names = FALSE (blanks Name*)", {
+    skip_on_cran()
     ds <- methods::new("VennDataset",
         set_names = c("A", "B"),
         items = list(A = c("g1"), B = c("g2")),
@@ -216,6 +236,7 @@ test_that("render_venn_svg honors show_names = FALSE (blanks Name*)", {
 })
 
 test_that("render_venn_svg with model = 'proportional' delegates to generate_proportional_svg", {
+    skip_on_cran()
     ds <- methods::new("VennDataset",
         set_names = c("A", "B"),
         items = list(A = c("g1", "g2"), B = c("g2", "g3")),
@@ -229,6 +250,7 @@ test_that("render_venn_svg with model = 'proportional' delegates to generate_pro
 })
 
 test_that("render_venn_svg works on bundled cancer drivers sample", {
+    skip_on_cran()
     skip_if_not(file.exists(system.file("extdata", "samples",
                                           "dataset_real_cancer_drivers_4.tsv",
                                           package = "vennDiagramLab")),

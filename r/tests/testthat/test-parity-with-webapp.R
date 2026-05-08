@@ -83,6 +83,7 @@ for (pair in PAIRS) {
         is_xfail <- sample %in% DUPLICATE_TITLE_SAMPLES
 
         test_that(sprintf("region_summary parity (dataframe): %s", sample), {
+            skip_on_cran()
             .skip_if_no_parity_fixtures()
             fixture <- .parity_fixture_path(sample, model, "region_summary")
             skip_if_not(file.exists(fixture), paste("Missing fixture:", fixture))
@@ -101,6 +102,7 @@ for (pair in PAIRS) {
         })
 
         test_that(sprintf("region_summary parity (bytes): %s", sample), {
+            skip_on_cran()
             .skip_if_no_parity_fixtures()
             fixture <- .parity_fixture_path(sample, model, "region_summary")
             skip_if_not(file.exists(fixture), paste("Missing fixture:", fixture))
@@ -128,6 +130,7 @@ for (pair in PAIRS) {
         is_xfail <- sample %in% DUPLICATE_TITLE_SAMPLES
 
         test_that(sprintf("matrix parity (dataframe): %s", sample), {
+            skip_on_cran()
             .skip_if_no_parity_fixtures()
             fixture <- .parity_fixture_path(sample, model, "matrix")
             skip_if_not(file.exists(fixture), paste("Missing fixture:", fixture))
@@ -146,6 +149,7 @@ for (pair in PAIRS) {
         })
 
         test_that(sprintf("matrix parity (bytes): %s", sample), {
+            skip_on_cran()
             .skip_if_no_parity_fixtures()
             fixture <- .parity_fixture_path(sample, model, "matrix")
             skip_if_not(file.exists(fixture), paste("Missing fixture:", fixture))
@@ -173,6 +177,7 @@ for (pair in PAIRS) {
         is_xfail <- sample %in% DUPLICATE_TITLE_SAMPLES
 
         test_that(sprintf("statistics parity (dataframe): %s", sample), {
+            skip_on_cran()
             .skip_if_no_parity_fixtures()
             fixture <- .parity_fixture_path(sample, model, "statistics")
             skip_if_not(file.exists(fixture), paste("Missing fixture:", fixture))
@@ -191,6 +196,7 @@ for (pair in PAIRS) {
         })
 
         test_that(sprintf("statistics parity (bytes): %s", sample), {
+            skip_on_cran()
             .skip_if_no_parity_fixtures()
             fixture <- .parity_fixture_path(sample, model, "statistics")
             skip_if_not(file.exists(fixture), paste("Missing fixture:", fixture))

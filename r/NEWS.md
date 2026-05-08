@@ -1,5 +1,21 @@
 # vennDiagramLab — NEWS
 
+## v2.0.3 — 2026-05-08 — Skip slow tests on CRAN
+
+Patch release reducing CRAN auto-check time below the 10-minute target. The full test suite (590+ tests) and integration tests against bundled samples + 44 SVG models pushed the Windows R CMD check to ~41 minutes, which auto-rejected the v2.0.2 incoming pretest.
+
+### Changed
+
+* Slow-running tests (`test-render-pdf`, `test-render-svg`, `test-render-upset`, `test-render-network`, `test-parity-with-webapp`) now call `testthat::skip_on_cran()` at the top of every `test_that()` block. CRAN sees only the fast unit-test slice (`test-analysis`, `test-classes`, `test-statistics`, `test-broom-tidy`, `test-ggplot-layer`, `test-io`, `test-samples`, `test-proportional`, `test-tsv-export`). The skipped tests still run on the package's GitHub Actions CI matrix (5 cells × 590 tests), where `NOT_CRAN=true` triggers the full test suite.
+
+No public-API or feature changes; the package's user-facing behavior is identical.
+
+### CRAN history
+
+* v2.0.1 (2026-05-07): rejected on Windows pretest due to a CRLF byte-parity bug in `cat(..., file = path)` text-mode write.
+* v2.0.2 (2026-05-07): the CRLF fix; rejected on Windows pretest due to 41-minute overall checktime exceeding CRAN's 10-minute auto-pass threshold.
+* v2.0.3 (this release): `skip_on_cran()` in slow tests; expected sub-10-min pretest.
+
 ## v2.0.2 — 2026-05-07 — Windows CRLF parity fix
 
 Patch release fixing a cross-platform packaging bug that surfaced on the

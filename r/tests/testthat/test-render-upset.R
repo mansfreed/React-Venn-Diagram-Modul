@@ -1,4 +1,5 @@
 test_that(".upset_data_from_region_result builds data with one row per non-empty region", {
+    skip_on_cran()
     ds <- methods::new("VennDataset",
         set_names = c("A", "B"),
         items = list(A = c("g1", "g2"), B = c("g2", "g3")),
@@ -17,6 +18,7 @@ test_that(".upset_data_from_region_result builds data with one row per non-empty
 })
 
 test_that(".upset_data_from_region_result skips empty regions", {
+    skip_on_cran()
     ds <- methods::new("VennDataset",
         set_names = c("A", "B", "C"),
         items = list(A = "x", B = "y", C = "z"),
@@ -32,6 +34,7 @@ test_that(".upset_data_from_region_result skips empty regions", {
 })
 
 test_that(".sort_by_size sorts intersections descending", {
+    skip_on_cran()
     intersections <- list(
         list(members = "A",  size = 5L, label = "A"),
         list(members = "B",  size = 10L, label = "B"),
@@ -44,6 +47,7 @@ test_that(".sort_by_size sorts intersections descending", {
 })
 
 test_that(".sort_by_degree sorts by membership degree ASC then label", {
+    skip_on_cran()
     intersections <- list(
         list(members = c("A", "B"), size = 1L, label = "AB"),
         list(members = "B",  size = 10L, label = "B"),
@@ -56,6 +60,7 @@ test_that(".sort_by_degree sorts by membership degree ASC then label", {
 })
 
 test_that(".bar_colors mode 'custom' uses the provided mapping with fallback", {
+    skip_on_cran()
     intersections <- list(
         list(members = "A",  size = 5L, label = "A"),
         list(members = "B",  size = 10L, label = "B"),
@@ -66,6 +71,7 @@ test_that(".bar_colors mode 'custom' uses the provided mapping with fallback", {
 })
 
 test_that(".bar_colors mode 'custom' with NULL custom uses fallback for all", {
+    skip_on_cran()
     intersections <- list(
         list(members = "A", size = 5L, label = "A"),
         list(members = "B", size = 10L, label = "B")
@@ -75,6 +81,7 @@ test_that(".bar_colors mode 'custom' with NULL custom uses fallback for all", {
 })
 
 test_that(".bar_colors mode 'heatmap' returns hex strings of correct length", {
+    skip_on_cran()
     intersections <- list(
         list(members = "A", size = 5L, label = "A"),
         list(members = "B", size = 10L, label = "B"),
@@ -86,6 +93,7 @@ test_that(".bar_colors mode 'heatmap' returns hex strings of correct length", {
 })
 
 test_that(".bar_colors mode 'heatmap' returns single color when all sizes equal", {
+    skip_on_cran()
     intersections <- list(
         list(members = "A", size = 5L, label = "A"),
         list(members = "B", size = 5L, label = "B")
@@ -95,6 +103,7 @@ test_that(".bar_colors mode 'heatmap' returns single color when all sizes equal"
 })
 
 test_that(".bar_colors mode 'depth' returns hex strings keyed by member-count viridis", {
+    skip_on_cran()
     intersections <- list(
         list(members = "A",            size = 5L,  label = "A"),
         list(members = c("A", "B"),    size = 10L, label = "AB"),
@@ -106,6 +115,7 @@ test_that(".bar_colors mode 'depth' returns hex strings keyed by member-count vi
 })
 
 test_that(".bar_colors mode 'depth' returns single color when all degrees equal", {
+    skip_on_cran()
     intersections <- list(
         list(members = "A", size = 5L, label = "A"),
         list(members = "B", size = 6L, label = "B")
@@ -115,6 +125,7 @@ test_that(".bar_colors mode 'depth' returns single color when all degrees equal"
 })
 
 test_that("render_upset returns a ggplot for a 3-set toy dataset", {
+    skip_on_cran()
     ds <- methods::new("VennDataset",
         set_names = c("A", "B", "C"),
         items = list(A = c("x", "y"), B = c("y", "z"), C = c("z", "w")),
@@ -127,6 +138,7 @@ test_that("render_upset returns a ggplot for a 3-set toy dataset", {
 })
 
 test_that("render_upset honors max_columns to cap intersection count", {
+    skip_on_cran()
     ds <- methods::new("VennDataset",
         set_names = c("A", "B", "C"),
         items = list(A = c("x", "y", "z"), B = c("y", "z", "w"), C = c("z", "w", "v")),
@@ -140,6 +152,7 @@ test_that("render_upset honors max_columns to cap intersection count", {
 })
 
 test_that("render_upset honors threshold to filter small intersections", {
+    skip_on_cran()
     ds <- methods::new("VennDataset",
         set_names = c("A", "B"),
         items = list(A = c("g1", "g2"), B = c("g2", "g3")),
@@ -153,6 +166,7 @@ test_that("render_upset honors threshold to filter small intersections", {
 })
 
 test_that("render_upset works on bundled cancer drivers sample", {
+    skip_on_cran()
     skip_if_not(file.exists(system.file("extdata", "samples",
                                           "dataset_real_cancer_drivers_4.tsv",
                                           package = "vennDiagramLab")),
@@ -163,6 +177,7 @@ test_that("render_upset works on bundled cancer drivers sample", {
 })
 
 test_that(".warn_if_oldrel_complex_upset warns on R < 4.6", {
+    skip_on_cran()
     expect_warning(
         .warn_if_oldrel_complex_upset(r_version = numeric_version("4.5.3")),
         regexp = "ComplexUpset"
@@ -170,5 +185,6 @@ test_that(".warn_if_oldrel_complex_upset warns on R < 4.6", {
 })
 
 test_that(".warn_if_oldrel_complex_upset is silent on R >= 4.6", {
+    skip_on_cran()
     expect_silent(.warn_if_oldrel_complex_upset(r_version = numeric_version("4.6.0")))
 })

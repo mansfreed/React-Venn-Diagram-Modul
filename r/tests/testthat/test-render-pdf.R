@@ -1,4 +1,5 @@
 test_that(".format_pdf_timestamp produces UTC timestamp without leading zero on day", {
+    skip_on_cran()
     ts <- .format_pdf_timestamp()
     # Format: "D Month YYYY HH:MM:SS UTC" (1- or 2-digit day, no leading zero)
     expect_match(ts, "^[1-9][0-9]? [A-Z][a-z]+ [0-9]{4} [0-9]{2}:[0-9]{2}:[0-9]{2} UTC$",
@@ -6,6 +7,7 @@ test_that(".format_pdf_timestamp produces UTC timestamp without leading zero on 
 })
 
 test_that(".pdf_footer_text formats vdl version + timestamp + page numbers", {
+    skip_on_cran()
     footer <- .pdf_footer_text(page_num = 2L, total_pages = 5L)
     # Should contain version, "Generated", "page 2 of 5"
     expect_match(footer, "vdl ", fixed = TRUE)
@@ -36,6 +38,7 @@ test_that(".overview_metadata_rows returns 11 (label, value) pairs", {
 })
 
 test_that(".set_sizes_rows returns one row per set with 7 columns", {
+    skip_on_cran()
     ds <- methods::new("VennDataset",
         set_names = c("Alpha", "Beta"),
         items = list(Alpha = c("g1", "g2"), Beta = c("g2", "g3")),
@@ -53,6 +56,7 @@ test_that(".set_sizes_rows returns one row per set with 7 columns", {
 })
 
 test_that(".build_overview_page returns a patchwork/ggplot composition", {
+    skip_on_cran()
     ds <- methods::new("VennDataset",
         set_names = c("A", "B"),
         items = list(A = c("g1", "g2"), B = c("g2", "g3")),
@@ -65,6 +69,7 @@ test_that(".build_overview_page returns a patchwork/ggplot composition", {
 })
 
 test_that(".build_venn_upset_page returns a patchwork composition", {
+    skip_on_cran()
     ds <- methods::new("VennDataset",
         set_names = c("A", "B"),
         items = list(A = c("g1", "g2"), B = c("g2", "g3")),
@@ -77,6 +82,7 @@ test_that(".build_venn_upset_page returns a patchwork composition", {
 })
 
 test_that(".pair_rows returns one row per pair with derived stats", {
+    skip_on_cran()
     ds <- methods::new("VennDataset",
         set_names = c("A", "B", "C"),
         items = list(A = c("x", "y"), B = c("y", "z"), C = c("z", "w")),
@@ -94,6 +100,7 @@ test_that(".pair_rows returns one row per pair with derived stats", {
 })
 
 test_that(".sig_label returns ***/**/*/ns based on FDR thresholds", {
+    skip_on_cran()
     expect_equal(.sig_label(0.0005), "***")
     expect_equal(.sig_label(0.005),  "**")
     expect_equal(.sig_label(0.04),   "*")
@@ -101,6 +108,7 @@ test_that(".sig_label returns ***/**/*/ns based on FDR thresholds", {
 })
 
 test_that(".build_statistics_pages returns at least one ggplot/patchwork", {
+    skip_on_cran()
     ds <- methods::new("VennDataset",
         set_names = c("A", "B", "C"),
         items = list(A = c("x", "y"), B = c("y", "z"), C = c("z", "w")),
@@ -117,6 +125,7 @@ test_that(".build_statistics_pages returns at least one ggplot/patchwork", {
 })
 
 test_that(".build_network_page returns a ggplot/patchwork", {
+    skip_on_cran()
     ds <- methods::new("VennDataset",
         set_names = c("A", "B", "C"),
         items = list(A = c("x", "y"), B = c("y", "z"), C = c("z", "w")),
@@ -129,6 +138,7 @@ test_that(".build_network_page returns a ggplot/patchwork", {
 })
 
 test_that(".build_about_page returns a ggplot containing methodology text", {
+    skip_on_cran()
     page <- .build_about_page()
     expect_true(inherits(page, "ggplot"))
 })
@@ -138,6 +148,7 @@ test_that(".build_about_page returns a ggplot containing methodology text", {
 # ---------------------------------------------------------------------------
 
 test_that("to_pdf_report writes a PDF file at the given path", {
+    skip_on_cran()
     skip_if_not_installed("pdftools")
     skip_if(getRversion() < "4.6", "PDF integration tests require R >= 4.6 (patchwork+ComplexUpset+ggplot2 interaction breaks on older R)")
     ds <- methods::new("VennDataset",
@@ -155,6 +166,7 @@ test_that("to_pdf_report writes a PDF file at the given path", {
 })
 
 test_that("to_pdf_report produces a PDF with expected page count", {
+    skip_on_cran()
     skip_if_not_installed("pdftools")
     skip_if(getRversion() < "4.6", "PDF integration tests require R >= 4.6 (patchwork+ComplexUpset+ggplot2 interaction breaks on older R)")
     ds <- methods::new("VennDataset",
@@ -173,6 +185,7 @@ test_that("to_pdf_report produces a PDF with expected page count", {
 })
 
 test_that("to_pdf_report omits network/about pages when flags are FALSE", {
+    skip_on_cran()
     skip_if_not_installed("pdftools")
     skip_if(getRversion() < "4.6", "PDF integration tests require R >= 4.6 (patchwork+ComplexUpset+ggplot2 interaction breaks on older R)")
     ds <- methods::new("VennDataset",
@@ -191,6 +204,7 @@ test_that("to_pdf_report omits network/about pages when flags are FALSE", {
 })
 
 test_that("to_pdf_report PDF text contains the footer 'page 1 of'", {
+    skip_on_cran()
     skip_if_not_installed("pdftools")
     skip_if(getRversion() < "4.6", "PDF integration tests require R >= 4.6 (patchwork+ComplexUpset+ggplot2 interaction breaks on older R)")
     ds <- methods::new("VennDataset",
@@ -213,6 +227,7 @@ test_that("to_pdf_report PDF text contains the footer 'page 1 of'", {
 })
 
 test_that("to_pdf_report works on bundled cancer drivers sample", {
+    skip_on_cran()
     skip_if_not_installed("pdftools")
     skip_if(getRversion() < "4.6", "PDF integration tests require R >= 4.6 (patchwork+ComplexUpset+ggplot2 interaction breaks on older R)")
     skip_if_not(file.exists(system.file("extdata", "samples",

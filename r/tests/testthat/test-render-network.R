@@ -1,4 +1,5 @@
 test_that(".build_network_data returns nodes + edges for a 3-set result", {
+    skip_on_cran()
     ds <- methods::new("VennDataset",
         set_names = c("A", "B", "C"),
         items = list(A = c("x", "y"), B = c("y", "z"), C = c("z", "w")),
@@ -22,6 +23,7 @@ test_that(".build_network_data returns nodes + edges for a 3-set result", {
 })
 
 test_that(".build_network_data computes radius via 12 + sqrt(size/max) * 22", {
+    skip_on_cran()
     ds <- methods::new("VennDataset",
         set_names = c("Big", "Small"),
         items = list(Big = as.character(1:100), Small = as.character(95:100)),
@@ -37,6 +39,7 @@ test_that(".build_network_data computes radius via 12 + sqrt(size/max) * 22", {
 })
 
 test_that(".weight_for_metric returns the correct value for each metric", {
+    skip_on_cran()
     expect_equal(.weight_for_metric("intersection",        5L, 0.3, 4.0, 0.5), 5)
     expect_equal(.weight_for_metric("jaccard",             5L, 0.3, 4.0, 0.5), 0.3)
     expect_equal(.weight_for_metric("fold_enrichment",     5L, 0.3, 4.0, 0.5), 4.0)
@@ -44,11 +47,13 @@ test_that(".weight_for_metric returns the correct value for each metric", {
 })
 
 test_that(".weight_for_metric caps fold_enrichment at 20.0", {
+    skip_on_cran()
     expect_equal(.weight_for_metric("fold_enrichment", 5L, 0.3, 100.0, 0.5), 20.0)
     expect_equal(.weight_for_metric("fold_enrichment", 5L, 0.3,   5.0, 0.5),  5.0)
 })
 
 test_that(".build_network_data populates edge fields with significance", {
+    skip_on_cran()
     ds <- methods::new("VennDataset",
         set_names = c("A", "B"),
         items = list(A = c("x", "y", "z"), B = c("x", "y", "w")),
@@ -69,6 +74,7 @@ test_that(".build_network_data populates edge fields with significance", {
 })
 
 test_that("render_network returns a ggplot for a 3-set result", {
+    skip_on_cran()
     ds <- methods::new("VennDataset",
         set_names = c("A", "B", "C"),
         items = list(A = c("x", "y"), B = c("y", "z"), C = c("z", "w")),
@@ -81,6 +87,7 @@ test_that("render_network returns a ggplot for a 3-set result", {
 })
 
 test_that("render_network errors on invalid edge_metric", {
+    skip_on_cran()
     ds <- methods::new("VennDataset",
         set_names = c("A", "B"),
         items = list(A = "x", B = "y"),
@@ -93,6 +100,7 @@ test_that("render_network errors on invalid edge_metric", {
 })
 
 test_that("render_network honors edge_metric parameter (no error for valid metrics)", {
+    skip_on_cran()
     ds <- methods::new("VennDataset",
         set_names = c("A", "B", "C"),
         items = list(A = c("x", "y"), B = c("y", "z"), C = c("z", "w")),
@@ -107,6 +115,7 @@ test_that("render_network honors edge_metric parameter (no error for valid metri
 })
 
 test_that("render_network honors node_color_map override", {
+    skip_on_cran()
     ds <- methods::new("VennDataset",
         set_names = c("A", "B"),
         items = list(A = c("x", "y"), B = c("y", "z")),
@@ -119,6 +128,7 @@ test_that("render_network honors node_color_map override", {
 })
 
 test_that("render_network is deterministic given the same seed", {
+    skip_on_cran()
     ds <- methods::new("VennDataset",
         set_names = c("A", "B", "C"),
         items = list(A = c("x", "y"), B = c("y", "z"), C = c("z", "w")),
