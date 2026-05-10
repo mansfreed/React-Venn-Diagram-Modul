@@ -1,5 +1,21 @@
 # vennDiagramLab — NEWS
 
+## v2.0.4 — 2026-05-10 — DESCRIPTION quoting + vignette buildtime fix
+
+Patch release addressing two issues from the CRAN auto-check + human reviewer feedback on v2.0.3.
+
+### Changed
+
+* **DESCRIPTION single-quotes software names** per CRAN reviewer (Uwe Ligges). Quoted: `'Venn Diagram Lab'`, `'UpSet'`, `'CSV'`, `'TSV'`, `'GMT'`, `'GMX'`, `'Jaccard'`, `'ggplot2'`, `'tidygraph'`, `'broom'`. Suppresses the "Possibly misspelled words in DESCRIPTION" NOTE (flagged GMX, Jaccard, TSV, UpSet, ggplot, tidygraph).
+* **Vignette buildtime cut from ~12 minutes to ~1 minute on CRAN** by gating the slow rendering chunks (`render_upset`, `render_network`, `to_pdf_report`, `geom_venn` composite, `rsvg_png`/`rsvg_pdf` export) on `NOT_CRAN`. On dev (`devtools::check()` sets `NOT_CRAN=true`) and CI all chunks still build their figures; the full 590+ test suite + 8 vignettes still execute on the 5-cell GitHub Actions matrix. On CRAN only the lightweight analysis chunks evaluate, bringing total checktime well under the 10-minute budget.
+
+No public-API or feature changes.
+
+### CRAN history
+
+* v2.0.3 (2026-05-08): rejected on win-builder — 18-min overall checktime (vignettes alone ~12 min) and DESCRIPTION-quoting NOTE.
+* v2.0.4 (this release): vignette `NOT_CRAN` gating + DESCRIPTION quoting.
+
 ## v2.0.3 — 2026-05-08 — Skip slow tests on CRAN
 
 Patch release reducing CRAN auto-check time below the 10-minute target. The full test suite (590+ tests) and integration tests against bundled samples + 44 SVG models pushed the Windows R CMD check to ~41 minutes, which auto-rejected the v2.0.2 incoming pretest.

@@ -1,27 +1,33 @@
 ## Resubmission
 
-This is a resubmission of v2.0.3, which addresses CRAN auto-check feedback
-from the v2.0.2 incoming pretest:
+This is a resubmission of v2.0.4, addressing the two issues raised by Uwe
+Ligges on the v2.0.3 win-builder pretest:
 
-1. **Overall checktime 41 min > 10 min on Windows** (the auto-rejection trigger):
-   slow integration tests in `test-render-pdf.R`, `test-render-svg.R`,
-   `test-render-upset.R`, `test-render-network.R`, and
-   `test-parity-with-webapp.R` now call `testthat::skip_on_cran()` at the
-   top of every `test_that()` block. The full 590+ test suite continues to
-   run on the package's GitHub Actions CI matrix (5 cells: Linux release/
-   devel/oldrel + macOS + Windows release), where `NOT_CRAN=true` is unset.
-   On CRAN, only fast unit tests (~50 cases) execute, bringing checktime
-   well under 10 minutes.
+1. **DESCRIPTION single-quoting** (reviewer ask + auto-check NOTE on Windows
+   + Debian: "Possibly misspelled words"). The Description field now
+   single-quotes software / package / format names: `'Venn Diagram Lab'`,
+   `'UpSet'`, `'CSV'`, `'TSV'`, `'GMT'`, `'GMX'`, `'Jaccard'`, `'ggplot2'`,
+   `'tidygraph'`, `'broom'`.
 
-2. **Possibly misspelled words in DESCRIPTION** (NOTE on Windows + Debian):
-   GMX, Jaccard, TSV, UpSet, ggplot, tidygraph — all are technical terms,
-   package names, or acronyms documented in the package's `inst/WORDLIST`.
+2. **Overall checktime 18 min > 10 min on Windows** (`re-building of vignette
+   outputs ... [12m] OK`). Heavy rendering chunks in vignettes
+   `v02_real_cancer_drivers`, `v04_upset_vs_venn_vs_network`,
+   `v07_pdf_reports`, and `v08_custom_styling_and_export`
+   (`render_upset`, `render_network`, `to_pdf_report`, `geom_venn`
+   composite, `rsvg_png`/`rsvg_pdf` export) now gate on
+   `NOT_CRAN <- identical(tolower(Sys.getenv("NOT_CRAN")), "true")`. On
+   CRAN, only the lightweight analysis chunks evaluate, dropping vignette
+   build well under one minute. The full chunks still build their figures
+   under `devtools::check()` and on the 5-cell GitHub Actions CI matrix.
 
 History:
-* v2.0.1: pretest rejected on Windows due to a CRLF byte-parity bug in
-  `cat(..., file = path)` text-mode write.
-* v2.0.2: the CRLF fix landed; rejected by 41-min overall checktime.
-* v2.0.3 (this submission): adds `skip_on_cran()` to slow tests.
+* v2.0.1: pretest rejected on Windows due to a CRLF byte-parity bug.
+* v2.0.2: the CRLF fix landed; rejected by 41-min overall checktime
+  (slow tests).
+* v2.0.3: `skip_on_cran()` in slow tests; rejected by 18-min overall
+  checktime (slow vignettes) and DESCRIPTION-quoting NOTE.
+* v2.0.4 (this submission): vignette `NOT_CRAN` gating + DESCRIPTION
+  single-quoting.
 
 No public-API changes.
 

@@ -9,6 +9,11 @@ vignette: >
 
 ```{r setup, include = FALSE}
 knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+# Skip the slow rendering chunks on CRAN's auto-check farm. Locally,
+# on CI, and under devtools::check(), `NOT_CRAN` is set and the chunks
+# build their figures. Keeps the vignette buildtime well under the
+# 10-minute CRAN budget (see r/cran-comments.md, v2.0.4 history).
+NOT_CRAN <- identical(tolower(Sys.getenv("NOT_CRAN")), "true")
 ```
 
 # Custom styling and export
@@ -78,7 +83,7 @@ xml2::xml_attr(doc, "viewBox")
 unit-square coordinate system, ready to compose with titles, themes, and
 other annotations.
 
-```{r ggplot}
+```{r ggplot, eval = NOT_CRAN}
 library(ggplot2)
 ggplot() +
     geom_venn(data = result) +
@@ -94,7 +99,7 @@ ggplot() +
 `render_venn_svg()` returns a string. Convert it to PNG or PDF via the
 `rsvg` package (already a hard import of `vennDiagramLab`):
 
-```{r export}
+```{r export, eval = NOT_CRAN}
 svg <- render_venn_svg(result)
 png_path <- tempfile(fileext = ".png")
 rsvg::rsvg_png(charToRaw(svg), png_path, width = 1200)

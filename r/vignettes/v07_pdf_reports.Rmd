@@ -9,6 +9,11 @@ vignette: >
 
 ```{r setup, include = FALSE}
 knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+# Skip the slow rendering chunks on CRAN's auto-check farm. Locally,
+# on CI, and under devtools::check(), `NOT_CRAN` is set and the chunks
+# build their figures. Keeps the vignette buildtime well under the
+# 10-minute CRAN budget (see r/cran-comments.md, v2.0.4 history).
+NOT_CRAN <- identical(tolower(Sys.getenv("NOT_CRAN")), "true")
 ```
 
 # PDF reports
@@ -27,7 +32,7 @@ result <- analyze(load_sample("dataset_real_cancer_drivers_4"))
 Save to a temporary file (vignettes shouldn't write into the package
 directory):
 
-```{r generate, eval = (getRversion() >= "4.6")}
+```{r generate, eval = NOT_CRAN && (getRversion() >= "4.6")}
 out <- tempfile(fileext = ".pdf")
 to_pdf_report(result, path = out, title = "Cancer driver overlap")
 file.exists(out)
