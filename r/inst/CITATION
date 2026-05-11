@@ -1,0 +1,33 @@
+## encoding: UTF-8
+## inst/CITATION — overrides default citation() output for vennDiagramLab.
+## The version + year are read from DESCRIPTION at runtime so the entry
+## never drifts from the installed copy. The DOI is the Zenodo concept
+## (all-versions) DOI, which auto-resolves to the latest archive.
+
+meta    <- utils::packageDescription("vennDiagramLab")
+version <- meta$Version
+year    <- if (!is.null(meta$Date)) sub("-.*$", "", meta$Date) else format(Sys.Date(), "%Y")
+
+bibentry(
+    bibtype  = "Manual",
+    key      = "vennDiagramLab-software",
+    title    = "vennDiagramLab: Headless Venn diagram analysis and rendering",
+    author   = c(
+        person("Zoltán",     "Dul",          email = "zoltan.dul@gmail.com"),
+        person("Márton",     "Ölbei"),
+        person("N. Shaun B.", "Thomas"),
+        person("Azeddine",   "Si Ammour"),
+        person("Attila",     "Csikász-Nagy")
+    ),
+    year     = year,
+    note     = paste0("R package version ", version),
+    url      = "https://zoliqua.github.io/Venn-Diagram-Lab/r/",
+    doi      = "10.5281/zenodo.19510813",
+    textVersion = paste0(
+        "Dul Z., Olbei M., Thomas N.S.B., Si Ammour A., Csikasz-Nagy A. (",
+        year, "). vennDiagramLab: Headless Venn diagram analysis and ",
+        "rendering. R package version ", version,
+        ". https://doi.org/10.5281/zenodo.19510813"
+    ),
+    header   = "To cite vennDiagramLab in publications, please use:"
+)

@@ -108,5 +108,13 @@ articles:
 
 news:
   releases:
+    - text: "v2.0.4"
+      href: news/index.html#vennDiagramLab-204
+    - text: "v2.0.3"
+      href: news/index.html#vennDiagramLab-203
+    - text: "v2.0.2"
+      href: news/index.html#vennDiagramLab-202
+    - text: "v2.0.1"
+      href: news/index.html#vennDiagramLab-201
     - text: "v2.0.0"
       href: news/index.html#vennDiagramLab-200
