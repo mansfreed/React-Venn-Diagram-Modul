@@ -9,11 +9,12 @@ vignette: >
 
 ```{r setup, include = FALSE}
 knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
-# Skip the slow rendering chunks on CRAN's auto-check farm. Locally,
-# on CI, and under devtools::check(), `NOT_CRAN` is set and the chunks
-# build their figures. Keeps the vignette buildtime well under the
-# 10-minute CRAN budget (see r/cran-comments.md, v2.0.4 history).
+# Skip evaluation of all chunks on CRAN's auto-check farm to fit the
+# 10-minute build budget. Locally, on CI, and under devtools::check(),
+# NOT_CRAN=true and all chunks evaluate normally. The vignette source
+# (which CRAN users see in browseVignettes() / vignette()) is unchanged.
 NOT_CRAN <- identical(tolower(Sys.getenv("NOT_CRAN")), "true")
+knitr::opts_chunk$set(eval = NOT_CRAN)
 ```
 
 # PDF reports

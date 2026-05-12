@@ -1,5 +1,24 @@
 # vennDiagramLab — NEWS
 
+## v2.0.5 — 2026-05-12 — Fix inst/CITATION pre-install crash + finish vignette skip
+
+Patch release addressing two issues from the CRAN auto-check on v2.0.4.
+
+### Fixed
+
+* **`inst/CITATION` no longer errors during CRAN incoming-feasibility check.** The file previously called `utils::packageDescription("vennDiagramLab")`, which returns `NA` when the package is not yet installed (as during CRAN's pre-install incoming check). `NA$Version` then triggers the cryptic `"$ operator is invalid for atomic vectors"` error. The fix uses the `meta` variable that R auto-injects when parsing the CITATION file, the documented pattern from "Writing R Extensions". `citation("vennDiagramLab")` output is unchanged on installed copies.
+
+### Changed
+
+* **Vignette evaluation now globally gated on `NOT_CRAN` for every chunk in every vignette.** v2.0.4 gated only the four obviously-slow chunks (`render_upset`, `render_network`, `to_pdf_report`, `geom_venn` composite), but win-builder still reported `[12m] OK` on the `re-building of vignette outputs` step. The remaining time was spent on per-vignette `library(vennDiagramLab)` calls (which transitively load `ggplot2`, `ComplexUpset`, `ggraph`, `tidygraph`, `rsvg`, `patchwork`, `gridExtra`, `BiocGenerics` — slow on Windows VMs) plus the lightweight `analyze()` / `render_venn_svg()` / `broom` chunks across eight vignettes. The setup chunk of every vignette now sets `knitr::opts_chunk$set(eval = NOT_CRAN)`, so on CRAN the rebuild is text-only (~1 minute total). Under `devtools::check()` and on the package's GitHub Actions CI matrix `NOT_CRAN=true` and all chunks evaluate normally. Locally verified: total vignette rebuild dropped from 12 min (Windows) / ~2 min (Mac) to ~12 seconds on Mac.
+
+No public-API or feature changes.
+
+### CRAN history
+
+* v2.0.4 (2026-05-12): rejected on win-builder — (1) `inst/CITATION` `packageDescription()` NA crash during incoming check, (2) overall checktime 20 min > 10 min (vignettes 12 min — partial gating was insufficient).
+* v2.0.5 (this release): CITATION uses auto-injected `meta`; all vignette chunks gated.
+
 ## v2.0.4 — 2026-05-10 — DESCRIPTION quoting + vignette buildtime fix
 
 Patch release addressing two issues from the CRAN auto-check + human reviewer feedback on v2.0.3.

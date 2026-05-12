@@ -9,6 +9,12 @@ vignette: >
 
 ```{r setup, include = FALSE}
 knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+# Skip evaluation of all chunks on CRAN's auto-check farm to fit the
+# 10-minute build budget. Locally, on CI, and under devtools::check(),
+# NOT_CRAN=true and all chunks evaluate normally. The vignette source
+# (which CRAN users see in browseVignettes() / vignette()) is unchanged.
+NOT_CRAN <- identical(tolower(Sys.getenv("NOT_CRAN")), "true")
+knitr::opts_chunk$set(eval = NOT_CRAN)
 ```
 
 # Quickstart

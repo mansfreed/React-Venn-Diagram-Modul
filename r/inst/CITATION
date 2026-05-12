@@ -1,12 +1,13 @@
 ## encoding: UTF-8
 ## inst/CITATION — overrides default citation() output for vennDiagramLab.
-## The version + year are read from DESCRIPTION at runtime so the entry
-## never drifts from the installed copy. The DOI is the Zenodo concept
-## (all-versions) DOI, which auto-resolves to the latest archive.
+## The `meta` variable is auto-injected by R when this file is parsed
+## (utils::readCitationFile assigns it from the DESCRIPTION). Never call
+## utils::packageDescription() here: that returns NA when the package is
+## not yet installed (as during the CRAN incoming-feasibility check) and
+## NA$Version then errors out, breaking the submission.
 
-meta    <- utils::packageDescription("vennDiagramLab")
+year    <- if (length(meta$Date)) sub("-.*$", "", meta$Date) else format(Sys.Date(), "%Y")
 version <- meta$Version
-year    <- if (!is.null(meta$Date)) sub("-.*$", "", meta$Date) else format(Sys.Date(), "%Y")
 
 bibentry(
     bibtype  = "Manual",

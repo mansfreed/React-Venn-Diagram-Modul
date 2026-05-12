@@ -1,33 +1,45 @@
 ## Resubmission
 
-This is a resubmission of v2.0.4, addressing the two issues raised by Uwe
-Ligges on the v2.0.3 win-builder pretest:
+This is a resubmission of v2.0.5, addressing the two issues from the
+CRAN auto-check on v2.0.4:
 
-1. **DESCRIPTION single-quoting** (reviewer ask + auto-check NOTE on Windows
-   + Debian: "Possibly misspelled words"). The Description field now
-   single-quotes software / package / format names: `'Venn Diagram Lab'`,
-   `'UpSet'`, `'CSV'`, `'TSV'`, `'GMT'`, `'GMX'`, `'Jaccard'`, `'ggplot2'`,
-   `'tidygraph'`, `'broom'`.
+1. **`inst/CITATION` crash during the incoming-feasibility check**
+   (`Reading CITATION file fails with $ operator is invalid for atomic
+   vectors when package is not installed`). v2.0.4's `inst/CITATION`
+   called `utils::packageDescription("vennDiagramLab")`, which returns
+   `NA` pre-install; `NA$Version` then errored. v2.0.5 uses the `meta`
+   variable that R auto-injects when parsing the CITATION file (the
+   pattern documented in "Writing R Extensions"). Verified locally by
+   reading the CITATION with `utils::readCitationFile(..., meta = ...)`
+   using only DESCRIPTION-derived meta.
 
-2. **Overall checktime 18 min > 10 min on Windows** (`re-building of vignette
-   outputs ... [12m] OK`). Heavy rendering chunks in vignettes
-   `v02_real_cancer_drivers`, `v04_upset_vs_venn_vs_network`,
-   `v07_pdf_reports`, and `v08_custom_styling_and_export`
-   (`render_upset`, `render_network`, `to_pdf_report`, `geom_venn`
-   composite, `rsvg_png`/`rsvg_pdf` export) now gate on
-   `NOT_CRAN <- identical(tolower(Sys.getenv("NOT_CRAN")), "true")`. On
-   CRAN, only the lightweight analysis chunks evaluate, dropping vignette
-   build well under one minute. The full chunks still build their figures
-   under `devtools::check()` and on the 5-cell GitHub Actions CI matrix.
+2. **Overall checktime 20 min > 10 min on Windows** (vignette rebuild
+   still at 12 min after v2.0.4's partial gating). v2.0.4 only gated the
+   obviously-slow chunks (`render_upset`, `render_network`,
+   `to_pdf_report`, `geom_venn` composite, rsvg exports). On Windows
+   win-builder VMs, the remaining time came from per-vignette
+   `library(vennDiagramLab)` (transitively loads ggplot2, ComplexUpset,
+   ggraph, tidygraph, rsvg, patchwork, gridExtra, BiocGenerics — slow
+   to load on Windows) plus the lightweight `analyze` / `render_venn_svg`
+   / `broom` chunks across all 8 vignettes. v2.0.5 sets
+   `knitr::opts_chunk$set(eval = NOT_CRAN)` in every vignette's setup
+   chunk, so on CRAN the rebuild is essentially text-only. Locally the
+   full 8-vignette rebuild dropped from ~2 min (Mac, NOT_CRAN=true) to
+   ~12 seconds (Mac, NOT_CRAN unset). Heavy chunks still run under
+   `devtools::check()` and on the GitHub Actions CI matrix.
 
 History:
-* v2.0.1: pretest rejected on Windows due to a CRLF byte-parity bug.
-* v2.0.2: the CRLF fix landed; rejected by 41-min overall checktime
+* v2.0.1: rejected on Windows pretest — CRLF byte-parity bug in
+  `cat(..., file = path)`.
+* v2.0.2: CRLF fix landed; rejected by 41-min overall checktime
   (slow tests).
-* v2.0.3: `skip_on_cran()` in slow tests; rejected by 18-min overall
-  checktime (slow vignettes) and DESCRIPTION-quoting NOTE.
-* v2.0.4 (this submission): vignette `NOT_CRAN` gating + DESCRIPTION
-  single-quoting.
+* v2.0.3: `skip_on_cran()` added; rejected by 18-min overall checktime
+  (slow vignettes) and DESCRIPTION-quoting NOTE.
+* v2.0.4: DESCRIPTION single-quoting + partial vignette gating;
+  rejected by 20-min checktime (vignettes still 12 min) and a CITATION
+  pre-install NA crash.
+* v2.0.5 (this submission): CITATION uses auto-injected `meta`; full
+  vignette gating via `opts_chunk$set(eval = NOT_CRAN)`.
 
 No public-API changes.
 

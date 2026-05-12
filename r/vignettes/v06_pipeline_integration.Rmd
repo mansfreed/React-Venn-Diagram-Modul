@@ -9,6 +9,12 @@ vignette: >
 
 ```{r setup, include = FALSE}
 knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+# Skip evaluation of all chunks on CRAN's auto-check farm to fit the
+# 10-minute build budget. Locally, on CI, and under devtools::check(),
+# NOT_CRAN=true and all chunks evaluate normally. The vignette source
+# (which CRAN users see in browseVignettes() / vignette()) is unchanged.
+NOT_CRAN <- identical(tolower(Sys.getenv("NOT_CRAN")), "true")
+knitr::opts_chunk$set(eval = NOT_CRAN)
 ```
 
 # Pipeline integration
@@ -41,7 +47,7 @@ head(broom::augment(result))
 
 If you want to filter to only the highly significant pairs:
 
-```{r dplyr, eval = requireNamespace("dplyr", quietly = TRUE)}
+```{r dplyr, eval = NOT_CRAN && requireNamespace("dplyr", quietly = TRUE)}
 broom::tidy(result) |>
     dplyr::filter(highly_significant) |>
     dplyr::arrange(dplyr::desc(jaccard)) |>
@@ -50,7 +56,7 @@ broom::tidy(result) |>
 
 Or count items per region:
 
-```{r dplyr-augment, eval = requireNamespace("dplyr", quietly = TRUE)}
+```{r dplyr-augment, eval = NOT_CRAN && requireNamespace("dplyr", quietly = TRUE)}
 broom::augment(result) |>
     dplyr::count(region_label, sort = TRUE)
 ```
