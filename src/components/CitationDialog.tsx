@@ -14,8 +14,15 @@ const AUTHORS_APA = 'Dul, Z., Ölbei, M., Thomas, N. S. B., Si Ammour, A., & Csi
 
 const AUTHORS_BIBTEX = "Dul, Zolt{\\'{a}}n and {\\\"O}lbei, M{\\'{a}}rton and Thomas, N. Shaun B. and Si Ammour, Azeddine and Csik{\\'{a}}sz-Nagy, Attila";
 
-const ZENODO_DOI = '10.5281/zenodo.20000599';
+// Zenodo concept (all-versions) DOI — auto-resolves to the latest archived
+// release of the project, regardless of which surface (web, Python, R) the
+// reader cares about. We deliberately do NOT point at a per-version DOI so
+// this string never needs to be updated per release.
+const ZENODO_DOI = '10.5281/zenodo.19510813';
 const ZENODO_URL = `https://doi.org/${ZENODO_DOI}`;
+// Companion R package CRAN-minted DOI (separate from the Zenodo concept above).
+const CRAN_R_DOI = '10.32614/CRAN.package.vennDiagramLab';
+const CRAN_R_URL = `https://doi.org/${CRAN_R_DOI}`;
 const TARGET_JOURNAL = 'BMC Bioinformatics';
 
 const MANUSCRIPT_APA = `${AUTHORS_APA} (2026). ${PAPER_TITLE}. Manuscript submitted for publication, ${TARGET_JOURNAL}.`;
@@ -37,16 +44,40 @@ const SOFTWARE_BIBTEX = `@software{venndiagramlab_${APP_VERSION.replace(/\./g, '
   year      = {2026},
   publisher = {Zenodo},
   doi       = {${ZENODO_DOI}},
-  url       = {${ZENODO_URL}}
+  url       = {${ZENODO_URL}},
+  note      = {Concept DOI — resolves to the latest archived version}
 }`;
 
-type CitationKind = 'manuscript' | 'software';
+const R_PACKAGE_APA = `${AUTHORS_APA} (2026). vennDiagramLab: Headless Venn diagram analysis and rendering (R package version 2.0.5). CRAN. ${CRAN_R_URL}`;
+
+const R_PACKAGE_BIBTEX = `@Manual{vennDiagramLab_R,
+  title     = {vennDiagramLab: Headless Venn diagram analysis and rendering},
+  author    = {${AUTHORS_BIBTEX}},
+  year      = {2026},
+  note      = {R package version 2.0.5},
+  url       = {https://CRAN.R-project.org/package=vennDiagramLab},
+  doi       = {${CRAN_R_DOI}}
+}`;
+
+type CitationKind = 'manuscript' | 'software' | 'rpackage';
 type CitationFormat = 'apa' | 'bibtex';
 
 interface CitationCardProps {
   kind: CitationKind;
   citations: Record<CitationFormat, string>;
 }
+
+const CARD_TITLE: Record<CitationKind, string> = {
+  manuscript: 'Manuscript',
+  software:   'Software (Zenodo concept DOI)',
+  rpackage:   'R companion package (CRAN)',
+};
+
+const CARD_STATUS: Record<CitationKind, { label: string; cls: string }> = {
+  manuscript: { label: 'Under review',   cls: 'citation-status-pending' },
+  software:   { label: 'Citable today',  cls: 'citation-status-citable' },
+  rpackage:   { label: 'Citable today',  cls: 'citation-status-citable' },
+};
 
 function CitationCard({ kind, citations }: CitationCardProps) {
   const [format, setFormat] = useState<CitationFormat>('apa');
@@ -63,23 +94,25 @@ function CitationCard({ kind, citations }: CitationCardProps) {
   };
 
   const isManuscript = kind === 'manuscript';
+  const isRPackage = kind === 'rpackage';
+
+  let subtitle: string;
+  if (isManuscript) {
+    subtitle = `Submitted to ${TARGET_JOURNAL}. Citation will be updated upon acceptance.`;
+  } else if (isRPackage) {
+    subtitle = 'Zoltán Dul et al. (2026) — CRAN-minted DOI for the vennDiagramLab R package. Cite this when reproducibility for the R-side analysis specifically matters.';
+  } else {
+    subtitle = `Zenodo concept (all-versions) DOI for Venn Diagram Lab. Auto-resolves to the latest archived release — never needs to be updated per version. Currently v${APP_VERSION}.`;
+  }
 
   return (
     <div className="citation-card" data-kind={kind}>
       <div className="citation-card-header">
         <div className="citation-card-heading">
-          <h3 className="citation-card-title">
-            {isManuscript ? 'Manuscript' : 'Software (Zenodo)'}
-          </h3>
-          <span className={`citation-status ${isManuscript ? 'citation-status-pending' : 'citation-status-citable'}`}>
-            {isManuscript ? 'Under review' : 'Citable today'}
-          </span>
+          <h3 className="citation-card-title">{CARD_TITLE[kind]}</h3>
+          <span className={`citation-status ${CARD_STATUS[kind].cls}`}>{CARD_STATUS[kind].label}</span>
         </div>
-        <p className="citation-card-subtitle">
-          {isManuscript
-            ? `Submitted to ${TARGET_JOURNAL}. Citation will be updated upon acceptance.`
-            : `Software DOI for the v${APP_VERSION} release on Zenodo. Use this when citing the tool itself.`}
-        </p>
+        <p className="citation-card-subtitle">{subtitle}</p>
       </div>
 
       <div className="citation-format-toggle" role="tablist" aria-label="Citation format">
@@ -107,7 +140,7 @@ function CitationCard({ kind, citations }: CitationCardProps) {
         <button className="citation-copy-btn" onClick={handleCopy}>
           {copied ? `${'✓'} Copied` : `${'⧉'} Copy citation`}
         </button>
-        {!isManuscript && (
+        {kind === 'software' && (
           <a
             href={ZENODO_URL}
             target="_blank"
@@ -115,6 +148,16 @@ function CitationCard({ kind, citations }: CitationCardProps) {
             className="citation-doi-link"
           >
             {ZENODO_DOI} ↗
+          </a>
+        )}
+        {kind === 'rpackage' && (
+          <a
+            href={CRAN_R_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="citation-doi-link"
+          >
+            {CRAN_R_DOI} ↗
           </a>
         )}
       </div>
@@ -160,15 +203,24 @@ export function CitationDialog({ isOpen, onClose }: CitationDialogProps) {
           />
           <div className="citation-card-spacer" />
           <CitationCard
+            kind="rpackage"
+            citations={{ apa: R_PACKAGE_APA, bibtex: R_PACKAGE_BIBTEX }}
+          />
+          <div className="citation-card-spacer" />
+          <CitationCard
             kind="manuscript"
             citations={{ apa: MANUSCRIPT_APA, bibtex: MANUSCRIPT_BIBTEX }}
           />
 
           <div className="companion-callout">
-            <strong>Once the paper is published</strong> this dialog will switch
-            to the journal citation (volume / issue / page numbers and DOI). For
-            reproducibility today, cite the <em>Software (Zenodo)</em> entry —
-            it pins the exact released version. Watch{' '}
+            <strong>Which to cite?</strong> Use the <em>Software (Zenodo
+            concept DOI)</em> for the project as a whole — it always points
+            at the latest archived release, so the reference never goes
+            stale. Add the <em>R companion package (CRAN)</em> entry if your
+            analysis ran specifically against the R package. Once the
+            manuscript is accepted, this dialog will switch the primary
+            citation to the journal entry (volume / issue / page numbers and
+            DOI). Watch{' '}
             <a
               href="https://github.com/ZoliQua/Venn-Diagram-Lab/releases"
               target="_blank"

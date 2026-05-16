@@ -2,6 +2,87 @@
 
 All notable changes to the Venn Diagram Lab project.
 
+## v2.1.1 — 2026-05-16 — Companion R package on CRAN: dialogs updated; citation DOI switched to concept
+
+Frontend patch release reflecting that the R companion package `vennDiagramLab`
+went live on CRAN as `2.0.5` on 2026-05-18 (after a multi-iteration submission
+cycle — see `r/NEWS.md`). The dialog text was holding the "submission in
+progress" narrative from v2.1.0; this release replaces it with the live CRAN
+install path and a CRAN-minted DOI, and migrates the project's citation DOI
+to the Zenodo concept (all-versions) DOI so end-users never need to update
+references per release.
+
+### `CompanionPackageDialog` — R tab
+
+- **Default install source flipped from `github` to `cran`.** First-time
+  viewers now see `install.packages("vennDiagramLab")` instead of the
+  `remotes::install_github(...)` fallback.
+- **Tab labels updated:** "From CRAN (live)" / "From GitHub (HEAD)" /
+  "From Bioconductor (pending)" — was "From GitHub (today)" /
+  "From CRAN (pending)" / "From Bioconductor (pending)".
+- **CRAN panel:** new install code block, CRAN-live date (2026-05-18),
+  current version (2.0.5), platform/binary note, and the CRAN-minted DOI
+  link `10.32614/CRAN.package.vennDiagramLab`.
+- **GitHub panel:** retains the `remotes::install_github(..., subdir = "r")`
+  command but reframes it as "development HEAD" with the new `ref =
+  "r-v2.0.5"` pinning hint.
+- **Bioconductor panel:** simplified to "awaiting moderation" — the old
+  4–8 week review estimate is removed since the queue is non-deterministic.
+- **Verify-the-install snippet** updated from `'2.0.0'` to `'2.0.5'`.
+- **Overview tab:** badges flipped from "Feature complete · v2.0.0" +
+  "CRAN + Bioconductor pending" to "On CRAN · v2.0.5" + "Bioconductor in
+  moderation"; the warn callout downgraded to an informational callout
+  describing the live-CRAN state.
+- **Roadmap tab:** the "In progress — Manual submission" row was split.
+  CRAN row is now ✓ (with the v2.0.1 → v2.0.5 iteration history); the
+  Bioconductor row remains in progress.
+- **Links tab:** CRAN card promoted to a primary `LinkCard` (was a
+  disabled placeholder), new CRAN-DOI card, GitHub card demoted from
+  primary, release tag link bumped from `r-v2.0.0` to `r-v2.0.5`.
+
+### `CompanionPackageDialog` — Python tab
+
+- **Overview badge:** `Stable · v2.0.0` → `Stable · v2.0.3` (matches
+  `python/src/venn_diagram_lab/version.py`).
+- **Install-verify snippet:** `# 2.0.0` → `# 2.0.3`.
+
+### `CitationDialog`
+
+- **Software DOI switched** from the per-version Zenodo deposit
+  `10.5281/zenodo.20000599` to the Zenodo concept DOI
+  `10.5281/zenodo.19510813` — this resolves to the latest archived
+  release and never needs to be updated per version. Software card title
+  updated to "Software (Zenodo concept DOI)".
+- **New R companion package citation card** with the CRAN-minted DOI
+  `10.32614/CRAN.package.vennDiagramLab`, APA + BibTeX entries for
+  `vennDiagramLab 2.0.5`.
+- **`CitationKind` union extended** with `'rpackage'`; lookup tables
+  `CARD_TITLE` and `CARD_STATUS` cover all three kinds. Subtitle copy
+  per-kind, DOI link per-kind.
+- **Closing callout** rewritten as a three-way "Which to cite?" guide
+  (Zenodo for project-wide; CRAN R DOI for R-specific reproducibility;
+  manuscript when accepted).
+
+### `WelcomeDialog`
+
+- R-package button subtitle updated from `vennDiagramLab · CRAN +
+  Bioconductor pending` to `vennDiagramLab · on CRAN`. Bioconductor
+  status is now surfaced inside the `CompanionPackageDialog` instead.
+
+### Internals
+
+- `src/version.ts`: `APP_VERSION` 2.1.0 → 2.1.1; `APP_RELEASE_DATE`
+  2026-05-07 → 2026-05-16.
+
+### Companion package side (separate release tracks)
+
+- **R package** `vennDiagramLab 2.0.5` published on CRAN 2026-05-18 — see
+  `r/NEWS.md` for the per-iteration story (Windows CRLF fix, 10-minute
+  checktime budget, DESCRIPTION single-quoting, CITATION pre-install
+  parsing fix). The v2.0.1 → v2.0.5 commits are already on `main`.
+- **Python package** `venn-diagram-lab 2.0.3` on PyPI (unchanged in this
+  frontend release).
+
 ## v2.1.0 — 2026-05-07 — Welcome screen rework + companion / citation dialogs wired in
 
 Frontend minor release. Wires in the orphan-shipped `CompanionPackageDialog` and `CitationDialog` components from v2.0.x, completes the welcome-screen UX overhaul, and hardens the production build for the credits photos.

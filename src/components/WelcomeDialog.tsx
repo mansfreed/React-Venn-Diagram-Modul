@@ -224,7 +224,7 @@ export function WelcomeDialog({ isOpen, onSelectMode, onSummary, onStartTour }: 
             <span className="welcome-companion-btn-icon welcome-companion-btn-icon-r" aria-hidden="true">R</span>
             <span className="welcome-companion-btn-text">
               <span className="welcome-companion-btn-title">R Package</span>
-              <span className="welcome-companion-btn-sub">vennDiagramLab · CRAN + Bioconductor pending</span>
+              <span className="welcome-companion-btn-sub">vennDiagramLab · on CRAN</span>
             </span>
           </button>
         </div>

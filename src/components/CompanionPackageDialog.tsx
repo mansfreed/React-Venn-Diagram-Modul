@@ -308,7 +308,7 @@ source .venv/bin/activate          # Linux / macOS
           <div className="companion-install-step-body">
             <div className="companion-install-step-title">Verify the install</div>
             <CodeBlock label="Shell">{`python -c "import venn_diagram_lab as vdl; print(vdl.__version__)"
-# 2.0.0`}</CodeBlock>
+# 2.0.3`}</CodeBlock>
           </div>
         </div>
 
@@ -466,7 +466,7 @@ function PythonContent({ activeTab }: { activeTab: TabId }) {
         </div>
 
         <div className="companion-badges">
-          <span className="companion-badge companion-badge-stable">Stable · v2.0.0</span>
+          <span className="companion-badge companion-badge-stable">Stable · v2.0.3</span>
           <span className="companion-badge">Python ≥ 3.10</span>
           <span className="companion-badge">8 example notebooks</span>
           <span className="companion-badge">MIT License</span>
@@ -702,18 +702,17 @@ function PythonContent({ activeTab }: { activeTab: TabId }) {
 type RInstallSource = 'github' | 'cran' | 'bioconductor';
 
 function RInstallTab() {
-  const [src, setSrc] = useState<RInstallSource>('github');
+  const [src, setSrc] = useState<RInstallSource>('cran');
 
   return (
     <div className="companion-section">
       <div className="companion-install-intro">
         <p className="companion-paragraph">
-          v2.0.0 is feature-complete (all 9 phases shipped, 590+ tests, full
-          R&nbsp;CMD&nbsp;check + BiocCheck WARNING-clean). It installs from
-          GitHub today; <strong>submission to CRAN and Bioconductor is in
-          progress</strong>. Once accepted, <code>install.packages()</code> and
-          <code>BiocManager::install()</code> will work without the GitHub
-          step.
+          <strong>vennDiagramLab 2.0.5 is on CRAN</strong> as of
+          2026-05-18 — just <code>install.packages("vennDiagramLab")</code>
+          and you are ready to go. The Bioconductor submission is still in
+          moderation; until then, CRAN is the recommended install channel.
+          The GitHub install path remains available for the development HEAD.
         </p>
       </div>
 
@@ -741,31 +740,33 @@ sudo apt install r-base`}</CodeBlock>
           <div className="companion-install-step-body">
             <div className="companion-install-step-title">
               Install vennDiagramLab
-              <span className={`companion-install-step-tag ${src === 'github' ? '' : 'companion-install-step-tag-optional'}`}>
-                {src === 'github' ? 'available today' : 'pending · awaiting registry acceptance'}
+              <span className={`companion-install-step-tag ${src === 'bioconductor' ? 'companion-install-step-tag-optional' : ''}`}>
+                {src === 'cran' && 'recommended · live on CRAN'}
+                {src === 'github' && 'development HEAD'}
+                {src === 'bioconductor' && 'pending · awaiting Bioc moderation'}
               </span>
             </div>
             <p className="companion-install-step-hint">
-              Choose your install source. GitHub works today; the CRAN and
-              Bioconductor commands are placeholders until the package is
-              accepted in those registries.
+              Three install paths. CRAN is the default for end users; GitHub
+              gives you the latest unreleased commit; Bioconductor is queued
+              for moderation but not yet live.
             </p>
             <div className="companion-install-os-toggle" role="tablist" aria-label="Install source">
-              <button
-                role="tab"
-                aria-selected={src === 'github'}
-                className={`companion-install-os-btn ${src === 'github' ? 'companion-install-os-btn-active' : ''}`}
-                onClick={() => setSrc('github')}
-              >
-                From GitHub (today)
-              </button>
               <button
                 role="tab"
                 aria-selected={src === 'cran'}
                 className={`companion-install-os-btn ${src === 'cran' ? 'companion-install-os-btn-active' : ''}`}
                 onClick={() => setSrc('cran')}
               >
-                From CRAN (pending)
+                From CRAN (live)
+              </button>
+              <button
+                role="tab"
+                aria-selected={src === 'github'}
+                className={`companion-install-os-btn ${src === 'github' ? 'companion-install-os-btn-active' : ''}`}
+                onClick={() => setSrc('github')}
+              >
+                From GitHub (HEAD)
               </button>
               <button
                 role="tab"
@@ -776,6 +777,21 @@ sudo apt install r-base`}</CodeBlock>
                 From Bioconductor (pending)
               </button>
             </div>
+            {src === 'cran' && (
+              <>
+                <CodeBlock label="R Console · CRAN">{`install.packages("vennDiagramLab")`}</CodeBlock>
+                <p className="companion-note">
+                  Live on CRAN as of <strong>2026-05-18</strong> (current
+                  version: <strong>2.0.5</strong>). Pre-built binaries are
+                  available for the three current major Windows / macOS / Linux
+                  R versions; pass <code>type = "source"</code> for the source
+                  tarball. CRAN-minted DOI:{' '}
+                  <a href="https://doi.org/10.32614/CRAN.package.vennDiagramLab" target="_blank" rel="noopener noreferrer" className="companion-link">
+                    10.32614/CRAN.package.vennDiagramLab
+                  </a>.
+                </p>
+              </>
+            )}
             {src === 'github' && (
               <>
                 <CodeBlock label="R Console · GitHub">{`# install.packages("remotes")
@@ -784,23 +800,10 @@ remotes::install_github(
   subdir = "r"
 )`}</CodeBlock>
                 <p className="companion-note">
-                  Pulls the current <code>main</code> branch HEAD. Pin a
-                  release tag with <code>ref = "r-v2.0.0"</code> for
+                  Pulls the current <code>main</code> branch HEAD — useful if
+                  you need a fix that has not made it into a CRAN release yet.
+                  Pin a release tag with <code>ref = "r-v2.0.5"</code> for
                   reproducibility.
-                </p>
-              </>
-            )}
-            {src === 'cran' && (
-              <>
-                <pre className="companion-code companion-code-pending"><code>install.packages("vennDiagramLab")</code></pre>
-                <p className="companion-note">
-                  Submitted via <code>devtools::release()</code>; CRAN review
-                  typically takes <strong>1-2 weeks</strong>. The command above
-                  will work once the package appears at{' '}
-                  <a href="https://CRAN.R-project.org/package=vennDiagramLab" target="_blank" rel="noopener noreferrer" className="companion-link">
-                    CRAN.R-project.org/package=vennDiagramLab
-                  </a>
-                  . Until then, switch to <em>From GitHub</em>.
                 </p>
               </>
             )}
@@ -815,10 +818,9 @@ BiocManager::install("vennDiagramLab")`}</code></pre>
                   <a href="https://github.com/Bioconductor/Contributions/issues" target="_blank" rel="noopener noreferrer" className="companion-link">
                     Bioconductor / Contributions
                   </a>{' '}
-                  issue tracker; review typically takes <strong>4-8 weeks</strong>.
-                  The package is tagged with <code>biocViews:
-                  Visualization, GeneSetEnrichment, Software</code>. Until
-                  accepted, switch to <em>From GitHub</em>.
+                  issue tracker; awaiting moderation. The package is tagged
+                  with <code>biocViews: Visualization, GeneSetEnrichment,
+                  Software</code>. Until accepted, use <em>From CRAN</em>.
                 </p>
               </>
             )}
@@ -831,10 +833,10 @@ BiocManager::install("vennDiagramLab")`}</code></pre>
             <div className="companion-install-step-title">Verify the install</div>
             <CodeBlock label="R Console">{`library(vennDiagramLab)
 packageVersion("vennDiagramLab")
-# [1] '2.0.0'
+# [1] '2.0.5'
 
 vdl_version()
-# [1] "2.0.0"`}</CodeBlock>
+# [1] "2.0.5"`}</CodeBlock>
           </div>
         </div>
 
@@ -948,15 +950,15 @@ augment(result)   # item-level membership matrix`}</CodeBlock>
       </div>
 
       <div className="companion-callout">
-        <strong>Submission status:</strong> v2.0.0 is feature-complete on
-        <code>main</code>. Released to GitHub as tag <code>r-v2.0.0</code>;
-        CRAN submission via <code>devtools::release()</code> and Bioconductor
-        submission via the{' '}
+        <strong>Release status:</strong> <code>vennDiagramLab 2.0.5</code> is
+        on CRAN (published 2026-05-18) and is the recommended install
+        channel. The Bioconductor submission is still in moderation on the{' '}
         <a href="https://github.com/Bioconductor/Contributions/issues" target="_blank" rel="noopener noreferrer" className="companion-link">
           Contributions
         </a>{' '}
-        tracker are in progress. Watch the{' '}
-        <em>Roadmap</em> tab for the full Phase 0-9 history.
+        tracker; the package is bioc-compatible (BiocCheck WARNING-clean,
+        biocViews set) but the queue is non-deterministic. Watch the{' '}
+        <em>Roadmap</em> tab for the full development history.
       </div>
     </div>
   );
@@ -978,13 +980,14 @@ function RContent({ activeTab }: { activeTab: TabId }) {
           tidygraph, and ComplexUpset.
         </p>
         <p className="companion-paragraph">
-          v2.0.0 ships with 8 RMarkdown vignettes executed on every
+          v2.0.5 ships with 8 RMarkdown vignettes executed on every
           R&nbsp;CMD&nbsp;check, a pkgdown documentation site, full
           BiocCheck WARNING-clean output, and a 590+ test suite (90+ parity
           tests against the web tool's exports).{' '}
-          <strong>CRAN and Bioconductor submission is in progress;</strong>
-          install from GitHub today, or wait for the registry release (see the
-          <em> Preview &amp; Install</em> tab).
+          <strong>The package is on CRAN as of 2026-05-18;</strong>{' '}
+          install with <code>install.packages("vennDiagramLab")</code>, or
+          see the <em>Preview &amp; Install</em> tab for the GitHub-HEAD
+          and Bioconductor paths.
         </p>
 
         <h3 className="companion-h3">What you get</h3>
@@ -1047,22 +1050,25 @@ function RContent({ activeTab }: { activeTab: TabId }) {
         </div>
 
         <div className="companion-badges">
-          <span className="companion-badge companion-badge-stable">Feature complete · v2.0.0</span>
-          <span className="companion-badge companion-badge-pending">CRAN + Bioconductor pending</span>
+          <span className="companion-badge companion-badge-stable">On CRAN · v2.0.5</span>
+          <span className="companion-badge companion-badge-pending">Bioconductor in moderation</span>
           <span className="companion-badge">R ≥ 4.2</span>
           <span className="companion-badge">8 vignettes</span>
           <span className="companion-badge">590+ tests</span>
           <span className="companion-badge">MIT License</span>
         </div>
-        <div className="companion-callout companion-callout-warn">
-          <strong>Not yet on CRAN or Bioconductor.</strong> Submission to both
-          registries is in progress: CRAN via <code>devtools::release()</code>
-          (1-2 week review), Bioconductor via the{' '}
+        <div className="companion-callout">
+          <strong>Live on CRAN since 2026-05-18.</strong>{' '}
+          <code>install.packages("vennDiagramLab")</code> works on every
+          major OS without any extra setup. The Bioconductor submission is
+          still in moderation on the{' '}
           <a href="https://github.com/Bioconductor/Contributions/issues" target="_blank" rel="noopener noreferrer" className="companion-link">
             Contributions
           </a>{' '}
-          tracker (4-8 week review). Until accepted, install the development
-          version from GitHub — see the <em>Preview &amp; Install</em> tab.
+          tracker — the package is bioc-compatible and queued, but the
+          review window is non-deterministic. See the{' '}
+          <em>Preview &amp; Install</em> tab for the GitHub-HEAD path if you
+          need an unreleased fix.
         </div>
       </div>
     );
@@ -1152,11 +1158,32 @@ function RContent({ activeTab }: { activeTab: TabId }) {
               <div className="companion-roadmap-desc">CI workflows enabled (R CMD check, BiocCheck, pkgdown deploy on push to <code>main</code> + weekly cron), <code>r/RELEASE.md</code> operator runbook, <code>r-v2.0.0</code> tag pattern (separate from Python's <code>v2.*</code>), CITATION date updated.</div>
             </div>
           </li>
+          <li className="companion-roadmap-done">
+            <span className="companion-roadmap-marker">✓</span>
+            <div>
+              <strong>CRAN release — published 2026-05-18</strong>
+              <div className="companion-roadmap-desc">
+                <code>vennDiagramLab 2.0.5</code> live at{' '}
+                <a href="https://CRAN.R-project.org/package=vennDiagramLab" target="_blank" rel="noopener noreferrer" className="companion-link">CRAN.R-project.org/package=vennDiagramLab</a>.
+                Five iterations (v2.0.1 → v2.0.5) addressed a Windows CRLF
+                byte-parity bug, the 10-minute checktime budget (skip_on_cran on slow tests + NOT_CRAN-gated vignettes), DESCRIPTION single-quoting, and a pre-install CITATION parsing bug.
+              </div>
+            </div>
+          </li>
           <li className="companion-roadmap-active">
             <span className="companion-roadmap-marker">●</span>
             <div>
-              <strong>In progress — Manual submission</strong>
-              <div className="companion-roadmap-desc"><code>devtools::release()</code> for CRAN (1-2 week review) + Bioconductor / Contributions issue (4-8 week review). Once both accepted, this row flips to ✓ and the placeholder install commands go live.</div>
+              <strong>In progress — Bioconductor submission</strong>
+              <div className="companion-roadmap-desc">
+                Open on the{' '}
+                <a href="https://github.com/Bioconductor/Contributions/issues" target="_blank" rel="noopener noreferrer" className="companion-link">Bioconductor / Contributions</a>{' '}
+                tracker, currently in moderation. The package is BiocCheck
+                WARNING-clean and bioc-views tagged
+                (<code>Visualization</code>, <code>GeneSetEnrichment</code>,
+                <code>Software</code>). Independent of CRAN — install via
+                <code>install.packages("vennDiagramLab")</code> in the
+                meantime.
+              </div>
             </div>
           </li>
         </ul>
@@ -1167,15 +1194,15 @@ function RContent({ activeTab }: { activeTab: TabId }) {
   return (
     <div className="companion-section">
       <div className="companion-link-grid">
-        <div className="companion-link-card companion-link-card-disabled" title="Submitted — awaiting CRAN review (1-2 weeks)">
-          <span className="companion-link-card-icon" aria-hidden="true">{'\u{1F4E6}'}</span>
-          <span className="companion-link-card-body">
-            <span className="companion-link-card-title">CRAN <span className="companion-link-pending">(pending)</span></span>
-            <span className="companion-link-card-subtitle">CRAN.R-project.org/package=vennDiagramLab</span>
-          </span>
-          <span className="companion-link-card-cta">Soon</span>
-        </div>
-        <div className="companion-link-card companion-link-card-disabled" title="Submitted — awaiting Bioconductor review (4-8 weeks)">
+        <LinkCard
+          icon={'\u{1F4E6}'}
+          title="CRAN — vennDiagramLab"
+          subtitle="CRAN.R-project.org/package=vennDiagramLab"
+          cta="Install"
+          variant="primary"
+          href="https://CRAN.R-project.org/package=vennDiagramLab"
+        />
+        <div className="companion-link-card companion-link-card-disabled" title="Submitted — awaiting Bioconductor moderation">
           <span className="companion-link-card-icon" aria-hidden="true">{'\u{1F9EC}'}</span>
           <span className="companion-link-card-body">
             <span className="companion-link-card-title">Bioconductor <span className="companion-link-pending">(pending)</span></span>
@@ -1184,11 +1211,17 @@ function RContent({ activeTab }: { activeTab: TabId }) {
           <span className="companion-link-card-cta">Soon</span>
         </div>
         <LinkCard
+          icon={'\u{1F517}'}
+          title="DOI · 10.32614/CRAN.package.vennDiagramLab"
+          subtitle="CRAN-minted DOI for the R package"
+          cta="DOI"
+          href="https://doi.org/10.32614/CRAN.package.vennDiagramLab"
+        />
+        <LinkCard
           icon={'\u{1F4BB}'}
           title="GitHub — r/ subdirectory"
           subtitle="ZoliQua/Venn-Diagram-Lab"
           cta="Source"
-          variant="primary"
           href={`${REPO_BASE}/tree/main/r`}
         />
         <LinkCard
@@ -1221,10 +1254,10 @@ function RContent({ activeTab }: { activeTab: TabId }) {
         />
         <LinkCard
           icon={'\u{1F516}'}
-          title="Release tag r-v2.0.0"
+          title="Release tag r-v2.0.5"
           subtitle="GitHub release notes"
           cta="Release"
-          href={`${REPO_BASE}/releases/tag/r-v2.0.0`}
+          href={`${REPO_BASE}/releases/tag/r-v2.0.5`}
         />
         <LinkCard
           icon={'\u{1F41B}'}
