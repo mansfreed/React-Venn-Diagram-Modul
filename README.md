@@ -1,10 +1,10 @@
 # Venn Diagram Lab
 
-Interactive viewer and editor for Venn diagrams — from 2-set to 9-set, covering all known construction methods. Built with React, TypeScript, and Vite. Ships with a companion published [Python module](python/README.md) (`pip install venn-diagram-lab`) that provides the same analysis and rendering capabilities headlessly — for notebooks, pipelines, and CI.
+Interactive viewer and editor for Venn diagrams — from 2-set to 9-set, covering all known construction methods. Built with React, TypeScript, and Vite. Ships with two officially published companion packages providing the same 44-model analysis and rendering pipeline headlessly: the **Python** [`venn-diagram-lab`](python/README.md) on PyPI and the **R** [`vennDiagramLab`](r/README.md) on CRAN — both byte-equivalent to the web tool's exports.
 
-[![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-2.1.1-blue.svg)](CHANGELOG.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20000599.svg)](https://doi.org/10.5281/zenodo.20000599)
+[![DOI (Zenodo concept)](https://zenodo.org/badge/DOI/10.5281/zenodo.19510813.svg)](https://doi.org/10.5281/zenodo.19510813)
 [![Models](https://img.shields.io/badge/models-44_SVG_+_proportional-green.svg)](#diagram-models)
 [![React](https://img.shields.io/badge/React-19-61dafb.svg?logo=react&logoColor=white)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178c6.svg?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
@@ -12,19 +12,26 @@ Interactive viewer and editor for Venn diagrams — from 2-set to 9-set, coverin
 [![Tests](https://img.shields.io/badge/tests-623_passing-brightgreen.svg)](#development)
 [![PyPI version](https://img.shields.io/pypi/v/venn-diagram-lab.svg?v=2)](https://pypi.org/project/venn-diagram-lab/)
 [![Python versions](https://img.shields.io/pypi/pyversions/venn-diagram-lab.svg?v=2)](https://pypi.org/project/venn-diagram-lab/)
+[![CRAN status](https://www.r-pkg.org/badges/version/vennDiagramLab)](https://CRAN.R-project.org/package=vennDiagramLab)
 
 <img width="1728" height="962" alt="Main page" src="https://github.com/user-attachments/assets/e6153bf1-b399-41e3-b6c8-b464626e32a7" />
 
-## Python package
+## Headless companion packages
 
-For headless analysis without a browser:
+For headless analysis without a browser, two officially-published packages
+share the web tool's 44 SVG models, statistics, and byte-equivalent TSV
+exports:
 
-```bash
-pip install venn-diagram-lab
-```
+| Surface | Install | Status |
+|---|---|---|
+| Python (PyPI) | `pip install venn-diagram-lab` | live |
+| R (CRAN) | `install.packages("vennDiagramLab")` | live (since 2026-05-18) |
+| R (Bioconductor) | `BiocManager::install("vennDiagramLab")` | submission pending |
 
-See [`python/README.md`](python/README.md) for full Python documentation, the
-notebook gallery, and the CLI reference.
+See [`python/README.md`](python/README.md) and [`r/README.md`](r/README.md) for
+each package's quickstart, notebook / vignette galleries, and CLI reference.
+Cross-implementation parity (byte-equivalent TSV exports across web / Python /
+R) is verified by ~30 fixture-based tests on every release.
 
 ## Features
 
@@ -217,6 +224,19 @@ notebook gallery, and the CLI reference.
 │   ├── examples/              8 executable Jupyter notebooks (gallery + pipelines)
 │   ├── scripts/               sync_data.py + notebook builder scripts
 │   └── tests/                 Pytest suite + golden parity fixtures vs the web tool
+├── r/                         Companion R package (CRAN: vennDiagramLab)
+│   ├── DESCRIPTION            CRAN-style metadata + Authors@R
+│   ├── README.md              CRAN-style README (install, quickstart, vignette index)
+│   ├── NEWS.md                Per-version release notes (CRAN-rendered)
+│   ├── RELEASE.md             Operator runbook (CRAN + Bioc + Zenodo release flow)
+│   ├── cran-comments.md       CRAN reviewer cover letter
+│   ├── R/                     Source — 4 S4 classes, io, analysis, statistics, render/
+│   ├── vignettes/             8 RMarkdown vignettes (executed during R CMD check)
+│   ├── inst/extdata/          Bundled SVG templates + sample datasets (synced from monorepo)
+│   ├── inst/CITATION          bibentry — concept DOI + CRAN-minted DOI
+│   ├── man/                   Roxygen-generated Rd files
+│   ├── tests/                 testthat — 590+ tests + parity vs Python golden fixtures
+│   └── data-raw/sync_data.R   Populate inst/extdata/ from monorepo models/ + data/
 ├── public/about-venn/         Custom educational SVG/PNG assets for the About dialog
 ├── publications/              Research papers (PDF)
 ├── samples/                   Source SVG samples for model generation
@@ -453,6 +473,7 @@ Requires Python 3 with `shapely` installed.
 | Zip / Excel export | jszip + exceljs (lazy-loaded) |
 | Region computation | Python + Shapely |
 | Python module | `venn-diagram-lab` on PyPI — see [`python/README.md`](python/README.md) |
+| R package | `vennDiagramLab` on CRAN (since 2026-05-18) — see [`r/README.md`](r/README.md) |
 
 No external UI libraries — pure React + custom CSS. Heavy export libraries (jsPDF, jszip, exceljs) are lazy-loaded on demand so the main bundle stays lean.
 
