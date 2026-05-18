@@ -108,6 +108,8 @@ articles:
 
 news:
   releases:
+    - text: "v2.0.5 (CRAN)"
+      href: news/index.html#vennDiagramLab-205
     - text: "v2.0.4"
       href: news/index.html#vennDiagramLab-204
     - text: "v2.0.3"
