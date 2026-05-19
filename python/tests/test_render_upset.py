@@ -3,6 +3,8 @@
 # ruff: noqa: I001
 from __future__ import annotations
 
+import io
+
 import matplotlib
 matplotlib.use("Agg")  # non-interactive backend before pyplot
 import matplotlib.pyplot as plt
@@ -237,7 +239,6 @@ class TestRenderUpsetClosesFigure:
         # plt.get_fignums() returns numbers of figures pyplot is tracking.
         assert img.fig.number not in plt.get_fignums()
         # The Figure object itself is still usable (savefig, etc.).
-        import io
         buf = io.BytesIO()
         img.fig.savefig(buf, format="png")
         assert buf.getvalue().startswith(b"\x89PNG")

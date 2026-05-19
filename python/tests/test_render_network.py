@@ -3,6 +3,7 @@
 # ruff: noqa: I001
 from __future__ import annotations
 
+import io
 import math
 
 import matplotlib
@@ -165,7 +166,6 @@ class TestRenderNetworkLegendAndDetach:
         img = render_network(result)
         assert img.fig.number not in plt.get_fignums()
         # Figure still usable after detach.
-        import io
         buf = io.BytesIO()
         img.fig.savefig(buf, format="png")
         assert buf.getvalue().startswith(b"\x89PNG")
