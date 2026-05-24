@@ -1153,6 +1153,22 @@ export default function App() {
     if (testNameMaxChars > ceiling) setTestNameMaxChars(ceiling);
   }, [testColumnMapping, testCsvData, testNameMaxChars]);
 
+  // Binary item × set matrix derived from the Venn result's exclusive-items
+  // partition. Works uniformly for binary and aggregated input modes.
+  // Used by the Item Share Distribution card in the Statistics panel.
+  const testItemSetMatrix = useMemo<number[][]>(() => {
+    if (!testVennResult) return [];
+    const n = testColumnMapping.length;
+    if (n < 2) return [];
+    const letters = 'ABCDEFGHI'.slice(0, n).split('');
+    const matrix: number[][] = [];
+    for (const [label, items] of testVennResult.exclusiveItems) {
+      const row = letters.map(l => label.includes(l) ? 1 : 0);
+      for (let i = 0; i < items.length; i++) matrix.push(row);
+    }
+    return matrix;
+  }, [testVennResult, testColumnMapping]);
+
   // Viewer: region list hover/click
   const handleSidebarHoverRegion = useCallback(() => {
     // Sidebar hover could drive canvas highlight in the future
@@ -1819,6 +1835,7 @@ export default function App() {
                   n={testColumnMapping.length}
                   setNames={testColumnMapping.map(i => testCsvData?.headers[i] ?? '')}
                   totalItems={testVennResult?.totalUniqueItems ?? testCsvData?.rows.length ?? 0}
+                  matrix={testItemSetMatrix}
                   selectedRegionLabel={regionDetection.selectedRegion?.label ?? null}
                   datasetName={testCsvFilename ?? undefined}
                   enrichmentMetric={testEnrichmentMetric}

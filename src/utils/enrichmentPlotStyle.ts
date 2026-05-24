@@ -10,7 +10,7 @@
  * to v1.10.1.
  */
 
-export type EnrichmentPlotType = 'bar' | 'lollipop' | 'heatmap';
+export type EnrichmentPlotType = 'bar' | 'lollipop' | 'heatmap' | 'shareDistribution';
 
 export interface EnrichmentPlotStyle {
   sigColor: string;
@@ -46,6 +46,7 @@ export interface EnrichmentPlotSettings {
   bar: EnrichmentPlotStyle;
   lollipop: EnrichmentPlotStyle;
   heatmap: EnrichmentPlotStyle;
+  shareDistribution: EnrichmentPlotStyle;
 }
 
 export function createDefaultPlotSettings(): EnrichmentPlotSettings {
@@ -53,6 +54,7 @@ export function createDefaultPlotSettings(): EnrichmentPlotSettings {
     bar: { ...DEFAULT_PLOT_STYLE },
     lollipop: { ...DEFAULT_PLOT_STYLE },
     heatmap: { ...DEFAULT_PLOT_STYLE },
+    shareDistribution: { ...DEFAULT_PLOT_STYLE },
   };
 }
 
@@ -64,4 +66,5 @@ export const PLOT_TYPE_LABELS: Record<EnrichmentPlotType, string> = {
   bar: 'Bar chart',
   lollipop: 'Lollipop chart',
   heatmap: 'Heatmap',
+  shareDistribution: 'Item Share Distribution',
 };

@@ -9,11 +9,14 @@ import {
 } from '../utils/enrichmentPlotSvg.ts';
 import type { EnrichmentMetric } from '../utils/enrichmentPlotSvg.ts';
 import type { EnrichmentPlotSettings, EnrichmentPlotType } from '../utils/enrichmentPlotStyle.ts';
+import { itemShareDistribution } from '../utils/shareDistribution.ts';
+import { buildShareDistributionSvg, DEFAULT_SHARE_DIST_STYLE } from '../utils/shareDistributionSvgBuilder.ts';
 
 interface EnrichmentPlotsProps {
   stats: PairwiseStat[];
   setLetters: string[];
   setNames: string[];
+  matrix: readonly (readonly number[])[];
   datasetName?: string;
   metric: EnrichmentMetric;
   onMetricChange: (metric: EnrichmentMetric) => void;
@@ -47,7 +50,7 @@ function stopClick<E extends { stopPropagation: () => void }>(fn: () => void) {
 }
 
 export function EnrichmentPlots({
-  stats, setLetters, setNames, datasetName,
+  stats, setLetters, setNames, matrix, datasetName,
   metric, onMetricChange,
   settings,
   activePlot = null,
@@ -65,6 +68,19 @@ export function EnrichmentPlots({
     () => buildEnrichmentHeatmapSvg(stats, setLetters, setNames, { metric, style: settings.heatmap }),
     [stats, setLetters, setNames, metric, settings.heatmap],
   );
+  const shareDistSvg = useMemo(() => {
+    const dist = itemShareDistribution(matrix, setLetters.length);
+    return buildShareDistributionSvg(dist, {
+      style: {
+        ...DEFAULT_SHARE_DIST_STYLE,
+        fontSize: settings.shareDistribution.fontSize,
+        fontFamily: settings.shareDistribution.fontFamily,
+        background: settings.shareDistribution.background,
+        gradientLow: settings.shareDistribution.gradientLowColor,
+        gradientHigh: settings.shareDistribution.gradientHighFdrColor,
+      },
+    });
+  }, [matrix, setLetters.length, settings.shareDistribution]);
 
   const prefix = slug(datasetName);
   const metricSuffix = metric === 'foldEnrichment' ? 'fe' : 'neglog10fdr';
@@ -140,6 +156,7 @@ export function EnrichmentPlots({
       {renderBlock('bar', 'Bar chart', barSvg, 'bar')}
       {renderBlock('lollipop', 'Lollipop chart', lollipopSvg, 'lollipop')}
       {renderBlock('heatmap', 'Heatmap', heatmapSvg, 'heatmap')}
+      {renderBlock('shareDistribution', 'Item Share Distribution', shareDistSvg, 'shareDistribution')}
     </div>
   );
 }

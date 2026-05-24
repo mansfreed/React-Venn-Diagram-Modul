@@ -11,6 +11,7 @@ interface DataSummaryPanelProps {
   n: number;
   setNames: string[];
   totalItems: number;
+  matrix: readonly (readonly number[])[];
   selectedRegionLabel: string | null;
   datasetName?: string;
   enrichmentMetric: EnrichmentMetric;
@@ -47,7 +48,7 @@ function jaccardBgColor(j: number): string | undefined {
 }
 
 export function DataSummaryPanel({
-  vennResult, n, setNames, totalItems, datasetName,
+  vennResult, n, setNames, totalItems, matrix, datasetName,
   enrichmentMetric, onEnrichmentMetricChange,
   enrichmentPlotSettings, activeEnrichmentPlot, onEnterPlotEdit,
   forceEnrichmentPlotsOpen,
@@ -140,6 +141,7 @@ export function DataSummaryPanel({
             stats={pairStats}
             setLetters={letters}
             setNames={setNames}
+            matrix={matrix}
             datasetName={datasetName}
             metric={enrichmentMetric}
             onMetricChange={onEnrichmentMetricChange}
