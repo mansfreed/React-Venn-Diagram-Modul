@@ -16,6 +16,7 @@
 import type { PairwiseStat } from './statistics.ts';
 import type { EnrichmentPlotStyle } from './enrichmentPlotStyle.ts';
 import { DEFAULT_PLOT_STYLE } from './enrichmentPlotStyle.ts';
+import type { ClusterOrder } from './clusterHeatmap.ts';
 
 export type EnrichmentMetric = 'neglog10fdr' | 'foldEnrichment';
 export type PlotBackground = 'white' | 'dark';
@@ -26,6 +27,11 @@ export interface EnrichmentPlotOptions {
   width?: number;
   height?: number;
   style?: Partial<EnrichmentPlotStyle>;
+  // Heatmap-only cluster mode (additive, backwards-compatible):
+  clusterOrder?: ClusterOrder;
+  showRowDendrogram?: boolean;
+  showColDendrogram?: boolean;
+  dendrogramFraction?: number; // 0..1
 }
 
 const FDR_FLOOR = 1e-300;
@@ -333,10 +339,28 @@ export function buildEnrichmentHeatmapSvg(
   const paddingT = 20;
   const paddingB = 18;
 
-  const gridX = leftLabelW;
-  const gridY = topLabelH;
-  const gridW = nSets * cellSize;
-  const gridH = nSets * cellSize;
+  // Cluster mode setup.
+  const cluster = opts.clusterOrder;
+  const order: number[] = cluster && cluster.leafOrder.length === nSets
+    ? cluster.leafOrder
+    : Array.from({ length: nSets }, (_, i) => i);
+  const showRow = cluster ? (opts.showRowDendrogram ?? true) : false;
+  const showCol = cluster ? (opts.showColDendrogram ?? true) : false;
+  const dendroFrac = opts.dendrogramFraction ?? 0.12;
+
+  const gridWBase = nSets * cellSize;
+  const gridHBase = nSets * cellSize;
+  // Pixels reserved for dendrogram tracks.
+  const dendroPx = (showRow || showCol)
+    ? Math.max(20, Math.round(Math.min(gridWBase, gridHBase) * dendroFrac))
+    : 0;
+  const dendroColH = showCol ? dendroPx + 6 : 0; // 6px gap to top labels
+  const dendroRowW = showRow ? dendroPx + 6 : 0; // 6px gap to row labels
+
+  const gridX = leftLabelW + dendroRowW;
+  const gridY = topLabelH + dendroColH;
+  const gridW = gridWBase;
+  const gridH = gridHBase;
 
   // Legend takes up its own horizontal slot; when hidden, collapse it.
   const legendSlot = style.showLegend ? (legendGap + legendW + legendLabelW) : 0;
@@ -385,32 +409,36 @@ export function buildEnrichmentHeatmapSvg(
   });
 
   if (style.showPairLabels) {
-    // Column labels (top, rotated)
+    // Column labels (top, rotated) \u2014 use cluster leaf order for content
     for (let c = 0; c < nSets; c++) {
+      const ci = order[c];
       const cx = gridX + c * cellSize + cellSize / 2;
       const cy = gridY - 6;
-      parts.push(`<text x="${cx}" y="${cy}" fill="${pal.text}" font-family="${ff}" font-size="${scaleFs(7, style)}" text-anchor="start" transform="rotate(-45 ${cx} ${cy})">${esc(trimmedNames[c])}</text>`);
+      parts.push(`<text x="${cx}" y="${cy}" fill="${pal.text}" font-family="${ff}" font-size="${scaleFs(7, style)}" text-anchor="start" transform="rotate(-45 ${cx} ${cy})">${esc(trimmedNames[ci])}</text>`);
     }
     // Row labels (left)
     for (let r = 0; r < nSets; r++) {
+      const ri = order[r];
       const ly = gridY + r * cellSize + cellSize / 2;
-      parts.push(`<text x="${gridX - 6}" y="${ly + 3}" fill="${pal.text}" font-family="${ff}" font-size="${scaleFs(7, style)}" text-anchor="end">${esc(trimmedNames[r])}</text>`);
+      parts.push(`<text x="${gridX - 6}" y="${ly + 3}" fill="${pal.text}" font-family="${ff}" font-size="${scaleFs(7, style)}" text-anchor="end">${esc(trimmedNames[ri])}</text>`);
     }
   }
 
-  // Cells
+  // Cells \u2014 visual (r, c) maps to original (ri, ci) via permutation
   for (let r = 0; r < nSets; r++) {
+    const ri = order[r];
     for (let c = 0; c < nSets; c++) {
+      const ci = order[c];
       const x = gridX + c * cellSize;
       const y = gridY + r * cellSize;
 
-      if (r === c) {
+      if (ri === ci) {
         parts.push(`<rect data-diag="true" x="${x}" y="${y}" width="${cellSize}" height="${cellSize}" fill="${COLOR_DIAG}" stroke="${pal.grid}" stroke-width="0.8"/>`);
         parts.push(`<text x="${x + cellSize / 2}" y="${y + cellSize / 2 + 3}" fill="${pal.textMuted}" font-family="${ff}" font-size="${scaleFs(9, style)}" text-anchor="middle">\u2014</text>`);
         continue;
       }
 
-      const key = setLetters[r] + setLetters[c];
+      const key = setLetters[ri] + setLetters[ci];
       const s = statByPair.get(key);
       const v = s ? metricValue(s, metric) : 0;
       const t = scaleMax > 0 ? v / scaleMax : 0;
@@ -423,6 +451,108 @@ export function buildEnrichmentHeatmapSvg(
         const textColor = t > 0.55 ? '#ffffff' : pal.text;
         parts.push(`<text x="${x + cellSize / 2}" y="${y + cellSize / 2 + 3}" fill="${textColor}" font-family="${ff}" font-size="${scaleFs(8, style)}" text-anchor="middle">${esc(label)}</text>`);
       }
+    }
+  }
+
+  // Dendrogram overlays (cluster mode only)
+  if (cluster && (showRow || showCol) && nSets >= 2 && cluster.merges.length > 0) {
+    const merges = cluster.merges;
+    const maxHeight = merges.reduce((m, x) => Math.max(m, x.height), 0) || 1;
+    const stroke = pal.textMuted;
+
+    // Map cluster-id -> leaf-position-set (positions in visual leaf-index space [0..nSets-1])
+    // Leaf k has visual position = order.indexOf(k).
+    const positionsById = new Map<number, number[]>();
+    for (let k = 0; k < nSets; k++) {
+      const vis = order.indexOf(k);
+      positionsById.set(k, [vis]);
+    }
+    // Each merge has node id = nSets + mi; its positions = union of children.
+    const mergePos: number[] = []; // representative position (mean of leaf positions)
+    for (let mi = 0; mi < merges.length; mi++) {
+      const m = merges[mi];
+      const leftPos = positionsById.get(m.left) ?? [];
+      const rightPos = positionsById.get(m.right) ?? [];
+      const all = [...leftPos, ...rightPos];
+      positionsById.set(nSets + mi, all);
+      const leftMean = leftPos.length > 0 ? leftPos.reduce((a, b) => a + b, 0) / leftPos.length : 0;
+      const rightMean = rightPos.length > 0 ? rightPos.reduce((a, b) => a + b, 0) / rightPos.length : 0;
+      // Store as midpoint of the two children's mean positions (parent location).
+      mergePos[mi] = (leftMean + rightMean) / 2;
+    }
+
+    // Helper: per-node representative position (visual leaf-index space, 0..nSets-1)
+    const nodePos = (id: number): number => {
+      if (id < nSets) return order.indexOf(id);
+      const mi = id - nSets;
+      return mergePos[mi];
+    };
+    // Helper: per-node height (leaves at 0)
+    const nodeHeight = (id: number): number => {
+      if (id < nSets) return 0;
+      return merges[id - nSets].height;
+    };
+
+    if (showCol && dendroColH > 0) {
+      // Column dendrogram sits in the band [colTop .. colBottom] just above gridY.
+      const colBottom = gridY - 2; // just above grid, above column-label band? labels are rotated above grid; place dendro above labels.
+      const colTop = topLabelH + paddingT + 2; // below the metric title; above column-label band's start.
+      // Actually column labels live in the top band [paddingT .. gridY]. We want the dendrogram ABOVE the labels.
+      // Better strategy: place dendrogram in [paddingT + axisLabelH .. paddingT + axisLabelH + dendroPx],
+      // and column labels remain in their original band below (between dendrogram and grid).
+      // The grid was shifted down by dendroColH. So the band for dendrogram is
+      //   [topOfBand .. topOfBand + dendroPx] where topOfBand = paddingT (axis label sits at y=paddingT centered text baseline)
+      const bandTop = paddingT + 6; // small gap below axis-label baseline
+      const bandBottom = bandTop + dendroPx;
+      // X for visual leaf position p: gridX + p*cellSize + cellSize/2
+      const xFor = (p: number): number => gridX + p * cellSize + cellSize / 2;
+      // Y maps height h: at h=0 -> bandBottom (leaves), at h=maxHeight -> bandTop (root)
+      const yFor = (h: number): number => bandBottom - (h / maxHeight) * (bandBottom - bandTop);
+
+      parts.push(`<g class="hm-dendro-col" stroke="${stroke}" stroke-width="1" fill="none">`);
+      for (let mi = 0; mi < merges.length; mi++) {
+        const m = merges[mi];
+        const xLeft = xFor(nodePos(m.left));
+        const xRight = xFor(nodePos(m.right));
+        const yLeftChild = yFor(nodeHeight(m.left));
+        const yRightChild = yFor(nodeHeight(m.right));
+        const yMerge = yFor(m.height);
+        // Vertical from left child up to merge node
+        parts.push(`<line x1="${xLeft}" y1="${yLeftChild}" x2="${xLeft}" y2="${yMerge}"/>`);
+        // Vertical from right child up to merge node
+        parts.push(`<line x1="${xRight}" y1="${yRightChild}" x2="${xRight}" y2="${yMerge}"/>`);
+        // Horizontal across at the merge height
+        parts.push(`<line x1="${xLeft}" y1="${yMerge}" x2="${xRight}" y2="${yMerge}"/>`);
+      }
+      parts.push(`</g>`);
+    }
+
+    if (showRow && dendroRowW > 0) {
+      // Row dendrogram occupies a vertical strip on the far left.
+      // The grid was shifted right by dendroRowW. Place the dendrogram in
+      // [leftPad .. leftPad + dendroPx], with leaves on the right (closest
+      // to grid) and the root on the left.
+      const leftPad = 6;
+      const bandLeft = leftPad;
+      const bandRight = leftPad + dendroPx;
+      const yForRow = (p: number): number => gridY + p * cellSize + cellSize / 2;
+      const xForRow = (h: number): number => bandRight - (h / maxHeight) * (bandRight - bandLeft);
+
+      parts.push(`<g class="hm-dendro-row" stroke="${stroke}" stroke-width="1" fill="none">`);
+      for (let mi = 0; mi < merges.length; mi++) {
+        const m = merges[mi];
+        const yTop = yForRow(nodePos(m.left));
+        const yBot = yForRow(nodePos(m.right));
+        const xLeftChild = xForRow(nodeHeight(m.left));
+        const xRightChild = xForRow(nodeHeight(m.right));
+        const xMerge = xForRow(m.height);
+        // Horizontal from each child inward to merge node X
+        parts.push(`<line x1="${xLeftChild}" y1="${yTop}" x2="${xMerge}" y2="${yTop}"/>`);
+        parts.push(`<line x1="${xRightChild}" y1="${yBot}" x2="${xMerge}" y2="${yBot}"/>`);
+        // Vertical at the merge X connecting the two children
+        parts.push(`<line x1="${xMerge}" y1="${yTop}" x2="${xMerge}" y2="${yBot}"/>`);
+      }
+      parts.push(`</g>`);
     }
   }
 
