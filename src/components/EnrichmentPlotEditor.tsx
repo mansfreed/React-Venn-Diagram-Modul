@@ -7,6 +7,7 @@ interface EnrichmentPlotEditorProps {
   plotType: EnrichmentPlotType;
   metric: EnrichmentMetric;
   style: EnrichmentPlotStyle;
+  nSets: number;
   onMetricChange: (m: EnrichmentMetric) => void;
   onUpdateStyle: (patch: Partial<EnrichmentPlotStyle>) => void;
   onResetStyle: () => void;
@@ -23,7 +24,7 @@ const FONT_LABELS: Record<string, string> = {
 };
 
 export function EnrichmentPlotEditor({
-  plotType, metric, style,
+  plotType, metric, style, nSets,
   onMetricChange, onUpdateStyle, onResetStyle, onExit,
 }: EnrichmentPlotEditorProps) {
   const isHeatmap = plotType === 'heatmap';
@@ -143,6 +144,71 @@ export function EnrichmentPlotEditor({
           </button>
         </div>
       </div>
+
+      {isHeatmap && (
+        <div className="plot-editor-group">
+          <div className="plot-editor-label">Axis order</div>
+          <div className="test-show-inline">
+            <button
+              type="button"
+              className={`btn btn-xs btn-toggle ${style.axisOrder === 'original' ? 'btn-toggle-active' : ''}`}
+              onClick={() => onUpdateStyle({ axisOrder: 'original' })}
+            >
+              Original
+            </button>
+            <button
+              type="button"
+              className={`btn btn-xs btn-toggle ${style.axisOrder === 'cluster' ? 'btn-toggle-active' : ''}`}
+              onClick={() => onUpdateStyle({ axisOrder: 'cluster' })}
+              disabled={nSets < 3}
+              title={nSets < 3 ? 'Clustering needs 3 or more sets.' : undefined}
+            >
+              Cluster
+            </button>
+          </div>
+
+          {style.axisOrder === 'cluster' && (
+            <>
+              <div className="test-font-type-row">
+                <label>Linkage</label>
+                <select
+                  className="prop-select"
+                  value={style.linkageMethod}
+                  onChange={e => onUpdateStyle({ linkageMethod: e.target.value as 'average' | 'complete' | 'single' })}
+                >
+                  <option value="average">Average (UPGMA)</option>
+                  <option value="complete">Complete</option>
+                  <option value="single">Single</option>
+                </select>
+              </div>
+
+              <div className="test-font-size">
+                <label>Dendrogram size: {Math.round(style.dendrogramFraction * 100)}%</label>
+                <input
+                  type="range" min="6" max="25" step="1"
+                  value={Math.round(style.dendrogramFraction * 100)}
+                  onChange={e => onUpdateStyle({ dendrogramFraction: Number(e.target.value) / 100 })}
+                />
+              </div>
+
+              <div className="test-show-inline">
+                <button
+                  className={`btn btn-xs btn-toggle ${style.showRowDendrogram ? 'btn-toggle-active' : ''}`}
+                  onClick={() => onUpdateStyle({ showRowDendrogram: !style.showRowDendrogram })}
+                >
+                  Row dendrogram
+                </button>
+                <button
+                  className={`btn btn-xs btn-toggle ${style.showColDendrogram ? 'btn-toggle-active' : ''}`}
+                  onClick={() => onUpdateStyle({ showColDendrogram: !style.showColDendrogram })}
+                >
+                  Column dendrogram
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      )}
 
       <div className="plot-editor-group">
         <div className="plot-editor-label">Visibility</div>

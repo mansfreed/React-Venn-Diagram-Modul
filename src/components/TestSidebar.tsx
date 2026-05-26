@@ -390,6 +390,7 @@ export function TestSidebar({
             plotType={plotEditState.plotType}
             metric={enrichmentMetric}
             style={enrichmentPlotSettings[plotEditState.plotType]}
+            nSets={n}
             onMetricChange={onEnrichmentMetricChange}
             onUpdateStyle={onUpdatePlotStyle}
             onResetStyle={onResetPlotStyle}

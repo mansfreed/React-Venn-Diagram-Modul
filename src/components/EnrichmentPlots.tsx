@@ -11,6 +11,7 @@ import type { EnrichmentMetric } from '../utils/enrichmentPlotSvg.ts';
 import type { EnrichmentPlotSettings, EnrichmentPlotType } from '../utils/enrichmentPlotStyle.ts';
 import { itemShareDistribution } from '../utils/shareDistribution.ts';
 import { buildShareDistributionSvg, DEFAULT_SHARE_DIST_STYLE } from '../utils/shareDistributionSvgBuilder.ts';
+import { clusterSetOrder } from '../utils/clusterHeatmap.ts';
 
 interface EnrichmentPlotsProps {
   stats: PairwiseStat[];
@@ -64,10 +65,32 @@ export function EnrichmentPlots({
     () => buildEnrichmentLollipopSvg(stats, { metric, style: settings.lollipop }),
     [stats, metric, settings.lollipop],
   );
-  const heatmapSvg = useMemo(
-    () => buildEnrichmentHeatmapSvg(stats, setLetters, setNames, { metric, style: settings.heatmap }),
-    [stats, setLetters, setNames, metric, settings.heatmap],
-  );
+  const heatmapSvg = useMemo(() => {
+    const s = settings.heatmap;
+    if (s.axisOrder === 'cluster' && setLetters.length >= 3) {
+      const n = setLetters.length;
+      const letterIndex = new Map<string, number>();
+      setLetters.forEach((ltr, idx) => letterIndex.set(ltr, idx));
+      const D = Array.from({ length: n }, () => Array.from({ length: n }, () => 0));
+      for (const st of stats) {
+        const i = letterIndex.get(st.a);
+        const j = letterIndex.get(st.b);
+        if (i === undefined || j === undefined) continue;
+        D[i][j] = 1 - st.jaccard;
+        D[j][i] = 1 - st.jaccard;
+      }
+      const order = clusterSetOrder(D, s.linkageMethod);
+      return buildEnrichmentHeatmapSvg(stats, setLetters, setNames, {
+        metric,
+        style: s,
+        clusterOrder: order,
+        showRowDendrogram: s.showRowDendrogram,
+        showColDendrogram: s.showColDendrogram,
+        dendrogramFraction: s.dendrogramFraction,
+      });
+    }
+    return buildEnrichmentHeatmapSvg(stats, setLetters, setNames, { metric, style: s });
+  }, [stats, setLetters, setNames, metric, settings.heatmap]);
   const shareDistSvg = useMemo(() => {
     const dist = itemShareDistribution(matrix, setLetters.length);
     return buildShareDistributionSvg(dist, {

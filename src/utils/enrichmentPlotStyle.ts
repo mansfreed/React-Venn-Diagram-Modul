@@ -25,6 +25,12 @@ export interface EnrichmentPlotStyle {
   gradientLowColor: string;
   gradientHighFdrColor: string;
   gradientHighFeColor: string;
+  // Heatmap cluster fields (no-op for other plot kinds):
+  axisOrder: 'original' | 'cluster';
+  linkageMethod: 'average' | 'complete' | 'single';
+  dendrogramFraction: number;
+  showRowDendrogram: boolean;
+  showColDendrogram: boolean;
 }
 
 export const DEFAULT_PLOT_STYLE: EnrichmentPlotStyle = {
@@ -40,6 +46,11 @@ export const DEFAULT_PLOT_STYLE: EnrichmentPlotStyle = {
   gradientLowColor: '#ffffff',
   gradientHighFdrColor: '#1b5e20',
   gradientHighFeColor: '#4a148c',
+  axisOrder: 'original',
+  linkageMethod: 'average',
+  dendrogramFraction: 0.12,
+  showRowDendrogram: true,
+  showColDendrogram: true,
 };
 
 export interface EnrichmentPlotSettings {
