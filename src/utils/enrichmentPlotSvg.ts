@@ -494,14 +494,9 @@ export function buildEnrichmentHeatmapSvg(
     };
 
     if (showCol && dendroColH > 0) {
-      // Column dendrogram sits in the band [colTop .. colBottom] just above gridY.
-      const colBottom = gridY - 2; // just above grid, above column-label band? labels are rotated above grid; place dendro above labels.
-      const colTop = topLabelH + paddingT + 2; // below the metric title; above column-label band's start.
-      // Actually column labels live in the top band [paddingT .. gridY]. We want the dendrogram ABOVE the labels.
-      // Better strategy: place dendrogram in [paddingT + axisLabelH .. paddingT + axisLabelH + dendroPx],
-      // and column labels remain in their original band below (between dendrogram and grid).
-      // The grid was shifted down by dendroColH. So the band for dendrogram is
-      //   [topOfBand .. topOfBand + dendroPx] where topOfBand = paddingT (axis label sits at y=paddingT centered text baseline)
+      // Column dendrogram sits in the band [topOfBand .. topOfBand + dendroPx].
+      // Column labels live in the top band [paddingT .. gridY]; the grid was shifted
+      // down by dendroColH to make room. Dendrogram is placed above the labels.
       const bandTop = paddingT + 6; // small gap below axis-label baseline
       const bandBottom = bandTop + dendroPx;
       // X for visual leaf position p: gridX + p*cellSize + cellSize/2
