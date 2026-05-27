@@ -3,6 +3,14 @@ import { pairwiseStatistics } from './statistics.ts';
 import type { PairwiseStat } from './statistics.ts';
 import { APP_VERSION } from '../version.ts';
 import { ABOUT_REPORT_SECTIONS } from './aboutReport.ts';
+import { itemShareDistribution } from './shareDistribution.ts';
+import { buildShareDistributionSvg, DEFAULT_SHARE_DIST_STYLE } from './shareDistributionSvgBuilder.ts';
+import type { ShareDistStyle } from './shareDistributionSvgBuilder.ts';
+import { clusterSetOrder } from './clusterHeatmap.ts';
+import { buildEnrichmentHeatmapSvg } from './enrichmentPlotSvg.ts';
+import type { EnrichmentMetric } from './enrichmentPlotSvg.ts';
+import type { EnrichmentPlotStyle } from './enrichmentPlotStyle.ts';
+import { svgStringToDataUrl } from './svgToImage.ts';
 
 export interface PdfReportParams {
   title: string;
@@ -32,6 +40,13 @@ export interface PdfReportParams {
   enrichmentHeatmapWidth: number;
   enrichmentHeatmapHeight: number;
   modelName: string;
+  // v2.2.3 additions — optional, additive. If supplied, the heatmap page is
+  // rebuilt to honour the live UI cluster toggle; if omitted, the legacy
+  // pre-rendered PNG is embedded as-is. Item Share Distribution is always
+  // rendered; the style is optional.
+  heatmapStyle?: EnrichmentPlotStyle;
+  heatmapMetric?: EnrichmentMetric;
+  shareDistributionStyle?: ShareDistStyle;
 }
 
 // A4 portrait dimensions in mm
@@ -676,7 +691,88 @@ export async function generatePdfReport(params: PdfReportParams): Promise<Blob> 
   if (y + 70 > PAGE_H - M.bottom) { pdf.addPage(); y = M.top; }
   y = sectionTitle(pdf, 'Heatmap', y, 50);
   const heatmapMaxH = PAGE_H - M.bottom - y - 6;
-  drawPlotImage(enrichmentHeatmapDataUrl, enrichmentHeatmapWidth, enrichmentHeatmapHeight, CONTENT_W, heatmapMaxH);
+
+  // Cluster-aware heatmap: if the caller passed a heatmap style with
+  // axisOrder === 'cluster' (and there are >= 3 sets to cluster), rebuild
+  // the SVG inline and render it to PNG so the PDF reflects the live UI
+  // toggle. Mirrors the logic in EnrichmentPlots.tsx (commit 5906acb).
+  const heatmapStyle = params.heatmapStyle;
+  const heatmapMetric: EnrichmentMetric = params.heatmapMetric ?? 'neglog10fdr';
+  if (heatmapStyle && heatmapStyle.axisOrder === 'cluster' && letters.length >= 3) {
+    const nLetters = letters.length;
+    const letterIndex = new Map<string, number>();
+    letters.forEach((ltr, idx) => letterIndex.set(ltr, idx));
+    const D = Array.from({ length: nLetters }, () => Array.from({ length: nLetters }, () => 0));
+    for (const st of stats) {
+      const i = letterIndex.get(st.a);
+      const j = letterIndex.get(st.b);
+      if (i === undefined || j === undefined) continue;
+      D[i][j] = 1 - st.jaccard;
+      D[j][i] = 1 - st.jaccard;
+    }
+    const order = clusterSetOrder(D, heatmapStyle.linkageMethod);
+    const clusterHeatmapSvg = buildEnrichmentHeatmapSvg(stats, letters, setNames, {
+      metric: heatmapMetric,
+      style: heatmapStyle,
+      clusterOrder: order,
+      showRowDendrogram: heatmapStyle.showRowDendrogram,
+      showColDendrogram: heatmapStyle.showColDendrogram,
+      dendrogramFraction: heatmapStyle.dendrogramFraction,
+    });
+    const rendered = await svgStringToDataUrl(clusterHeatmapSvg);
+    drawPlotImage(rendered.dataUrl, rendered.width, rendered.height, CONTENT_W, heatmapMaxH);
+  } else {
+    drawPlotImage(enrichmentHeatmapDataUrl, enrichmentHeatmapWidth, enrichmentHeatmapHeight, CONTENT_W, heatmapMaxH);
+  }
+
+  // ════════════════════════════════════════════
+  // PAGE: Item Share Distribution
+  // ════════════════════════════════════════════
+  // For each set-membership count k = 1..N, the histogram shows how many
+  // items belong to exactly k sets. Matrix is derived from the Venn result's
+  // exclusive-items partition (same shape as App.tsx's testItemSetMatrix).
+  pdf.addPage();
+  y = M.top;
+  y = pageTitle(pdf, 'Item Share Distribution', y);
+
+  // Derive the binary item × set matrix from vennResult.exclusiveItems.
+  const shareMatrix: number[][] = [];
+  for (const [label, items] of vennResult.exclusiveItems) {
+    const row = letters.map(l => (label.includes(l) ? 1 : 0));
+    for (let i = 0; i < items.length; i++) shareMatrix.push(row);
+  }
+
+  const shareDist = itemShareDistribution(shareMatrix, n);
+  const shareStyle = params.shareDistributionStyle ?? DEFAULT_SHARE_DIST_STYLE;
+  const shareSvg = buildShareDistributionSvg(shareDist, { style: shareStyle });
+  const shareRendered = await svgStringToDataUrl(shareSvg);
+
+  // Place the histogram image at a sensible width, centred.
+  const shareMaxW = Math.min(CONTENT_W, 160);
+  const shareAspect = shareRendered.height / shareRendered.width;
+  const shareW = shareMaxW;
+  const shareH = shareW * shareAspect;
+  const shareX = M.left + (CONTENT_W - shareW) / 2;
+  pdf.addImage(shareRendered.dataUrl, 'PNG', shareX, y, shareW, shareH);
+  y += shareH + 6;
+
+  // Per-membership-count breakdown table.
+  if (y + 30 > PAGE_H - M.bottom) { pdf.addPage(); y = M.top; }
+  y = sectionTitle(pdf, 'Per-membership-count breakdown', y);
+
+  const shareTotal = Array.from(shareDist.values()).reduce((s, v) => s + v, 0) || 1;
+  const shareRows: (string | number)[][] = [];
+  for (const [k, v] of Array.from(shareDist.entries()).sort((a, b) => a[0] - b[0])) {
+    const pct = ((v / shareTotal) * 100).toFixed(1) + '%';
+    const tick = k === 1 ? '1 set' : `${k} sets`;
+    shareRows.push([tick, String(v), pct]);
+  }
+  y = drawTable(pdf, M.left, y,
+    ['Membership count', 'Items', 'Share'],
+    shareRows,
+    [60, 40, 40],
+    { aligns: ['left', 'right', 'right'], fontSize: 8 },
+  );
 
   // ════════════════════════════════════════════
   // LAST PAGE: Methodology & Explanation

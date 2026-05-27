@@ -61,4 +61,12 @@ export const ABOUT_REPORT_SECTIONS: AboutReportSection[] = [
     title: '6. Heatmap',
     text: 'The heatmap renders a symmetric n x n matrix of pairwise -log10(FDR) values. Each cell is shaded from white (no enrichment) to dark green (strong enrichment) according to a linear colour scale shown in the legend on the right. The diagonal is marked with an em-dash because a set is not tested against itself. The matrix is symmetric: the cell (A,B) and the cell (B,A) always share the same value. In the interactive Data-mode panel the same heatmap can be switched to display Fold Enrichment, using a white-to-purple scale instead.',
   },
+  {
+    title: '7. Item Share Distribution',
+    text: 'For each set-membership count k = 1..N, the histogram shows how many items belong to exactly k sets. A right-skewed distribution indicates high redundancy across sets; a left-skewed distribution indicates set-specific items dominate. The accompanying breakdown table lists the exact item count and percentage share for each membership level.',
+  },
+  {
+    title: '8. Cluster Heatmap',
+    text: 'Rows and columns are reordered by hierarchical clustering on 1 - Jaccard distance. The default linkage is average (UPGMA); single and complete linkage are also available. The dendrograms above and to the left of the grid show the cluster structure; closer joins indicate more similar set composition. The Original / Cluster toggle in the Data-mode panel controls which ordering is used in the live view and in this PDF.',
+  },
 ];

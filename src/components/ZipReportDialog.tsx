@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import type { VennResult } from '../utils/csvParser.ts';
 import type { VennDocument } from '../types.ts';
 import type { ProportionalAccuracy } from '../utils/proportionalLayout.ts';
+import type { EnrichmentPlotSettings } from '../utils/enrichmentPlotStyle.ts';
 import { generateZipReport } from '../utils/zipReport.ts';
 
 interface ZipReportDialogProps {
@@ -17,12 +18,14 @@ interface ZipReportDialogProps {
   title: string;
   modelName: string;
   proportionalAccuracy?: ProportionalAccuracy | null;
+  enrichmentPlotSettings?: EnrichmentPlotSettings;
 }
 
 export function ZipReportDialog({
   isOpen, onClose,
   vennResult, doc, n, setNames, totalItems, totalFileRows,
   filename, title, modelName, proportionalAccuracy,
+  enrichmentPlotSettings,
 }: ZipReportDialogProps) {
   const [step, setStep] = useState('Preparing...');
   const [percent, setPercent] = useState(0);
@@ -37,6 +40,7 @@ export function ZipReportDialog({
         const blob = await generateZipReport({
           doc, vennResult, n, setNames, totalItems, totalFileRows,
           filename, title, modelName, proportionalAccuracy,
+          enrichmentPlotSettings,
           onProgress: (label, pct) => {
             if (cancelled) return;
             setStep(label);

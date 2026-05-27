@@ -5,6 +5,7 @@ import { svgStringToDataUrl } from '../utils/svgToImage.ts';
 import { generatePdfReport } from '../utils/pdfReport.ts';
 import { pairwiseStatistics } from '../utils/statistics.ts';
 import { buildReportArtefacts } from '../utils/reportArtefacts.ts';
+import type { EnrichmentPlotSettings } from '../utils/enrichmentPlotStyle.ts';
 
 interface PdfReportDialogProps {
   isOpen: boolean;
@@ -19,12 +20,14 @@ interface PdfReportDialogProps {
   title: string;
   modelName: string;
   proportionalAccuracy?: { single?: Map<string, number>; pairwise: Map<string, number>; triple?: number; overall: number } | null;
+  enrichmentPlotSettings?: EnrichmentPlotSettings;
 }
 
 export function PdfReportDialog({
   isOpen, onClose,
   vennResult, doc, n, setNames, totalItems, totalFileRows,
   filename, title, modelName, proportionalAccuracy,
+  enrichmentPlotSettings,
 }: PdfReportDialogProps) {
   const [step, setStep] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -88,6 +91,18 @@ export function PdfReportDialog({
           enrichmentHeatmapHeight: enrichmentHeatmap.height,
           modelName,
           proportionalAccuracy,
+          heatmapStyle: enrichmentPlotSettings?.heatmap,
+          heatmapMetric: 'neglog10fdr',
+          shareDistributionStyle: enrichmentPlotSettings ? {
+            background: enrichmentPlotSettings.shareDistribution.background,
+            fontSize: enrichmentPlotSettings.shareDistribution.fontSize,
+            fontFamily: enrichmentPlotSettings.shareDistribution.fontFamily,
+            gradientLow: enrichmentPlotSettings.shareDistribution.gradientLowColor,
+            gradientHigh: enrichmentPlotSettings.shareDistribution.gradientHighFdrColor,
+            showPercent: false,
+            showAxisLabel: enrichmentPlotSettings.shareDistribution.showAxisLabel,
+            logScale: false,
+          } : undefined,
         });
 
         if (cancelled) return;
@@ -113,7 +128,7 @@ export function PdfReportDialog({
 
     generate();
     return () => { cancelled = true; };
-  }, [doc, filename, isOpen, modelName, n, onClose, proportionalAccuracy, setNames, title, totalFileRows, totalItems, vennResult]);
+  }, [doc, filename, isOpen, modelName, n, onClose, proportionalAccuracy, setNames, title, totalFileRows, totalItems, vennResult, enrichmentPlotSettings]);
 
   if (!isOpen) return null;
 

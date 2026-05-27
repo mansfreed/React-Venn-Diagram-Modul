@@ -12,6 +12,7 @@ import type { VennDocument } from '../types.ts';
 import type { VennResult } from './csvParser.ts';
 import type { ProportionalAccuracy } from './proportionalLayout.ts';
 import type { PairwiseStat } from './statistics.ts';
+import type { EnrichmentPlotSettings } from './enrichmentPlotStyle.ts';
 import { pairwiseStatistics } from './statistics.ts';
 import { exportRegionSummaryTsv, exportMatrixTsv } from './exportData.ts';
 import { buildReportArtefacts } from './reportArtefacts.ts';
@@ -31,6 +32,7 @@ export interface ZipReportParams {
   title: string;
   modelName: string;
   proportionalAccuracy?: ProportionalAccuracy | null;
+  enrichmentPlotSettings?: EnrichmentPlotSettings;
   onProgress?: (step: string, percent: number) => void;
 }
 
@@ -245,6 +247,18 @@ export async function generateZipReport(params: ZipReportParams): Promise<Blob> 
     enrichmentHeatmapHeight: enrichmentHeatmap.height,
     modelName: params.modelName,
     proportionalAccuracy: params.proportionalAccuracy,
+    heatmapStyle: params.enrichmentPlotSettings?.heatmap,
+    heatmapMetric: 'neglog10fdr',
+    shareDistributionStyle: params.enrichmentPlotSettings ? {
+      background: params.enrichmentPlotSettings.shareDistribution.background,
+      fontSize: params.enrichmentPlotSettings.shareDistribution.fontSize,
+      fontFamily: params.enrichmentPlotSettings.shareDistribution.fontFamily,
+      gradientLow: params.enrichmentPlotSettings.shareDistribution.gradientLowColor,
+      gradientHigh: params.enrichmentPlotSettings.shareDistribution.gradientHighFdrColor,
+      showPercent: false,
+      showAxisLabel: params.enrichmentPlotSettings.shareDistribution.showAxisLabel,
+      logScale: false,
+    } : undefined,
   });
   zip.file(`venn_report_${n}-sets.pdf`, pdfBlob);
 

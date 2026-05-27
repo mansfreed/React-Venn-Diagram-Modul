@@ -2021,6 +2021,7 @@ export default function App() {
           title={doc.texts.header?.content ?? testCsvFilename ?? 'Venn Diagram Report'}
           modelName={testModel ?? ''}
           proportionalAccuracy={proportionalAccuracy}
+          enrichmentPlotSettings={testEnrichmentPlotSettings}
         />
       )}
 
@@ -2038,6 +2039,7 @@ export default function App() {
           title={doc.texts.header?.content ?? testCsvFilename ?? 'Venn Diagram Report'}
           modelName={testModel ?? ''}
           proportionalAccuracy={proportionalAccuracy}
+          enrichmentPlotSettings={testEnrichmentPlotSettings}
         />
       )}
 
