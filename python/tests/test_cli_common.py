@@ -25,11 +25,14 @@ def test_load_input_path(tmp_path: Path) -> None:
     assert hasattr(ds, "set_names")
 
 
+_EXPECTED_SETS_CANCER = 4
+
+
 def test_load_input_sample() -> None:
     """A registered sample name is loaded via load_sample()."""
     ds = load_input("dataset_real_cancer_drivers_4")
     assert ds is not None
-    assert len(ds.set_names) == 4
+    assert len(ds.set_names) == _EXPECTED_SETS_CANCER
 
 
 def test_load_input_unknown_raises_typer_exit() -> None:

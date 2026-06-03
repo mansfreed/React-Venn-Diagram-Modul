@@ -7,17 +7,19 @@ from pathlib import Path
 
 from typer.testing import CliRunner
 
+from venn_diagram_lab.analysis import list_models
 from venn_diagram_lab.cli import app
 
 runner = CliRunner()
 SAMPLE = "dataset_real_cancer_drivers_4"
+_EXPECTED_SETS_CANCER = 4
 
 
 def test_data_validate_good_sample_emits_json() -> None:
     res = runner.invoke(app, ["data", "validate", SAMPLE])
     assert res.exit_code == 0, res.output
     doc = json.loads(res.output)
-    assert len(doc["sets"]) == 4
+    assert len(doc["sets"]) == _EXPECTED_SETS_CANCER
     assert doc["item_count"] > 0
     assert isinstance(doc["errors"], list)
     assert doc["errors"] == []
@@ -70,7 +72,6 @@ def test_data_convert_csv_to_tsv(tmp_path: Path) -> None:
 
 def test_data_fit_model() -> None:
     """The suggested model name must exist in list_models()."""
-    from venn_diagram_lab.analysis import list_models
 
     res = runner.invoke(app, ["data", "fit-model", SAMPLE])
     assert res.exit_code == 0

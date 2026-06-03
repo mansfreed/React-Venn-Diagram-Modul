@@ -7,13 +7,19 @@ from pathlib import Path
 import pytest
 from typer.testing import CliRunner
 
+from venn_diagram_lab.analysis import analyze
 from venn_diagram_lab.cli import app
+from venn_diagram_lab.render.svg import render_venn_svg
+from venn_diagram_lab.samples import load_sample
 
 runner = CliRunner()
 SAMPLE = "dataset_real_cancer_drivers_4"
+_EXPECTED_BARS = 4   # 4 sets → 4 sd-bar rects
 
 
-def test_render_venn_from_sample_default_out(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+def test_render_venn_from_sample_default_out(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path,
+) -> None:
     """`vdl render venn <sample>` writes <sample>__venn.svg in CWD."""
     monkeypatch.chdir(tmp_path)
     res = runner.invoke(app, ["render", "venn", SAMPLE])
@@ -49,10 +55,6 @@ def test_render_venn_dry_run(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) ->
 
 def test_render_venn_parity_with_api(tmp_path: Path) -> None:
     """CLI byte-equivalent to direct Python API call."""
-    from venn_diagram_lab.analysis import analyze
-    from venn_diagram_lab.render.svg import render_venn_svg
-    from venn_diagram_lab.samples import load_sample
-
     api_target = tmp_path / "api.svg"
     cli_target = tmp_path / "cli.svg"
     img = render_venn_svg(analyze(load_sample(SAMPLE)))
@@ -105,7 +107,7 @@ def test_render_share_dist(tmp_path: Path) -> None:
     assert res.exit_code == 0, res.output
     assert target.exists()
     body = target.read_text(encoding="utf-8")
-    assert body.count('class="sd-bar"') == 4
+    assert body.count('class="sd-bar"') == _EXPECTED_BARS
 
 
 def test_render_all_writes_bundle(tmp_path: Path) -> None:

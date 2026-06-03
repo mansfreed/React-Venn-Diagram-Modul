@@ -7,7 +7,9 @@ from pathlib import Path
 import pytest
 from typer.testing import CliRunner
 
+from venn_diagram_lab.analysis import analyze
 from venn_diagram_lab.cli import app
+from venn_diagram_lab.samples import load_sample
 
 runner = CliRunner()
 
@@ -55,9 +57,6 @@ def test_export_unknown_input_exits_1(tmp_path: Path) -> None:
 
 def test_export_parity_with_api(tmp_path: Path) -> None:
     """CLI byte-equivalent to direct Python API call."""
-    from venn_diagram_lab.analysis import analyze
-    from venn_diagram_lab.samples import load_sample
-
     api_target = tmp_path / "api.tsv"
     cli_target = tmp_path / "cli.tsv"
     result = analyze(load_sample(SAMPLE))
