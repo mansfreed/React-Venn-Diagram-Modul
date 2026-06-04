@@ -229,6 +229,29 @@ _BH_DISCUSSION_MD = (
     "  signal is real, not a multiple-testing artefact.\n"
 )
 
+_ENRICH_PLOTS_MD = (
+    "## Pairwise enrichment plots — bar, lollipop, heatmap\n\n"
+    "The web tool's Statistics panel shows the same pairwise data three ways:\n"
+    "as a bar chart, a lollipop chart, and a clustered heatmap. Python now\n"
+    "exposes all three under `venn_diagram_lab.render.svg`. Each accepts the\n"
+    "same `metric` selector — `'neglog10fdr'` (default, `-log10` of BH-FDR)\n"
+    "or `'foldEnrichment'` — and a common significance palette\n"
+    "(`#2e7d32` for FDR<0.05, `#888888` otherwise) plus `***`/`**`/`*`\n"
+    "markers. The heatmap visualises Jaccard similarity instead, with an\n"
+    "optional UPGMA reordering."
+)
+
+_ENRICH_PLOTS_CODE = (
+    "from venn_diagram_lab.render.svg import (\n"
+    "    render_cluster_heatmap_svg,\n"
+    "    render_enrichment_bar_svg,\n"
+    "    render_enrichment_lollipop_svg,\n"
+    ")\n\n"
+    "display(render_enrichment_bar_svg(result))\n"
+    "display(render_enrichment_lollipop_svg(result, metric='foldEnrichment'))\n"
+    "display(render_cluster_heatmap_svg(result, linkage='average'))"
+)
+
 _TSV_MD = "## Reproducing the web tool's TSV export"
 
 _TSV_CODE = (
@@ -304,11 +327,15 @@ CELLS = [
     ("code", _BH_CODE),
     # 27. BH discussion
     ("md", _BH_DISCUSSION_MD),
-    # 28. TSV export section header
+    # 28. Enrichment plots section header + explanation
+    ("md", _ENRICH_PLOTS_MD),
+    # 29. Three plots side-by-side (bar, lollipop, heatmap)
+    ("code", _ENRICH_PLOTS_CODE),
+    # 30. TSV export section header
     ("md", _TSV_MD),
-    # 29. TSV export code
+    # 31. TSV export code
     ("code", _TSV_CODE),
-    # 30. Next steps
+    # 32. Next steps
     ("md", _NEXT_STEPS_MD),
 ]
 

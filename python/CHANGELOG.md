@@ -7,6 +7,23 @@ summarises the Python-only changes.
 
 [root]: https://github.com/ZoliQua/Venn-Diagram-Lab/blob/main/CHANGELOG.md
 
+## v2.2.3 — 2026-05-31 — Enrichment bar + lollipop + data lookup
+
+- New `render_enrichment_bar_svg(result, metric=...)` and
+  `render_enrichment_lollipop_svg(result, metric=...)` — close the 3-card
+  Statistics-panel gap with the webtool (bar + lollipop + heatmap).
+- Two metrics supported per renderer: `"neglog10fdr"` (default) and
+  `"foldEnrichment"`; significance palette and markers match
+  `DEFAULT_PLOT_STYLE` from `src/utils/enrichmentPlotStyle.ts`.
+- New CLI commands `vdl render bar` and `vdl render lollipop` (alphabetical
+  position in the catalog table; epilogs follow the same shape as the
+  other render subcommands).
+- New `vdl data lookup <INPUT> <ITEM>` — script-friendly equivalent of the
+  webtool's Find Item global search; prints every region containing the
+  item with its set composition and exclusive-item count.
+- Tests +8 (`tests/test_cli_render.py`, `tests/test_cli_data.py`); ruff +
+  mypy clean; full suite 455 passing.
+
 ## v2.2.2 — 2026-05-31 — Item Share Distribution + Cluster Heatmap
 
 - New `item_share_distribution(matrix)` returning a per-membership-count

@@ -131,3 +131,39 @@ def test_data_describe_no_input_no_sample_exits_1() -> None:
     res = runner.invoke(app, ["data", "describe"])
     assert res.exit_code == 1
     assert "INPUT required" in res.output or "use --sample" in res.output
+
+
+# ----- data lookup (v2.2.3) -------------------------------------------------
+
+
+def test_data_lookup_known_item() -> None:
+    """An item that exists in the cancer-drivers dataset prints 'found in'."""
+    res = runner.invoke(app, ["data", "lookup", SAMPLE, "TP53"])
+    assert res.exit_code == 0, res.output
+    assert "TP53" in res.output
+    assert "found in" in res.output
+    # TP53 is in all four catalogs of dataset_real_cancer_drivers_4, so the
+    # match must be the 4-way region "ABCD".
+    assert "ABCD" in res.output
+
+
+def test_data_lookup_unknown_item() -> None:
+    """An item that doesn't exist prints 'not found' but still exits 0."""
+    res = runner.invoke(app, ["data", "lookup", SAMPLE, "NOTAGENE_XYZ"])
+    assert res.exit_code == 0, res.output
+    assert "not found" in res.output
+
+
+def test_data_lookup_with_sample_flag() -> None:
+    """`vdl data lookup --sample TP53` skips the INPUT positional."""
+    res = runner.invoke(app, ["data", "lookup", "--sample", "TP53"])
+    assert res.exit_code == 0, res.output
+    assert "TP53" in res.output
+    assert "found in" in res.output
+
+
+def test_data_lookup_missing_item_exits_1() -> None:
+    """No ITEM argument exits 1 with a clear message."""
+    res = runner.invoke(app, ["data", "lookup", SAMPLE])
+    assert res.exit_code == 1
+    assert "ITEM required" in res.output or "item" in res.output.lower()

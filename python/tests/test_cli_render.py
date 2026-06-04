@@ -193,3 +193,62 @@ def test_render_venn_no_input_no_sample_exits_1() -> None:
     res = runner.invoke(app, ["render", "venn"])
     assert res.exit_code == 1
     assert "INPUT required" in res.output or "use --sample" in res.output
+
+
+# ----- enrichment bar + lollipop (v2.2.3) -----------------------------------
+
+
+def test_render_bar_with_sample(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path,
+) -> None:
+    """`vdl render bar --sample` writes the default-named bar.svg in CWD."""
+    monkeypatch.chdir(tmp_path)
+    res = runner.invoke(app, ["render", "bar", "--sample"])
+    assert res.exit_code == 0, res.output
+    target = tmp_path / f"{SAMPLE}__bar.svg"
+    assert target.exists()
+    body = target.read_text(encoding="utf-8")
+    assert body.lstrip().startswith("<svg")
+    # Default metric is neglog10fdr — the axis label should reflect it.
+    assert "log" in body and "FDR" in body
+
+
+def test_render_bar_metric_fold_enrichment(tmp_path: Path) -> None:
+    """`--metric foldEnrichment` renders the same chart with the FE axis label."""
+    target = tmp_path / "bar.svg"
+    res = runner.invoke(
+        app,
+        [
+            "render", "bar", SAMPLE,
+            "--metric", "foldEnrichment",
+            "--out", str(target),
+        ],
+    )
+    assert res.exit_code == 0, res.output
+    assert target.exists()
+    body = target.read_text(encoding="utf-8")
+    assert "Fold Enrichment" in body
+
+
+def test_render_lollipop_with_sample(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path,
+) -> None:
+    """`vdl render lollipop --sample` writes the default-named lollipop.svg."""
+    monkeypatch.chdir(tmp_path)
+    res = runner.invoke(app, ["render", "lollipop", "--sample"])
+    assert res.exit_code == 0, res.output
+    target = tmp_path / f"{SAMPLE}__lollipop.svg"
+    assert target.exists()
+    body = target.read_text(encoding="utf-8")
+    # The hallmark of a lollipop vs a bar is the circle + stem line.
+    assert "<circle" in body
+
+
+def test_render_bar_invalid_metric_exits_nonzero(tmp_path: Path) -> None:
+    """An unknown metric value is rejected by the renderer."""
+    target = tmp_path / "bar.svg"
+    res = runner.invoke(
+        app,
+        ["render", "bar", SAMPLE, "--metric", "not_a_metric", "--out", str(target)],
+    )
+    assert res.exit_code != 0

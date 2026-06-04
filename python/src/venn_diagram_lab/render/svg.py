@@ -26,6 +26,8 @@ if TYPE_CHECKING:
 __all__ = [
     "SvgImage",
     "render_cluster_heatmap_svg",
+    "render_enrichment_bar_svg",
+    "render_enrichment_lollipop_svg",
     "render_share_distribution_svg",
     "render_venn_svg",
 ]
@@ -755,3 +757,504 @@ def _append_hm_dendrograms(
                 f'x2="{x_merge}" y2="{y_bot}"/>'
             )
         parts.append("</g>")
+
+
+# ---------------------------------------------------------------------------
+# Enrichment bar + lollipop renderers (v2.2.3)
+#
+# Mirrors src/utils/enrichmentPlotSvg.ts (buildEnrichmentBarSvg + lollipop).
+# Pure string construction (parts + "".join) — same pattern as the share
+# distribution + cluster heatmap renderers. Layout, colors, and significance
+# markers match DEFAULT_PLOT_STYLE (Tahoma, #2e7d32 / #888888, ***/**/*).
+# ---------------------------------------------------------------------------
+
+_EP_FDR_FLOOR = 1e-300
+_EP_COLOR_AXIS = "#888888"
+_EP_COLOR_GRID = "#e8e8e8"
+_EP_COLOR_TEXT = "#222222"
+_EP_COLOR_TEXT_MUTED = "#555555"
+_EP_SIG_COLOR = "#2e7d32"  # DEFAULT_PLOT_STYLE.sigColor
+_EP_NS_COLOR = "#888888"   # DEFAULT_PLOT_STYLE.nsColor
+_EP_FONT_FAMILY = "Tahoma,sans-serif"
+_EP_FONT_SIZE_BASE = 10  # DEFAULT_PLOT_STYLE.fontSize
+_EP_SIG_THRESHOLD = 0.05
+_EP_SIG_TRIPLE = 0.001
+_EP_SIG_DOUBLE = 0.01
+_EP_METRIC_NEGLOG10FDR = "neglog10fdr"
+_EP_METRIC_FOLDENRICHMENT = "foldEnrichment"
+
+_EP_MARGIN_TOP = 24
+_EP_MARGIN_RIGHT = 16
+_EP_MARGIN_BOTTOM = 52
+_EP_MARGIN_LEFT = 48
+
+_EP_NICE_TICK_FRACTION_15 = 1.5
+_EP_NICE_TICK_FRACTION_3 = 3
+_EP_NICE_TICK_FRACTION_7 = 7
+_EP_TICK_FORMAT_BIG = 100
+_EP_TICK_FORMAT_SMALL = 0.1
+
+_LOLLIPOP_MIN_DOT_R = 2.5
+_LOLLIPOP_MAX_DOT_R = 8.0
+_LOLLIPOP_BAR_W_MAX = 22
+
+
+@dataclass(frozen=True)
+class _PairStat:
+    """Internal pairwise statistic struct used by the bar + lollipop renderers."""
+
+    a: str  # set letter (e.g. "A")
+    b: str  # set letter (e.g. "B")
+    label: str  # concatenated label, e.g. "AB"
+    intersection: int
+    fold_enrichment: float
+    fdr: float
+    neglog10fdr: float
+
+
+def _sig_marker(fdr: float) -> str:
+    """Return ``"***"`` / ``"**"`` / ``"*"`` / ``""`` for the given FDR."""
+    if fdr < _EP_SIG_TRIPLE:
+        return "***"
+    if fdr < _EP_SIG_DOUBLE:
+        return "**"
+    if fdr < _EP_SIG_THRESHOLD:
+        return "*"
+    return ""
+
+
+def _metric_label(metric: str) -> str:
+    """Return the human-readable Y-axis label for the given metric."""
+    if metric == _EP_METRIC_FOLDENRICHMENT:
+        return "Fold Enrichment"
+    # U+2212 MINUS SIGN + U+2081 / U+2080 subscript digits to match the
+    # webtool's TS source byte-for-byte.
+    return "−log₁₀(FDR)"  # noqa: RUF001
+
+
+def _nice_ticks(maxv: float, count: int = 4) -> list[float]:
+    """Compute a small "nice" tick list bracketing zero to ``maxv``.
+
+    Port of ``niceTicks`` from enrichmentPlotSvg.ts.
+    """
+    import math  # noqa: PLC0415
+    if not (maxv > 0) or not math.isfinite(maxv):
+        return [0.0, 1.0]
+    raw = maxv / count
+    pow_ = math.pow(10.0, math.floor(math.log10(raw)))
+    normalized = raw / pow_
+    if normalized < _EP_NICE_TICK_FRACTION_15:
+        step_mult = 1
+    elif normalized < _EP_NICE_TICK_FRACTION_3:
+        step_mult = 2
+    elif normalized < _EP_NICE_TICK_FRACTION_7:
+        step_mult = 5
+    else:
+        step_mult = 10
+    step = step_mult * pow_
+    ticks: list[float] = []
+    v = 0.0
+    # Cap iterations defensively (matches TS' bounded loop in practice).
+    while v <= maxv + step * 0.0001:
+        ticks.append(round(v, 10))
+        v += step
+    return ticks
+
+
+def _format_tick(v: float) -> str:
+    """Format a tick value following the TS ``formatTick`` rules."""
+    if v == 0:
+        return "0"
+    av = abs(v)
+    if av >= _EP_TICK_FORMAT_BIG or av < _EP_TICK_FORMAT_SMALL:
+        # Mirror JS toExponential(1): "1.2e+2" or "5.0e-3".
+        import math  # noqa: PLC0415
+        exp = math.floor(math.log10(av))
+        mantissa = v / math.pow(10.0, exp)
+        sign = "+" if exp >= 0 else "-"
+        return f"{mantissa:.1f}e{sign}{abs(exp)}"
+    if v == int(v):
+        return str(int(v))
+    return f"{v:.1f}"
+
+
+def _esc(s: object) -> str:
+    """Minimal XML escape (matches the TS ``esc`` helper)."""
+    return (
+        str(s)
+        .replace("&", "&amp;")
+        .replace("<", "&lt;")
+        .replace(">", "&gt;")
+        .replace('"', "&quot;")
+    )
+
+
+def _collect_pair_stats(result: RegionResult) -> list[_PairStat]:
+    """Assemble pairwise statistics in canonical (i,j) order for plotting.
+
+    Reads ``result.statistics.hypergeometric`` (long-form, sorted by p_value)
+    and re-emits the rows in the deterministic ``i < j`` set-index order so
+    bar/lollipop charts always render A-B, A-C, ..., B-C, ... regardless of
+    the hypergeometric table's p-value sort.
+    """
+    import math  # noqa: PLC0415
+
+    stats = result.statistics
+    set_names = list(result.dataset.set_names)
+    n = len(set_names)
+    name_to_idx = {name: i for i, name in enumerate(set_names)}
+    name_to_letter = {name: _LETTERS[i] for i, name in enumerate(set_names)}
+
+    # Index the long-form table by (set_a, set_b).
+    by_pair: dict[tuple[str, str], dict[str, float]] = {}
+    if not stats.hypergeometric.empty:
+        for _, row in stats.hypergeometric.iterrows():
+            a_name = str(row["set_a"])
+            b_name = str(row["set_b"])
+            by_pair[(a_name, b_name)] = {
+                "intersection": float(row["intersection"]),
+                "p_adjusted": float(row["p_adjusted"]),
+            }
+
+    out: list[_PairStat] = []
+    fe_df = stats.fold_enrichment
+    for i in range(n):
+        for j in range(i + 1, n):
+            a_name = set_names[i]
+            b_name = set_names[j]
+            payload = by_pair.get((a_name, b_name)) or by_pair.get((b_name, a_name))
+            if payload is None:
+                continue
+            fdr = max(payload["p_adjusted"], _EP_FDR_FLOOR)
+            inter = int(payload["intersection"])
+            # pandas-stubs widens iat's return to Any-of-many; the
+            # fold_enrichment table is numeric by construction so an
+            # explicit cast to float is safe (mirrors the heatmap path).
+            fe = float(cast(float, fe_df.iat[i, j])) if not fe_df.empty else 0.0
+            neglog = -math.log10(fdr)
+            out.append(
+                _PairStat(
+                    a=name_to_letter[a_name],
+                    b=name_to_letter[b_name],
+                    label=name_to_letter[a_name] + name_to_letter[b_name],
+                    intersection=inter,
+                    fold_enrichment=fe,
+                    fdr=fdr,
+                    neglog10fdr=neglog,
+                )
+            )
+    # silence unused-warning on the helper map
+    _ = name_to_idx
+    return out
+
+
+def _metric_value(s: _PairStat, metric: str) -> float:
+    """Return the chosen metric's value for one pair."""
+    if metric == _EP_METRIC_FOLDENRICHMENT:
+        return s.fold_enrichment
+    return s.neglog10fdr
+
+
+def _validate_metric(metric: str) -> None:
+    """Raise ``ValueError`` when ``metric`` is not a supported literal."""
+    if metric not in (_EP_METRIC_NEGLOG10FDR, _EP_METRIC_FOLDENRICHMENT):
+        raise ValueError(
+            f"metric must be {_EP_METRIC_NEGLOG10FDR!r} or "
+            f"{_EP_METRIC_FOLDENRICHMENT!r}, got {metric!r}"
+        )
+
+
+def render_enrichment_bar_svg(
+    result: RegionResult,
+    *,
+    metric: str = "neglog10fdr",
+    width: int = 560,
+    height: int = 240,
+) -> SvgImage:
+    """Render the pairwise-enrichment bar chart.
+
+    Mirrors the webtool's ``buildEnrichmentBarSvg``
+    (src/utils/enrichmentPlotSvg.ts). One bar per pairwise stat, ordered
+    by ``(set_a_index, set_b_index)``. Bar height is proportional to the
+    chosen ``metric``:
+
+    * ``"neglog10fdr"`` (default): ``-log10(BH-FDR)``, floor 1e-300.
+    * ``"foldEnrichment"``: ``(k * N) / (K * n)`` from
+      :class:`~venn_diagram_lab.statistics.StatisticsResult.fold_enrichment`.
+
+    Bars use ``#2e7d32`` for significant pairs (``FDR < 0.05``) and
+    ``#888888`` otherwise. Significance markers ``***`` (``< 0.001``),
+    ``**`` (``< 0.01``), and ``*`` (``< 0.05``) appear above each bar.
+
+    Parameters
+    ----------
+    result
+        :class:`RegionResult` from :func:`venn_diagram_lab.analyze`.
+    metric
+        Bar-height metric — ``"neglog10fdr"`` or ``"foldEnrichment"``.
+    width, height
+        Output SVG dimensions in pixels.
+
+    Returns
+    -------
+    SvgImage
+        Rendered chart; ``width`` and ``height`` mirror the input args.
+    """
+    _validate_metric(metric)
+    pairs = _collect_pair_stats(result)
+
+    plot_x = _EP_MARGIN_LEFT
+    plot_y = _EP_MARGIN_TOP
+    plot_w = width - _EP_MARGIN_LEFT - _EP_MARGIN_RIGHT
+    plot_h = height - _EP_MARGIN_TOP - _EP_MARGIN_BOTTOM
+    ff = _EP_FONT_FAMILY
+
+    parts: list[str] = []
+    parts.append(
+        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}" '
+        f'width="{width}" height="{height}">'
+    )
+    parts.append(f'<rect width="{width}" height="{height}" fill="#ffffff"/>')
+
+    if not pairs:
+        parts.append(
+            f'<text x="{width / 2}" y="{height / 2}" fill="{_EP_COLOR_TEXT_MUTED}" '
+            f'font-family="{ff}" font-size="11" text-anchor="middle">'
+            f"No pairs to plot</text>"
+        )
+        parts.append("</svg>")
+        return SvgImage(svg="".join(parts), width=width, height=height)
+
+    values = [_metric_value(s, metric) for s in pairs]
+    max_val = max(0.0, *values) if values else 0.0
+    ticks = _nice_ticks(max_val or 1.0)
+    y_max = max(max_val, ticks[-1] if ticks else 1.0)
+
+    n = len(pairs)
+    slot_w = plot_w / n
+    bar_w = min(_LOLLIPOP_BAR_W_MAX, slot_w * 0.7)
+
+    for t in ticks:
+        y = plot_y + plot_h - (t / y_max) * plot_h if y_max > 0 else plot_y + plot_h
+        parts.append(
+            f'<line x1="{plot_x}" y1="{y}" x2="{plot_x + plot_w}" y2="{y}" '
+            f'stroke="{_EP_COLOR_GRID}" stroke-width="1"/>'
+        )
+        parts.append(
+            f'<text x="{plot_x - 4}" y="{y + 3}" fill="{_EP_COLOR_TEXT_MUTED}" '
+            f'font-family="{ff}" font-size="9" text-anchor="end">'
+            f"{_esc(_format_tick(t))}</text>"
+        )
+
+    parts.append(
+        f'<line x1="{plot_x}" y1="{plot_y}" x2="{plot_x}" y2="{plot_y + plot_h}" '
+        f'stroke="{_EP_COLOR_AXIS}" stroke-width="1"/>'
+    )
+    parts.append(
+        f'<line x1="{plot_x}" y1="{plot_y + plot_h}" x2="{plot_x + plot_w}" '
+        f'y2="{plot_y + plot_h}" stroke="{_EP_COLOR_AXIS}" stroke-width="1"/>'
+    )
+
+    for i, s in enumerate(pairs):
+        v = values[i]
+        cx = plot_x + slot_w * i + slot_w / 2
+        bar_h = max(0.0, (v / y_max) * plot_h) if y_max > 0 else 0.0
+        y = plot_y + plot_h - bar_h
+        color = _EP_SIG_COLOR if s.fdr < _EP_SIG_THRESHOLD else _EP_NS_COLOR
+        parts.append(
+            f'<rect x="{cx - bar_w / 2}" y="{y}" width="{bar_w}" height="{bar_h}" '
+            f'rx="1.5" fill="{color}" opacity="0.85"/>'
+        )
+        marker = _sig_marker(s.fdr)
+        if marker:
+            parts.append(
+                f'<text x="{cx}" y="{y - 3}" fill="{_EP_COLOR_TEXT}" '
+                f'font-family="{ff}" font-size="9" text-anchor="middle" '
+                f'font-weight="bold">{marker}</text>'
+            )
+        lx = cx
+        ly = plot_y + plot_h + 10
+        parts.append(
+            f'<text x="{lx}" y="{ly}" fill="{_EP_COLOR_TEXT}" font-family="{ff}" '
+            f'font-size="9" text-anchor="end" '
+            f'transform="rotate(-45 {lx} {ly})">{_esc(s.label)}</text>'
+        )
+
+    y_label_x = 14
+    y_label_y = plot_y + plot_h / 2
+    parts.append(
+        f'<text x="{y_label_x}" y="{y_label_y}" fill="{_EP_COLOR_TEXT}" '
+        f'font-family="{ff}" font-size="10" font-weight="bold" '
+        f'text-anchor="middle" '
+        f'transform="rotate(-90 {y_label_x} {y_label_y})">'
+        f"{_esc(_metric_label(metric))}</text>"
+    )
+
+    legend_y = height - 12
+    parts.append(
+        f'<rect x="{plot_x}" y="{legend_y - 6}" width="8" height="8" '
+        f'fill="{_EP_SIG_COLOR}" opacity="0.85"/>'
+    )
+    parts.append(
+        f'<text x="{plot_x + 12}" y="{legend_y}" fill="{_EP_COLOR_TEXT_MUTED}" '
+        f'font-family="{ff}" font-size="9">FDR &lt; 0.05</text>'
+    )
+    parts.append(
+        f'<rect x="{plot_x + 70}" y="{legend_y - 6}" width="8" height="8" '
+        f'fill="{_EP_NS_COLOR}" opacity="0.85"/>'
+    )
+    parts.append(
+        f'<text x="{plot_x + 82}" y="{legend_y}" fill="{_EP_COLOR_TEXT_MUTED}" '
+        f'font-family="{ff}" font-size="9">not significant</text>'
+    )
+
+    parts.append("</svg>")
+    return SvgImage(svg="".join(parts), width=width, height=height)
+
+
+def render_enrichment_lollipop_svg(
+    result: RegionResult,
+    *,
+    metric: str = "neglog10fdr",
+    width: int = 560,
+    height: int = 240,
+) -> SvgImage:
+    """Render the pairwise-enrichment lollipop chart.
+
+    Same data + significance scheme as :func:`render_enrichment_bar_svg`
+    but as a stem-and-dot plot: a vertical line rises from the baseline
+    to the metric value, capped by a filled circle whose radius scales
+    with ``intersection`` (``sqrt(intersection / max_intersection)``,
+    range 2.5-8 px). Mirrors the webtool's ``buildEnrichmentLollipopSvg``
+    (src/utils/enrichmentPlotSvg.ts).
+
+    Parameters
+    ----------
+    result
+        :class:`RegionResult` from :func:`venn_diagram_lab.analyze`.
+    metric
+        Stem-height metric — ``"neglog10fdr"`` or ``"foldEnrichment"``.
+    width, height
+        Output SVG dimensions in pixels.
+    """
+    import math  # noqa: PLC0415
+
+    _validate_metric(metric)
+    pairs = _collect_pair_stats(result)
+
+    plot_x = _EP_MARGIN_LEFT
+    plot_y = _EP_MARGIN_TOP
+    plot_w = width - _EP_MARGIN_LEFT - _EP_MARGIN_RIGHT
+    plot_h = height - _EP_MARGIN_TOP - _EP_MARGIN_BOTTOM
+    ff = _EP_FONT_FAMILY
+
+    parts: list[str] = []
+    parts.append(
+        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}" '
+        f'width="{width}" height="{height}">'
+    )
+    parts.append(f'<rect width="{width}" height="{height}" fill="#ffffff"/>')
+
+    if not pairs:
+        parts.append(
+            f'<text x="{width / 2}" y="{height / 2}" fill="{_EP_COLOR_TEXT_MUTED}" '
+            f'font-family="{ff}" font-size="11" text-anchor="middle">'
+            f"No pairs to plot</text>"
+        )
+        parts.append("</svg>")
+        return SvgImage(svg="".join(parts), width=width, height=height)
+
+    values = [_metric_value(s, metric) for s in pairs]
+    max_val = max(0.0, *values) if values else 0.0
+    ticks = _nice_ticks(max_val or 1.0)
+    y_max = max(max_val, ticks[-1] if ticks else 1.0)
+    max_inter = max(1, *[s.intersection for s in pairs])
+
+    n = len(pairs)
+    slot_w = plot_w / n
+
+    for t in ticks:
+        y = plot_y + plot_h - (t / y_max) * plot_h if y_max > 0 else plot_y + plot_h
+        parts.append(
+            f'<line x1="{plot_x}" y1="{y}" x2="{plot_x + plot_w}" y2="{y}" '
+            f'stroke="{_EP_COLOR_GRID}" stroke-width="1"/>'
+        )
+        parts.append(
+            f'<text x="{plot_x - 4}" y="{y + 3}" fill="{_EP_COLOR_TEXT_MUTED}" '
+            f'font-family="{ff}" font-size="9" text-anchor="end">'
+            f"{_esc(_format_tick(t))}</text>"
+        )
+
+    parts.append(
+        f'<line x1="{plot_x}" y1="{plot_y}" x2="{plot_x}" y2="{plot_y + plot_h}" '
+        f'stroke="{_EP_COLOR_AXIS}" stroke-width="1"/>'
+    )
+    parts.append(
+        f'<line x1="{plot_x}" y1="{plot_y + plot_h}" x2="{plot_x + plot_w}" '
+        f'y2="{plot_y + plot_h}" stroke="{_EP_COLOR_AXIS}" stroke-width="1"/>'
+    )
+
+    for i, s in enumerate(pairs):
+        v = values[i]
+        cx = plot_x + slot_w * i + slot_w / 2
+        dot_y = (
+            plot_y + plot_h - (v / y_max) * plot_h if y_max > 0 else plot_y + plot_h
+        )
+        color = _EP_SIG_COLOR if s.fdr < _EP_SIG_THRESHOLD else _EP_NS_COLOR
+        t_size = math.sqrt(s.intersection / max_inter) if max_inter else 0.0
+        r = _LOLLIPOP_MIN_DOT_R + (_LOLLIPOP_MAX_DOT_R - _LOLLIPOP_MIN_DOT_R) * t_size
+
+        parts.append(
+            f'<line x1="{cx}" y1="{plot_y + plot_h}" x2="{cx}" y2="{dot_y}" '
+            f'stroke="{color}" stroke-width="1.2" opacity="0.85"/>'
+        )
+        parts.append(
+            f'<circle cx="{cx}" cy="{dot_y}" r="{r:.2f}" '
+            f'fill="{color}" opacity="0.9"/>'
+        )
+        marker = _sig_marker(s.fdr)
+        if marker:
+            parts.append(
+                f'<text x="{cx}" y="{dot_y - r - 2}" fill="{_EP_COLOR_TEXT}" '
+                f'font-family="{ff}" font-size="9" text-anchor="middle" '
+                f'font-weight="bold">{marker}</text>'
+            )
+        lx = cx
+        ly = plot_y + plot_h + 10
+        parts.append(
+            f'<text x="{lx}" y="{ly}" fill="{_EP_COLOR_TEXT}" font-family="{ff}" '
+            f'font-size="9" text-anchor="end" '
+            f'transform="rotate(-45 {lx} {ly})">{_esc(s.label)}</text>'
+        )
+
+    y_label_x = 14
+    y_label_y = plot_y + plot_h / 2
+    parts.append(
+        f'<text x="{y_label_x}" y="{y_label_y}" fill="{_EP_COLOR_TEXT}" '
+        f'font-family="{ff}" font-size="10" font-weight="bold" '
+        f'text-anchor="middle" '
+        f'transform="rotate(-90 {y_label_x} {y_label_y})">'
+        f"{_esc(_metric_label(metric))}</text>"
+    )
+
+    legend_y = height - 12
+    parts.append(
+        f'<circle cx="{plot_x + 4}" cy="{legend_y - 2}" r="{_LOLLIPOP_MIN_DOT_R}" '
+        f'fill="{_EP_COLOR_TEXT_MUTED}"/>'
+    )
+    parts.append(
+        f'<text x="{plot_x + 12}" y="{legend_y}" fill="{_EP_COLOR_TEXT_MUTED}" '
+        f'font-family="{ff}" font-size="9">small intersection</text>'
+    )
+    parts.append(
+        f'<circle cx="{plot_x + 110}" cy="{legend_y - 2}" r="{_LOLLIPOP_MAX_DOT_R}" '
+        f'fill="{_EP_COLOR_TEXT_MUTED}"/>'
+    )
+    parts.append(
+        f'<text x="{plot_x + 122}" y="{legend_y}" fill="{_EP_COLOR_TEXT_MUTED}" '
+        f'font-family="{ff}" font-size="9">large intersection '
+        f"(n={max_inter})</text>"
+    )
+
+    parts.append("</svg>")
+    return SvgImage(svg="".join(parts), width=width, height=height)

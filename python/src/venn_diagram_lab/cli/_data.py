@@ -298,6 +298,85 @@ def cmd_fit_model(
 
 
 @app.command(
+    "lookup",
+    epilog=examples_epilog(
+        "  vdl data lookup --sample TP53",
+        "  vdl data lookup dataset_real_cancer_drivers_4 KRAS",
+        "  vdl data lookup data/my.tsv MYC",
+    ),
+)
+def cmd_lookup(
+    input: Annotated[
+        str | None,
+        typer.Argument(
+            help="Dataset path or bundled sample name. Optional when --sample is given.",
+        ),
+    ] = None,
+    item: Annotated[
+        str | None,
+        typer.Argument(
+            help="The item/gene name to search for across every Venn region.",
+        ),
+    ] = None,
+    *,
+    sample: Annotated[
+        bool,
+        typer.Option(
+            "--sample",
+            help="Run with the bundled cancer-drivers sample (overrides INPUT default).",
+        ),
+    ] = False,
+    model: Annotated[str, typer.Option()] = "auto",
+) -> None:
+    """Find which Venn region(s) contain a given item.
+
+    Walks every region in the analysis result and prints, for each
+    region that contains the item, the region label (e.g. ``ABCD``),
+    the set names that compose it (e.g. ``Vogelstein, COSMIC_CGC,
+    OncoKB, IntOGen``), and the region's total exclusive-item count.
+    Useful as a script-friendly version of the webtool's "Find Item"
+    global search. Exits 0 in both found and not-found cases; the
+    distinction is in the printed text.
+    """
+    # When --sample is set without an INPUT, the first positional argument
+    # becomes the ITEM. Detect that case (input looks like a gene symbol,
+    # no extension or known sample name) and shift it.
+    if sample and input is not None and item is None:
+        # Single positional + --sample → that positional is the item.
+        item = input
+        input = None
+    if item is None:
+        exit_error("ITEM required (e.g. `vdl data lookup --sample TP53`)")
+        return  # mypy hint; exit_error raises
+    resolved = resolve_sample_or_input(input, sample)
+    try:
+        ds = load_input(resolved)
+        result = analyze(ds, model=model)
+    except (VennDiagramError, OSError) as e:
+        exit_error(str(e))
+        return  # mypy hint; exit_error raises
+
+    set_letters = "ABCDEFGHI"[: len(ds.set_names)]
+    matches = [r for r in result.regions.values() if item in r.exclusive_items]
+
+    if not matches:
+        typer.echo(f"{item!r}: not found in dataset universe")
+        return
+    typer.echo(f"{item!r} found in {len(matches)} region(s):")
+    # Sort matches by depth (number of sets) then label so output is stable.
+    for r in sorted(matches, key=lambda x: (len(x.label), x.label)):
+        sets_in = [
+            ds.set_names[i]
+            for i, ch in enumerate(set_letters)
+            if ch in r.label
+        ]
+        typer.echo(
+            f"  region {r.label:10s} ({len(sets_in)}-way: "
+            f"{', '.join(sets_in)}) — {r.exclusive_count} items total"
+        )
+
+
+@app.command(
     "samples",
     epilog=examples_epilog("  vdl data samples    # no sample data needed"),
 )

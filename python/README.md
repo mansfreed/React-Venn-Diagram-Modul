@@ -132,6 +132,39 @@ print(heatmap.svg[:200])
 
 Both renderers return the same `SvgImage` dataclass as `render_venn_svg`, so `.save("plot.svg" | "plot.png" | "plot.pdf")` works uniformly.
 
+### Enrichment bar + lollipop charts (v2.2.3)
+
+The webtool's Statistics panel shows the same pairwise data three ways
+(bar, lollipop, heatmap). Python now exposes all three:
+
+```python
+from venn_diagram_lab import analyze, load_sample
+from venn_diagram_lab.render.svg import (
+    render_cluster_heatmap_svg,
+    render_enrichment_bar_svg,
+    render_enrichment_lollipop_svg,
+)
+
+result = analyze(load_sample("dataset_real_cancer_drivers_4"))
+
+render_enrichment_bar_svg(result).save("bar.svg")
+render_enrichment_lollipop_svg(result, metric="foldEnrichment").save("lollipop.svg")
+render_cluster_heatmap_svg(result, linkage="average").save("heatmap.svg")
+```
+
+Both bar and lollipop accept `metric="neglog10fdr"` (default — bar
+height ∝ `-log10(BH-FDR)`) or `metric="foldEnrichment"` (bar height ∝
+fold-enrichment over the universe). Significant pairs (`FDR<0.05`)
+fill with `#2e7d32`; non-significant with `#888888`. Markers
+`***`/`**`/`*` mark `FDR<0.001`/`<0.01`/`<0.05` respectively.
+
+CLI:
+
+```bash
+vdl render bar --sample
+vdl render lollipop --sample --metric foldEnrichment
+```
+
 ## Export to TSV (matches the web tool byte-for-byte)
 
 ```python
@@ -177,11 +210,13 @@ Each render command accepts `INPUT` (file path or bundled sample name) or
 
 | Command | Purpose |
 |---|---|
-| `vdl render venn <input>` | Venn diagram (44 SVG models + area-proportional 2/3-set). |
-| `vdl render upset <input>` | UpSet plot for the dataset's intersection structure. |
-| `vdl render network <input>` | Force-directed set-relationship network. |
+| `vdl render bar <input> [--metric M]` | Pairwise-enrichment bar chart (`-log10 FDR` or `foldEnrichment`). |
 | `vdl render heatmap <input> [--cluster --linkage M]` | Pairwise Jaccard / FDR heatmap, optionally cluster-reordered. |
+| `vdl render lollipop <input> [--metric M]` | Pairwise-enrichment lollipop chart (same metric set as `bar`). |
+| `vdl render network <input>` | Force-directed set-relationship network. |
 | `vdl render share-dist <input>` | Item Share Distribution histogram (v2.2.2 stats addition). |
+| `vdl render upset <input>` | UpSet plot for the dataset's intersection structure. |
+| `vdl render venn <input>` | Venn diagram (44 SVG models + area-proportional 2/3-set). |
 | `vdl render all <input> --output-dir D` | One-shot bundle: all five SVGs into one directory. |
 
 ### `vdl export` — TSV table writers
@@ -207,11 +242,12 @@ the same `RegionResult` writer methods as the Python API.
 
 | Command | Purpose |
 |---|---|
-| `vdl data validate <input> [--text] [--strict]` | Schema check; JSON by default, `--text` for colourised output. Exit 1 on errors (`--strict` promotes warnings). |
-| `vdl data describe <input>` | Quick summary (set count, item count, top regions). |
 | `vdl data convert <in> <out>` | Format conversion (TSV ⇄ CSV). |
+| `vdl data describe <input>` | Quick summary (set count, item count, top regions). |
 | `vdl data fit-model <input>` | Recommend a catalog-resident model name for the input's set count. |
+| `vdl data lookup <input> <item>` | Find which Venn region(s) contain a given item (script-friendly Find Item). |
 | `vdl data samples` | List bundled sample datasets. |
+| `vdl data validate <input> [--text] [--strict]` | Schema check; JSON by default, `--text` for colourised output. Exit 1 on errors (`--strict` promotes warnings). |
 
 ### `vdl model` — model catalog
 

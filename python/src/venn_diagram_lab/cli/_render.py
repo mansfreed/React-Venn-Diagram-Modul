@@ -47,6 +47,115 @@ def _save_or_stream(img: object, target: Path, dry_run: bool, kind: str) -> None
     typer.echo(f"Wrote {target}")
 
 
+# ---- bar -------------------------------------------------------------------
+
+
+@app.command(
+    "bar",
+    epilog=examples_epilog(
+        "  vdl render bar --sample                                            # demo run",
+        "  vdl render bar dataset_real_cancer_drivers_4 --metric foldEnrichment",
+        "  vdl render bar data/genes.tsv --out /tmp/bar.svg",
+    ),
+)
+def cmd_bar(
+    input: Annotated[
+        str | None,
+        typer.Argument(
+            help="Dataset path or bundled sample name. Optional when --sample is given.",
+        ),
+    ] = None,
+    *,
+    sample: Annotated[
+        bool,
+        typer.Option(
+            "--sample",
+            help="Run with the bundled cancer-drivers sample (overrides INPUT default).",
+        ),
+    ] = False,
+    out: Annotated[Path | None, typer.Option("--out", "-o")] = None,
+    model: Annotated[str, typer.Option(help="Model name; 'auto' or 'proportional'")] = "auto",
+    metric: Annotated[
+        str,
+        typer.Option(help="Metric: 'neglog10fdr' or 'foldEnrichment'"),
+    ] = "neglog10fdr",
+    dry_run: Annotated[bool, typer.Option("--dry-run")] = False,
+) -> None:
+    """Render the pairwise-enrichment bar chart.
+
+    One bar per pairwise stat, height proportional to ``--metric``
+    (``neglog10fdr`` by default, or ``foldEnrichment``). Bars use the
+    webtool's significance palette (#2e7d32 for FDR<0.05, #888888
+    otherwise) and carry ``***``/``**``/``*`` markers when applicable.
+    Output format is inferred from ``--out``; default file is
+    ``<stem>__bar.svg`` in CWD.
+    """
+    from venn_diagram_lab.render.svg import render_enrichment_bar_svg  # noqa: PLC0415
+    resolved = resolve_sample_or_input(input, sample)
+    try:
+        ds = load_input(resolved)
+        result = analyze(ds, model=model)
+    except (VennDiagramError, OSError) as e:
+        exit_error(str(e))
+    img = render_enrichment_bar_svg(result, metric=metric)
+    target = resolve_out(out, resolved, "bar", "svg")
+    _save_or_stream(img, target, dry_run, "bar")
+
+
+# ---- lollipop --------------------------------------------------------------
+
+
+@app.command(
+    "lollipop",
+    epilog=examples_epilog(
+        "  vdl render lollipop --sample                                       # demo run",
+        "  vdl render lollipop dataset_real_cancer_drivers_4 --metric foldEnrichment",
+        "  vdl render lollipop data/genes.tsv --out /tmp/lollipop.svg",
+    ),
+)
+def cmd_lollipop(
+    input: Annotated[
+        str | None,
+        typer.Argument(
+            help="Dataset path or bundled sample name. Optional when --sample is given.",
+        ),
+    ] = None,
+    *,
+    sample: Annotated[
+        bool,
+        typer.Option(
+            "--sample",
+            help="Run with the bundled cancer-drivers sample (overrides INPUT default).",
+        ),
+    ] = False,
+    out: Annotated[Path | None, typer.Option("--out", "-o")] = None,
+    model: Annotated[str, typer.Option(help="Model name; 'auto' or 'proportional'")] = "auto",
+    metric: Annotated[
+        str,
+        typer.Option(help="Metric: 'neglog10fdr' or 'foldEnrichment'"),
+    ] = "neglog10fdr",
+    dry_run: Annotated[bool, typer.Option("--dry-run")] = False,
+) -> None:
+    """Render the pairwise-enrichment lollipop chart.
+
+    Same metric and significance scheme as ``vdl render bar``, drawn as
+    a stem-and-dot plot. Dot radius scales with the pair's intersection
+    size (``sqrt(intersection / max_intersection)``, range 2.5-8 px),
+    so dense overlaps stand out at a glance. Output format inferred
+    from ``--out``; default file is ``<stem>__lollipop.svg`` in CWD.
+    """
+    from venn_diagram_lab.render.svg import render_enrichment_lollipop_svg  # noqa: PLC0415
+    resolved = resolve_sample_or_input(input, sample)
+    try:
+        ds = load_input(resolved)
+        result = analyze(ds, model=model)
+    except (VennDiagramError, OSError) as e:
+        exit_error(str(e))
+    img = render_enrichment_lollipop_svg(result, metric=metric)
+    target = resolve_out(out, resolved, "lollipop", "svg")
+    _save_or_stream(img, target, dry_run, "lollipop")
+
+
 # ---- venn ------------------------------------------------------------------
 
 
