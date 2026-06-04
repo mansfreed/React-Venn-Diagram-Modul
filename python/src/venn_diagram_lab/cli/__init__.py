@@ -44,6 +44,7 @@ _console = Console()
 from venn_diagram_lab.cli import (  # noqa: E402
     _data,
     _export,
+    _meta,
     _model,
     _render,
     _report,
@@ -60,6 +61,9 @@ app.add_typer(_workflow.app, name="workflow")
 
 # Top-level v2.2.2 shortcuts.
 _stats.register(app)
+
+# Meta top-level commands (tree, about, credits).
+_meta.register(app)
 
 
 @app.callback()
