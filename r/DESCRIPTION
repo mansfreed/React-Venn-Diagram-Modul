@@ -42,6 +42,8 @@ Imports:
     rsvg,
     patchwork,
     gridExtra,
+    openxlsx,
+    zip,
     BiocGenerics
 Suggests:
     testthat (>= 3.0.0),
@@ -63,3 +65,27 @@ LazyData: false
 Config/testthat/edition: 3
 Config/roxygen2/version: 8.0.0
 RoxygenNote: 8.0.0
+Collate:
+    'classes.R'
+    'errors.R'
+    'analysis.R'
+    'broom-tidy.R'
+    'cluster.R'
+    'enrichment-plot-helpers.R'
+    'excel-workbook.R'
+    'ggplot-layer.R'
+    'io.R'
+    'proportional.R'
+    'render-enrichment-bar.R'
+    'render-enrichment-lollipop.R'
+    'render-network.R'
+    'render-pdf.R'
+    'render-share-distribution.R'
+    'render-svg.R'
+    'render-upset.R'
+    'samples.R'
+    'share-distribution.R'
+    'statistics.R'
+    'tsv-export.R'
+    'zip-report.R'
+    'zzz.R'
