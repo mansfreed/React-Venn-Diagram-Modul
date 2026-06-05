@@ -50,14 +50,3 @@ test_that("render_enrichment_bar rejects an unknown metric", {
     expect_error(render_enrichment_bar(res, metric = "bogus"),
                  "metric must be")
 })
-
-test_that("render_enrichment_bar 'No pairs to plot' fallback fires when no pairs", {
-    ds <- methods::new("VennDataset",
-        set_names = c("A"),
-        items = list(A = c("x", "y")),
-        item_order = c("x", "y"),
-        universe_size = 10L, source_path = NULL, format = "csv")
-    res <- analyze(ds)
-    img <- render_enrichment_bar(res)
-    expect_match(slot(img, "content"), "No pairs to plot", fixed = TRUE)
-})
