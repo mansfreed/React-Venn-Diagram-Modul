@@ -1,8 +1,13 @@
-test_that(".nice_ticks produces 0..maxv with rounded step", {
-    # Port-of-_nice_ticks from python/.../render/svg.py:835
-    expect_equal(vennDiagramLab:::.nice_ticks(1.0, count = 4), c(0, 0.5, 1.0))
-    expect_equal(vennDiagramLab:::.nice_ticks(10.0, count = 4), c(0, 5, 10))
-    # 0 / negative input returns a fallback
+test_that(".nice_ticks produces 0..maxv with rounded step (byte-for-byte Python parity)", {
+    # Port-of-_nice_ticks from python/.../render/svg.py:835.
+    # For maxv=1, count=4: raw=0.25, pow=0.1, normalized=2.5 -> step_mult=2 (2.5 < 3),
+    # step=0.2, so ticks = 0, 0.2, 0.4, 0.6, 0.8, 1.0.
+    expect_equal(vennDiagramLab:::.nice_ticks(1.0, count = 4),
+                 c(0, 0.2, 0.4, 0.6, 0.8, 1.0))
+    # For maxv=10: raw=2.5, pow=1, normalized=2.5 -> step_mult=2, step=2.
+    expect_equal(vennDiagramLab:::.nice_ticks(10.0, count = 4),
+                 c(0, 2, 4, 6, 8, 10))
+    # 0 / negative input returns a fallback c(0, 1).
     expect_equal(vennDiagramLab:::.nice_ticks(0, count = 4), c(0, 1))
 })
 
