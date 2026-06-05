@@ -45,11 +45,18 @@ def _emit(
     target = resolve_out(out, resolved, kind, "tsv")
     if target is STDOUT_SENTINEL:
         # Route through the writer so TSV escape / sort-order / line-ending logic
-        # stays identical to a direct file write.
-        with NamedTemporaryFile("w+", suffix=".tsv", delete=True, encoding="utf-8") as tf:
-            tmp_path = Path(tf.name)
+        # stays identical to a direct file write. `delete=False` + manual cleanup
+        # is required on Windows because the default `delete=True` holds an
+        # exclusive handle and the writer can't re-open the path (PermissionError
+        # 13). POSIX is unaffected — the cleanup happens in the finally branch.
+        tf = NamedTemporaryFile("w", suffix=".tsv", delete=False, encoding="utf-8")
+        tmp_path = Path(tf.name)
+        tf.close()
+        try:
             getattr(result, writer_method)(tmp_path)
             content = tmp_path.read_text(encoding="utf-8")
+        finally:
+            tmp_path.unlink(missing_ok=True)
         write_text_out(target, content)
         return
     target.parent.mkdir(parents=True, exist_ok=True)
