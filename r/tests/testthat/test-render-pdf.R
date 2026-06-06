@@ -70,6 +70,7 @@ test_that(".build_overview_page returns a patchwork/ggplot composition", {
 
 test_that(".build_venn_upset_page returns a patchwork composition", {
     skip_on_cran()
+    skip_if(getRversion() < "4.6", ".build_venn_upset_page invokes render_upset -- requires R >= 4.6 (ComplexUpset + ggplot2 4 + S7)")
     ds <- methods::new("VennDataset",
         set_names = c("A", "B"),
         items = list(A = c("g1", "g2"), B = c("g2", "g3")),
