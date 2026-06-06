@@ -182,22 +182,32 @@
 #   - integer vector of bitmasks: converted via region@label lookup
 .resolve_highlight_labels <- function(highlight, result) {
     if (is.null(highlight)) return(character(0))
+    n <- length(result@dataset@set_names)
+    letters_chars <- strsplit(.LETTERS_VDL, "", fixed = TRUE)[[1L]][seq_len(n)]
+    max_mask <- bitwShiftL(1L, n) - 1L
+    mask_to_label <- function(m) {
+        bits <- which(vapply(seq_len(n),
+                              function(i) bitwAnd(m, bitwShiftL(1L, i - 1L)) != 0L,
+                              logical(1L)))
+        paste(letters_chars[bits], collapse = "")
+    }
     if (is.numeric(highlight)) {
         masks <- as.integer(highlight)
         labels <- character(length(masks))
         for (i in seq_along(masks)) {
-            r <- result@regions[[as.character(masks[i])]]
-            if (is.null(r)) {
-                stop(sprintf("highlight: no region with mask %d", masks[i]),
+            m <- masks[i]
+            if (is.na(m) || m < 1L || m > max_mask) {
+                stop(sprintf("highlight: no region with mask %d", m),
                      call. = FALSE)
             }
-            labels[i] <- r@label
+            labels[i] <- mask_to_label(m)
         }
         return(labels)
     }
     if (is.character(highlight)) {
-        # Validate by looking up each label across regions.
-        all_labels <- vapply(result@regions, function(r) r@label, character(1L))
+        # Validate by reconstructing valid labels from all bitmasks
+        # 1..max_mask (covers empty and non-empty regions alike).
+        all_labels <- vapply(seq_len(max_mask), mask_to_label, character(1L))
         unknown <- setdiff(highlight, all_labels)
         if (length(unknown) > 0L) {
             stop(sprintf("highlight: unknown region label(s): %s",
