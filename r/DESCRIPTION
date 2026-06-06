@@ -51,6 +51,7 @@ Suggests:
     rmarkdown,
     rprojroot,
     pdftools,
+    svglite,
     broom,
     tibble,
     dplyr,

@@ -81,7 +81,7 @@
 # minus + subscript digits as the webtool / python for byte-for-byte parity.
 .metric_label <- function(metric) {
     if (metric == .EP_METRIC_FOLDENRICHMENT) return("Fold Enrichment")
-    "−log₁₀(FDR)"
+    "\u2212log\u2081\u2080(FDR)"
 }
 
 #' @noRd

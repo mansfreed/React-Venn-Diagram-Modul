@@ -18,7 +18,8 @@ Invisibly returns `NULL`.
 Sheets:
 \itemize{
   \item \code{Jaccard} -- NxN matrix of Jaccard indices.
-  \item \code{Sørensen-Dice} -- NxN matrix of Dice coefficients.
+  \item \code{Sorensen-Dice} (the actual sheet title uses the o-with-stroke
+    character) -- NxN matrix of Dice coefficients.
   \item \code{Enrichment} -- long-form (\code{set_a}, \code{set_b},
     \code{intersection}, \code{union}, \code{expected},
     \code{fold_enrichment}, \code{p_value}, \code{fdr},

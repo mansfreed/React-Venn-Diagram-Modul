@@ -14,7 +14,7 @@ NULL
 #' @noRd
 .XL_SHEET_JACCARD    <- "Jaccard"
 #' @noRd
-.XL_SHEET_DICE       <- "Sørensen-Dice"
+.XL_SHEET_DICE       <- "S\u00f8rensen-Dice"
 #' @noRd
 .XL_SHEET_ENRICHMENT <- "Enrichment"
 #' @noRd
@@ -101,7 +101,8 @@ NULL
 #' Sheets:
 #' \itemize{
 #'   \item \code{Jaccard} -- NxN matrix of Jaccard indices.
-#'   \item \code{Sørensen-Dice} -- NxN matrix of Dice coefficients.
+#'   \item \code{Sorensen-Dice} (the actual sheet title uses the o-with-stroke
+#'     character) -- NxN matrix of Dice coefficients.
 #'   \item \code{Enrichment} -- long-form (\code{set_a}, \code{set_b},
 #'     \code{intersection}, \code{union}, \code{expected},
 #'     \code{fold_enrichment}, \code{p_value}, \code{fdr},
