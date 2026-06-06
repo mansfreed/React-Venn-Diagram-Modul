@@ -81,6 +81,12 @@ result = analyze(ds)
 
 All visualisation methods accept the same kwargs as the underlying `render.*` functions — see their docstrings for full reference.
 
+`render_venn_svg` (and `result.render_venn(...)`) also accepts
+`show_items=True` to display item identifiers inside each region,
+`item_options={...}` for layout tuning, and `highlight=[...]` for a
+spotlight mode that desaturates non-matching set shapes. The Region
+accessors and Boolean DSL section below covers these in depth.
+
 ## 4. Statistics and Charts
 
 ```python
@@ -156,11 +162,13 @@ print(heatmap.svg[:200])
 
 Both renderers return the same `SvgImage` dataclass as `render_venn_svg`, so `.save("plot.svg" | "plot.png" | "plot.pdf")` works uniformly.
 
-### 4.3. PDF + ZIP report enhancements
+### 4.3. PDF and ZIP reports
 
-The `to_pdf_report` PDF now includes a dedicated Item Share Distribution
-page (matching the webtool's v2.2.2 PDF). Cluster-mode heatmap can be
-requested explicitly:
+`to_pdf_report` produces a multi-page PDF with the dataset overview,
+Venn + UpSet on a single page, paginated statistics tables, an Item
+Share Distribution page, an optional Cluster Heatmap page, and a
+network panel with the significant pairwise edges. A *Credits and
+Cite* footer closes the report.
 
 ```python
 result.to_pdf_report("report.pdf", cluster_heatmap=True)
@@ -171,24 +179,81 @@ result.to_pdf_report("report.pdf", cluster_heatmap=True)
 vdl report pdf --sample --cluster-heatmap
 ```
 
-The `vdl report zip` bundle now also includes an `enrichment_statistics_{n}-sets.xlsx` Excel workbook (3 sheets: Jaccard, Sørensen-Dice, Intersection Enrichment) and a `README.txt` with provenance + the full *About This Report* methodology text — closing the parity gap with the webtool's *Download Everything* button.
+`vdl report zip` bundles everything in one archive: the PDF, four
+SVGs (Venn, UpSet, Network, Share Distribution), three TSVs (regions,
+matrix, statistics), a three-sheet `enrichment_statistics_{n}-sets.xlsx`
+workbook (Jaccard, Sørensen-Dice, Intersection Enrichment), and a
+`README.txt` with provenance + the *About This Report* methodology
+section.
 
-The PDF report's final pages now carry the unified *About This Report* appendix — the same 12 structured sections used by the webtool and the R companion (intro + Plots + Statistics blocks) — and end with a *Credits and Cite* footer listing authors, package URLs, and the Zenodo DOI. Titles render in bold; bodies in plain weight; the content auto-paginates across as many landscape pages as it needs.
+## 5. Region accessors and Boolean DSL
 
-### 4.4. Item display, Highlight, Region accessors, Boolean DSL
+Four composable helpers for selecting items and regions inside an
+analysed diagram. The accessors and the DSL chain naturally with the
+renderers in the previous section.
 
-- `render_venn_svg(result, show_items=True, item_options={...})` — Item names inside regions.
-- `render_venn_svg(result, highlight=["AB", "ABC"])` — Spotlight mode (also accepts bitmask lists).
-- `intersection_items(result, sets)` — Items in every named set.
-- `exclusive_items(result, sets)` — Items in exactly this combination.
-- `union_items(result, sets)` — Items in any of the named sets.
-- `parse_region_expression(expr, n_sets)` — Boolean DSL to region bitmasks.
+```python
+from venn_diagram_lab import (
+    analyze, load_sample,
+    intersection_items, exclusive_items, union_items,
+    parse_region_expression, render_venn_svg,
+)
 
-CLI: `vdl render venn --show-items --highlight-expr "A & B"` and
-`vdl data items --mode exclusive --sets A,B` /
-`vdl data regions --expr "A & B" --n-sets 4`.
+res = analyze(load_sample("dataset_real_cancer_drivers_4"))
 
-## 5. Export to TSV 
+# Items in EVERY named set (regardless of other memberships).
+intersection_items(res, ["Vogelstein", "COSMIC_CGC", "OncoKB"])
+
+# Items in EXACTLY this combination (and no other set).
+exclusive_items(res, ["Vogelstein", "COSMIC_CGC"])
+
+# Items in ANY of the named sets (deduplicated).
+union_items(res, ["Vogelstein", "COSMIC_CGC"])
+
+# Boolean DSL -> sorted list of region bitmasks.
+masks = parse_region_expression("A & B + B & C", n_sets=4)
+# -> [3, 6, 7, 11, 14, 15]
+
+# Spotlight: render the Venn with only the matching regions highlighted.
+render_venn_svg(res, highlight=masks, show_items=True,
+                item_options={"max_items_per_region": 8,
+                              "truncate_long_names": 10}).save("spotlight.svg")
+```
+
+DSL grammar: atoms `A..I`, `&` intersection, `|` or `+` union, `~` or
+`!` complement, parentheses for grouping. Precedence (highest first):
+unary > intersection > union; binary operators are left-associative.
+
+`render_venn_svg`'s `show_items=True` replaces the per-region count
+text with the actual item identifiers as multi-line tspans inside the
+existing `Count_*` text nodes. `item_options` keys (defaults):
+`max_items_per_region=20`, `ncol_items=1`, `truncate_long_names=12`
+(0 disables), `line_height=10`, `font_size=8`,
+`show_counts_with_items=False`, `ellipsis="..."`. Regions exceeding
+`max_items_per_region` show a trailing `"+N more"` line.
+
+`highlight` accepts a sequence of region labels (`["AB", "ABC"]`) or
+of region bitmasks (e.g. the output of `parse_region_expression`).
+Sets that do not contribute to any highlighted region are desaturated
+to `#cccccc` at 25% opacity.
+
+CLI surface:
+
+```bash
+# Items in this exact combination.
+vdl data items dataset_real_cancer_drivers_4 \
+    --mode exclusive --sets A,B --out -
+
+# DSL debug / validator.
+vdl data regions --expr "A & B + B & C" --n-sets 4
+# -> 3,6,7,11,14,15
+
+# Spotlight render with DSL highlight.
+vdl render venn --sample --show-items \
+    --highlight-expr "A & B & ~C & ~D" --out /tmp/spot.svg
+```
+
+## 6. Export to TSV 
 
 The TSV file matches the web tool's byte-for-byte.
 
@@ -198,16 +263,16 @@ result.to_matrix_tsv("matrix.tsv")              # one row per item with set memb
 result.to_statistics_tsv("statistics.tsv")      # pairwise stats with FDR
 ```
 
-These match the React web tool's three Export buttons exactly — including float formatting and spreadsheet-formula escaping. The Phase 7 parity tests (`pytest python/tests/test_parity_with_webapp.py`) prove this for all 5 bundled samples.
+These match the React web tool's three Export buttons exactly — including float formatting and spreadsheet-formula escaping. Byte-equivalence is enforced by the cross-package parity tests (`pytest python/tests/test_parity_with_webapp.py`) for all 5 bundled samples.
 
-## 6. Command-line interface
+## 7. Command-line interface
 
 The wheel installs a `vdl` console script with a Typer-based subapp layout (commands are listed alphabetically in `vdl --help` and inside each subapp). Every subcommand has an extended `--help` page with a *How to try it* example block, and every dataset-consuming command accepts a
 `--sample` flag that runs the demo on the bundled `dataset_real_cancer_drivers_4` fixture without a positional argument.
 
 The full tree is discoverable in one shot via `vdl tree`. Below is the v2.2.2 catalog grouped by subapp:
 
-### 6.1. Top-level shortcuts
+### 7.1. Top-level shortcuts
 
 | Command | Purpose |
 |---|---|
@@ -222,7 +287,7 @@ The full tree is discoverable in one shot via `vdl tree`. Below is the v2.2.2 ca
 | `vdl analyze ...` | **Deprecated** (removed in v2.3) — Swiss-army analyzer; see migration hints. |
 | `vdl render-sample ...` | **Deprecated** (removed in v2.3) — bundled-sample shortcut for the old `analyze`. |
 
-### 6.2. `vdl render` — visual outputs
+### 7.2. `vdl render` — visual outputs
 
 Each render command accepts `INPUT` (file path or bundled sample name) or
 `--sample` for demo mode. Format is inferred from the `--out` extension
@@ -234,12 +299,12 @@ Each render command accepts `INPUT` (file path or bundled sample name) or
 | `vdl render heatmap <input> [--cluster --linkage M]` | Pairwise Jaccard / FDR heatmap, optionally cluster-reordered. |
 | `vdl render lollipop <input> [--metric M]` | Pairwise-enrichment lollipop chart (same metric set as `bar`). |
 | `vdl render network <input>` | Force-directed set-relationship network. |
-| `vdl render share-dist <input>` | Item Share Distribution histogram (v2.2.2 stats addition). |
+| `vdl render share-dist <input>` | Item Share Distribution histogram (item-membership counts per k). |
 | `vdl render upset <input>` | UpSet plot for the dataset's intersection structure. |
 | `vdl render venn <input>` | Venn diagram (44 SVG models + area-proportional 2/3-set). |
 | `vdl render all <input> --output-dir D` | One-shot bundle: all five SVGs into one directory. |
 
-### 6.3. `vdl export` — TSV table writers
+### 7.3. `vdl export` — TSV table writers
 
 Stdout pipe via `--out -` (text format only). All commands route through
 the same `RegionResult` writer methods as the Python API.
@@ -251,14 +316,14 @@ the same `RegionResult` writer methods as the Python API.
 | `vdl export statistics <input>` | Pairwise Jaccard / Dice / OC / FE / hypergeometric / BH-FDR. |
 | `vdl export pairwise <input>` | Alias of `statistics` (common bioinformatics synonym). |
 
-### 6.4. `vdl report` — multi-page bundles
+### 7.4. `vdl report` — multi-page bundles
 
 | Command | Purpose |
 |---|---|
 | `vdl report pdf <input> [--cluster-heatmap] --out R.pdf` | Multi-page PDF report (mirrors the web tool's *Report PDF*). `--cluster-heatmap` appends the cluster-ordered Jaccard heatmap page. |
 | `vdl report zip <input> --out R.zip` | Full bundle ZIP (4 SVGs + 3 TSVs + 1 XLSX + 1 PDF + README.txt). |
 
-### 6.5. `vdl data` — data operations
+### 7.5. `vdl data` — data operations
 
 | Command | Purpose |
 |---|---|
@@ -269,7 +334,7 @@ the same `RegionResult` writer methods as the Python API.
 | `vdl data samples` | List bundled sample datasets. |
 | `vdl data validate <input> [--text] [--strict]` | Schema check; JSON by default, `--text` for colourised output. Exit 1 on errors (`--strict` promotes warnings). |
 
-### 6.6. `vdl model` — model catalog
+### 7.6. `vdl model` — model catalog
 
 | Command | Purpose |
 |---|---|
@@ -277,7 +342,7 @@ the same `RegionResult` writer methods as the Python API.
 | `vdl model info <name>` | Set count, geometry family, display name for one model. |
 | `vdl model svg <name> [--out F]` | Write the raw bundled SVG template (no substitution). |
 
-### 6.7. `vdl workflow` — project helpers
+### 7.7. `vdl workflow` — project helpers
 
 | Command | Purpose |
 |---|---|
@@ -285,7 +350,7 @@ the same `RegionResult` writer methods as the Python API.
 | `vdl workflow bench <input>` | Per-stage timing (load / analyze / 5 renderers / total). |
 | `vdl workflow run-from <cfg.yaml>` | Execute every step in a YAML config (`outputs: [{kind, out, …}]`). |
 
-### 6.8. Examples
+### 7.8. Examples
 
 ```bash
 # Demo mode (no input file needed)
@@ -310,7 +375,7 @@ vdl render --help              # subapp help (alphabetical)
 vdl render venn --help         # extended help with "How to try it" examples
 ```
 
-## 7. Notebook gallery
+## 8. Notebook gallery
 
 Eleven executable notebooks live under [`python/examples/`](https://github.com/ZoliQua/Venn-Diagram-Lab/tree/main/python/examples):
 
@@ -330,7 +395,7 @@ Eleven executable notebooks live under [`python/examples/`](https://github.com/Z
 
 Each notebook is built from a `python/scripts/notebooks/_build_NN_*.py` script and executed nightly on CI to prevent bit-rot.
 
-## 8. Bundled sample datasets
+## 9. Bundled sample datasets
 
 | Name | Sets | Items | Source |
 |---|---|---|---|
@@ -346,7 +411,7 @@ list_samples()
 ds = load_sample("dataset_real_cancer_drivers_4")
 ```
 
-## 9. Contributing
+## 10. Contributing
 
 The repo monorepos the React web tool and this Python package. After cloning:
 
@@ -373,15 +438,15 @@ npm run fixtures:parity
 
 Conventional commit prefixes used: `feat(python):`, `fix(python):`, `chore(python):`, `docs(python):`, `test(python):`.
 
-## 10. Versioning
+## 11. Versioning
 
 Strict SemVer. Pre-1.0 minor bumps may include behavior changes; see [`CHANGELOG.md`](CHANGELOG.md).
 
-## 11. License, Citation and Credits
+## 12. License, Citation and Credits
 
 MIT — see [`LICENSE`](LICENSE).
 
-### 11.1. Citation
+### 12.1. Citation
 
 If you use this package in research, please cite the software using the Zenodo concept (all-versions) DOI — it always resolves to the latest archived release, so there is nothing to update per version:
 
@@ -399,7 +464,7 @@ The R companion package also has a CRAN-minted DOI:
 
 See [`CITATION.cff`](https://github.com/ZoliQua/Venn-Diagram-Lab/blob/main/CITATION.cff) for machine-readable citation metadata.
 
-### 11.2. See also
+### 12.2. See also
 
 | Language| Platform |  Package / URL | Status |
 |---|---|---|---|
