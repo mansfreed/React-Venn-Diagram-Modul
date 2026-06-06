@@ -36,6 +36,28 @@ summarises the Python-only changes.
 - Tests +13 (`tests/test_cli_render.py`, `tests/test_cli_data.py`,
   `tests/test_cli_report.py`); ruff + mypy clean; full suite 460 passing.
 
+### Item display, Highlight, Region accessors, Boolean DSL
+
+* `render_venn_svg(result, show_items=True, item_options={...})`: replace
+  per-region counts with multi-line item identifiers. `item_options`
+  recognises `max_items_per_region`, `ncol_items`, `truncate_long_names`,
+  `line_height`, `font_size`, `show_counts_with_items`, `ellipsis`.
+* `render_venn_svg(result, highlight=[...])`: spotlight mode. Accepts
+  region labels (`["AB", "ABC"]`) or bitmasks (`[3, 7]`). Sets not
+  contributing to any highlighted region are desaturated to `#cccccc`
+  at 25% opacity.
+* `intersection_items`, `exclusive_items`, `union_items`: three new
+  exported helpers over `RegionResult` for selecting items by set
+  combination. Output ordering follows `dataset.item_order` for
+  deterministic byte-equivalent results.
+* `parse_region_expression(expr, n_sets)`: Boolean DSL parser. Grammar:
+  `&` intersection, `|`/`+` union, `~`/`!` complement, parentheses,
+  atoms `A..I`. Returns a sorted list of region bitmasks.
+* CLI: `vdl render venn` gains `--show-items`, `--max-items-per-region`,
+  `--truncate-long-names`, `--highlight`, `--highlight-expr` flags.
+* CLI: two new subcommands — `vdl data items` (accessor wrapper) and
+  `vdl data regions` (DSL validator that prints the mask list).
+
 ## v2.2.2 — 2026-05-31 — Item Share Distribution + Cluster Heatmap
 
 - New `item_share_distribution(matrix)` returning a per-membership-count

@@ -175,6 +175,19 @@ The `vdl report zip` bundle now also includes an `enrichment_statistics_{n}-sets
 
 The PDF report's final pages now carry the unified *About This Report* appendix — the same 12 structured sections used by the webtool and the R companion (intro + Plots + Statistics blocks) — and end with a *Credits and Cite* footer listing authors, package URLs, and the Zenodo DOI. Titles render in bold; bodies in plain weight; the content auto-paginates across as many landscape pages as it needs.
 
+### 4.4. Item display, Highlight, Region accessors, Boolean DSL
+
+- `render_venn_svg(result, show_items=True, item_options={...})` — Item names inside regions.
+- `render_venn_svg(result, highlight=["AB", "ABC"])` — Spotlight mode (also accepts bitmask lists).
+- `intersection_items(result, sets)` — Items in every named set.
+- `exclusive_items(result, sets)` — Items in exactly this combination.
+- `union_items(result, sets)` — Items in any of the named sets.
+- `parse_region_expression(expr, n_sets)` — Boolean DSL to region bitmasks.
+
+CLI: `vdl render venn --show-items --highlight-expr "A & B"` and
+`vdl data items --mode exclusive --sets A,B` /
+`vdl data regions --expr "A & B" --n-sets 4`.
+
 ## 5. Export to TSV 
 
 The TSV file matches the web tool's byte-for-byte.
