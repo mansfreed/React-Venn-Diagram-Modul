@@ -1,6 +1,7 @@
 test_that("to_zip_report writes a ZIP containing the expected 10 files", {
     skip_if_not_installed("zip")
     skip_if_not_installed("openxlsx")
+    skip_if(getRversion() < "4.6", "ZIP bundle tests require R >= 4.6 (renders PDF that includes ComplexUpset path; breaks on older R)")
     ds <- load_sample("dataset_real_cancer_drivers_4")
     res <- analyze(ds)
     out <- tempfile(fileext = ".zip")
@@ -19,6 +20,7 @@ test_that("to_zip_report writes a ZIP containing the expected 10 files", {
 test_that("to_zip_report README contains provenance + About text", {
     skip_if_not_installed("zip")
     skip_if_not_installed("openxlsx")
+    skip_if(getRversion() < "4.6", "ZIP bundle tests require R >= 4.6 (renders PDF that includes ComplexUpset path; breaks on older R)")
     ds <- load_sample("dataset_real_cancer_drivers_4")
     res <- analyze(ds)
     out <- tempfile(fileext = ".zip")

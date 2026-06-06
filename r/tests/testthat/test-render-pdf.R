@@ -154,6 +154,7 @@ test_that(".build_about_pages returns a non-empty list of ggplots", {
 
 test_that("to_pdf_report includes the Item Share Distribution page by default", {
     skip_if_not_installed("pdftools")
+    skip_if(getRversion() < "4.6", "PDF integration tests require R >= 4.6 (patchwork+ComplexUpset+ggplot2 interaction breaks on older R)")
     ds <- methods::new("VennDataset",
         set_names = c("A", "B", "C"),
         items = list(A = c("x", "y"), B = c("y", "z"), C = c("z")),
@@ -174,6 +175,7 @@ test_that("to_pdf_report includes the Item Share Distribution page by default", 
 
 test_that("to_pdf_report omits Item Share Distribution when include_share = FALSE", {
     skip_if_not_installed("pdftools")
+    skip_if(getRversion() < "4.6", "PDF integration tests require R >= 4.6 (patchwork+ComplexUpset+ggplot2 interaction breaks on older R)")
     ds <- methods::new("VennDataset",
         set_names = c("A", "B", "C"),
         items = list(A = c("x", "y"), B = c("y", "z"), C = c("z")),
@@ -191,6 +193,7 @@ test_that("to_pdf_report omits Item Share Distribution when include_share = FALS
 
 test_that("to_pdf_report includes the Cluster Heatmap page when include_cluster = TRUE", {
     skip_if_not_installed("pdftools")
+    skip_if(getRversion() < "4.6", "PDF integration tests require R >= 4.6 (patchwork+ComplexUpset+ggplot2 interaction breaks on older R)")
     ds <- load_sample("dataset_real_cancer_drivers_4")
     res <- analyze(ds)
     out <- tempfile(fileext = ".pdf")
@@ -201,6 +204,7 @@ test_that("to_pdf_report includes the Cluster Heatmap page when include_cluster 
 
 test_that("to_pdf_report omits Cluster Heatmap by default", {
     skip_if_not_installed("pdftools")
+    skip_if(getRversion() < "4.6", "PDF integration tests require R >= 4.6 (patchwork+ComplexUpset+ggplot2 interaction breaks on older R)")
     ds <- methods::new("VennDataset",
         set_names = c("A", "B", "C"),
         items = list(A = c("x", "y"), B = c("y", "z"), C = c("z")),
