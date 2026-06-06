@@ -1,14 +1,41 @@
 # vennDiagramLab — NEWS
 
-## v2.2.3 — 2026-06-01 — Cross-package version sync (no functional changes)
+## v2.2.3 — 2026-06-02 — Render + PDF + bundle parity with Python
 
-The webtool and Python package shipped a coordinated v2.2.3 patch release
-(Python gained new bar / lollipop enrichment renderers, CLI shortcuts,
-and PDF/ZIP report enhancements). The R companion package has no
-analogue work in this round — `ComplexUpset` already covers the
-enrichment-plot surfaces and the R PDF report uses `patchwork`. This
-release is a version-stamp only to keep all three distributions on the
-same v2.2.3 marker; the R API is unchanged from v2.2.2.
+Cross-package patch release matching webtool v2.2.3 and Python v2.2.3.
+This is the R companion's Phase-10 catch-up: four new public APIs plus
+two new PDF report pages, all additive (no breaking changes, no removed
+APIs).
+
+### New features
+
+* `render_enrichment_bar(result, metric, width, height)`: pairwise
+  enrichment bar chart SVG. Bar height encodes -log10(BH-FDR) or
+  Fold Enrichment, with green / grey colouring at FDR < 0.05 and
+  significance markers `***`/`**`/`*` above each bar.
+* `render_enrichment_lollipop(result, metric, width, height)`: same
+  data as `render_enrichment_bar()` rendered as a stem-and-dot plot,
+  with dot radius scaling by `sqrt(intersection / max_intersection)`.
+* `to_excel_workbook(result, path)`: 3-sheet xlsx (Jaccard, Sørensen-Dice,
+  Enrichment) matching the webtool's ZIP-bundle statistics file.
+  Pure-R (uses `openxlsx`).
+* `to_zip_report(result, path, include_share, include_cluster)`: bundles
+  PDF + 4 SVGs + 3 TSVs + xlsx + README.txt into a single ZIP archive.
+  Mirrors the webtool's *Download Everything* button and Python's
+  `vdl report zip`.
+
+### PDF report (`to_pdf_report`)
+
+* `include_share = TRUE` (default): Item Share Distribution page —
+  histogram + per-bin breakdown table + explanatory paragraph.
+* `include_cluster = FALSE` (default, opt-in): Cluster Heatmap page
+  with the cluster-ordered Jaccard heatmap from
+  `render_cluster_heatmap()`.
+
+### Dependencies
+
+* `openxlsx` and `zip` added to `Imports`. Both are pure-R (no Java
+  for `openxlsx`, no system `zip(1)` for `zip`).
 
 ## v2.2.2 — 2026-05-31 — Item-share distribution + cluster heatmap (cross-package parity)
 

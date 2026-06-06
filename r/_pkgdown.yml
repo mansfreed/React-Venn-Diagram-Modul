@@ -47,6 +47,8 @@ reference:
       - render_network
       - render_share_distribution
       - render_cluster_heatmap
+      - render_enrichment_bar
+      - render_enrichment_lollipop
       - to_pdf_report
 
   - title: Statistics surfaces (v2.2.2)
@@ -61,6 +63,12 @@ reference:
       - to_region_summary_tsv
       - to_matrix_tsv
       - to_statistics_tsv
+
+  - title: Bundle exports (v2.2.3)
+    desc: 3-sheet xlsx workbook and full Report ZIP bundle matching the webtool's Download Everything button.
+    contents:
+      - to_excel_workbook
+      - to_zip_report
 
   - title: ggplot2 + broom integration
     desc: Embed venns in ggplot chains and convert results to tidyverse-friendly tibbles.
