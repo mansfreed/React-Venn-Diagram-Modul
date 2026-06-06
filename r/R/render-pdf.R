@@ -335,6 +335,46 @@ NULL
     )
 }
 
+# ---------------------------------------------------------------------------
+# Cluster Heatmap page (v2.2.3 -- opt-in via to_pdf_report(include_cluster=TRUE)).
+#
+# Mirrors python _build_cluster_heatmap_page (render/pdf.py:571-602): a
+# centered rasterised SVG of the cluster-ordered Jaccard heatmap with L-shaped
+# dendrograms, on its own page.
+# ---------------------------------------------------------------------------
+
+.HEATMAP_RASTER_WIDTH <- 1600L
+
+#' @noRd
+.build_cluster_heatmap_page <- function(result) {
+    title_plot <- ggplot2::ggplot() + ggplot2::geom_blank() +
+        ggplot2::ggtitle("Clustered Jaccard Similarity Heatmap") +
+        ggplot2::theme_void() +
+        ggplot2::theme(plot.title = ggplot2::element_text(
+            size = 16, face = "bold", hjust = 0.5,
+            margin = ggplot2::margin(t = 8, b = 8)
+        ))
+
+    hm_img <- render_cluster_heatmap(result, linkage = "average")
+    hm_svg <- slot(hm_img, "content")
+    raster <- rsvg::rsvg_nativeraster(charToRaw(hm_svg),
+                                       width = .HEATMAP_RASTER_WIDTH)
+    rw <- ncol(raster); rh <- nrow(raster)
+    hm_plot <- ggplot2::ggplot() +
+        ggplot2::annotation_raster(raster, xmin = 0, xmax = rw, ymin = 0, ymax = rh) +
+        ggplot2::coord_fixed(xlim = c(0, rw), ylim = c(0, rh),
+                              expand = FALSE, clip = "off") +
+        ggplot2::theme_void() +
+        ggplot2::theme(plot.margin = ggplot2::margin(
+            t = 10, r = 80, b = 50, l = 80, unit = "pt"
+        ))
+
+    patchwork::wrap_plots(
+        title_plot, hm_plot, patchwork::plot_spacer(),
+        ncol = 1L, heights = c(0.08, 0.85, 0.07)
+    )
+}
+
 .SIG_VERY_THRESHOLD <- 0.001
 .SIG_MID_THRESHOLD  <- 0.01
 .SIG_THRESHOLD      <- 0.05

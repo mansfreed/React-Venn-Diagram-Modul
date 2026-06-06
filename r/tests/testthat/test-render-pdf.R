@@ -189,6 +189,30 @@ test_that("to_pdf_report omits Item Share Distribution when include_share = FALS
     expect_false(any(grepl("Per[-−]bin breakdown", txt)))
 })
 
+test_that("to_pdf_report includes the Cluster Heatmap page when include_cluster = TRUE", {
+    skip_if_not_installed("pdftools")
+    ds <- load_sample("dataset_real_cancer_drivers_4")
+    res <- analyze(ds)
+    out <- tempfile(fileext = ".pdf")
+    suppressWarnings(to_pdf_report(res, path = out, include_cluster = TRUE))
+    txt <- pdftools::pdf_text(out)
+    expect_true(any(grepl("Clustered Jaccard Similarity Heatmap", txt, fixed = TRUE)))
+})
+
+test_that("to_pdf_report omits Cluster Heatmap by default", {
+    skip_if_not_installed("pdftools")
+    ds <- methods::new("VennDataset",
+        set_names = c("A", "B", "C"),
+        items = list(A = c("x", "y"), B = c("y", "z"), C = c("z")),
+        item_order = c("x", "y", "z"),
+        universe_size = 10L, source_path = NULL, format = "csv")
+    res <- analyze(ds)
+    out <- tempfile(fileext = ".pdf")
+    suppressWarnings(to_pdf_report(res, path = out))  # default include_cluster = FALSE
+    txt <- pdftools::pdf_text(out)
+    expect_false(any(grepl("Clustered Jaccard Similarity Heatmap", txt, fixed = TRUE)))
+})
+
 test_that(".ABOUT_SECTIONS includes the v2.2.3 Credits and Cite footer", {
     titles <- vapply(.ABOUT_SECTIONS, function(s) s$title, character(1L))
     expect_true("Credits and Cite" %in% titles)
