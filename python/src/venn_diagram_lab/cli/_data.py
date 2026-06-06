@@ -14,7 +14,9 @@ from venn_diagram_lab.cli._common import (
     examples_epilog,
     exit_error,
     load_input,
+    resolve_out,
     resolve_sample_or_input,
+    write_text_out,
 )
 from venn_diagram_lab.errors import VennDiagramError
 from venn_diagram_lab.samples import list_samples
@@ -374,6 +376,148 @@ def cmd_lookup(
             f"  region {r.label:10s} ({len(sets_in)}-way: "
             f"{', '.join(sets_in)}) — {r.exclusive_count} items total"
         )
+
+
+@app.command(
+    "items",
+    epilog=examples_epilog(
+        "  vdl data items --sample --mode exclusive --sets A,B",
+        "  vdl data items data/my.tsv --mode intersection --sets A,B,C --out /tmp/i.txt",
+        "  vdl data items --sample --mode union --sets Vogelstein,OncoKB --out -",
+    ),
+)
+def cmd_items(
+    input: Annotated[
+        str | None,
+        typer.Argument(
+            help="Dataset path or bundled sample name. Optional when --sample is given.",
+        ),
+    ] = None,
+    *,
+    sample: Annotated[
+        bool,
+        typer.Option(
+            "--sample",
+            help="Run with the bundled cancer-drivers sample.",
+        ),
+    ] = False,
+    mode: Annotated[
+        str,
+        typer.Option(
+            "--mode",
+            help="One of 'intersection', 'exclusive', 'union'.",
+        ),
+    ] = "exclusive",
+    sets: Annotated[
+        str,
+        typer.Option(
+            "--sets",
+            help="Comma-separated set letters (e.g. 'A,B') or display names.",
+        ),
+    ] = "",
+    out: Annotated[
+        Path | None,
+        typer.Option(
+            "--out",
+            "-o",
+            help="Output path (one item per line); '-' for stdout. Default stdout.",
+        ),
+    ] = None,
+    model: Annotated[str, typer.Option()] = "auto",
+) -> None:
+    """List items matching a set-combination query.
+
+    `--mode intersection` returns items present in EVERY listed set
+    (regardless of other memberships); `--mode exclusive` returns items
+    present in EXACTLY this combination (and no other listed set);
+    `--mode union` returns items present in ANY of the listed sets.
+    """
+    from venn_diagram_lab import (  # noqa: PLC0415
+        exclusive_items,
+        intersection_items,
+        union_items,
+    )
+    from venn_diagram_lab.analysis import analyze  # noqa: PLC0415
+
+    if not sets.strip():
+        exit_error("--sets is required (e.g. --sets A,B).")
+    sets_list = [s.strip() for s in sets.split(",") if s.strip()]
+    if mode not in ("intersection", "exclusive", "union"):
+        exit_error(f"Unknown --mode {mode!r}. Use intersection / exclusive / union.")
+
+    resolved = resolve_sample_or_input(input, sample)
+    try:
+        ds = load_input(resolved)
+        result = analyze(ds, model=model)
+        if mode == "intersection":
+            items = intersection_items(result, sets_list)
+        elif mode == "exclusive":
+            items = exclusive_items(result, sets_list)
+        else:
+            items = union_items(result, sets_list)
+    except (VennDiagramError, OSError, ValueError) as e:
+        exit_error(str(e))
+
+    content = "\n".join(items) + ("\n" if items else "")
+    target = resolve_out(out, resolved, "items", "txt")
+    write_text_out(target, content)
+
+
+@app.command(
+    "regions",
+    epilog=examples_epilog(
+        "  vdl data regions --expr 'A & B' --n-sets 4",
+        "  vdl data regions --expr 'A | B + C' --n-sets 3 --format labels",
+        "  vdl data regions --expr 'A & ~B' --n-sets 4 --format masks",
+    ),
+)
+def cmd_regions(
+    *,
+    expr: Annotated[
+        str,
+        typer.Option(
+            "--expr",
+            help="Boolean region expression (A..I atoms; &, |, +, ~, !; parentheses).",
+        ),
+    ],
+    n_sets: Annotated[
+        int,
+        typer.Option(
+            "--n-sets",
+            help="Number of sets in the diagram (2..9).",
+        ),
+    ],
+    format: Annotated[
+        str,
+        typer.Option(
+            "--format",
+            help="Output format: 'masks' (comma-separated ints) or 'labels' (letters).",
+        ),
+    ] = "masks",
+) -> None:
+    """Resolve a Boolean DSL expression to a list of region bitmasks.
+
+    Useful for debugging the DSL and as input to other commands. Output
+    is printed to stdout, one line.
+    """
+    from venn_diagram_lab.region_expression import parse_region_expression  # noqa: PLC0415
+
+    if format not in ("masks", "labels"):
+        exit_error(f"Unknown --format {format!r}. Use 'masks' or 'labels'.")
+    try:
+        masks = parse_region_expression(expr, n_sets=n_sets)
+    except ValueError as e:
+        exit_error(str(e))
+
+    if format == "masks":
+        typer.echo(",".join(str(m) for m in masks))
+    else:
+        letters = "ABCDEFGHI"[:n_sets]
+
+        def mask_to_label(m: int) -> str:
+            return "".join(letters[i] for i in range(n_sets) if m & (1 << i))
+
+        typer.echo(",".join(mask_to_label(m) for m in masks))
 
 
 @app.command(

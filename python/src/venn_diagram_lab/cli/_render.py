@@ -189,6 +189,41 @@ def cmd_venn(
     model: Annotated[str, typer.Option(help="Model name; 'auto' or 'proportional'")] = "auto",
     show_names: Annotated[bool, typer.Option()] = True,
     show_counts: Annotated[bool, typer.Option()] = True,
+    show_items: Annotated[
+        bool,
+        typer.Option(
+            "--show-items",
+            help="Replace per-region counts with item identifiers as multi-line tspans.",
+        ),
+    ] = False,
+    max_items_per_region: Annotated[
+        int,
+        typer.Option(
+            "--max-items-per-region",
+            help="Cap items shown per region (default 20). Use with --show-items.",
+        ),
+    ] = 20,
+    truncate_long_names: Annotated[
+        int,
+        typer.Option(
+            "--truncate-long-names",
+            help="Truncate item labels longer than N characters (0 disables). Default 12.",
+        ),
+    ] = 12,
+    highlight: Annotated[
+        str | None,
+        typer.Option(
+            "--highlight",
+            help="Comma-separated region labels (e.g. 'AB,ABC') to spotlight.",
+        ),
+    ] = None,
+    highlight_expr: Annotated[
+        str | None,
+        typer.Option(
+            "--highlight-expr",
+            help="Boolean DSL (e.g. 'A & B + B & C') resolving to region masks to spotlight.",
+        ),
+    ] = None,
     dry_run: Annotated[bool, typer.Option("--dry-run")] = False,
 ) -> None:
     """Render the Venn diagram SVG, PNG, or PDF.
@@ -199,6 +234,7 @@ def cmd_venn(
     from the `--out` extension. Falls back to `<input-stem>__venn.svg`
     in the current working directory when `--out` is omitted.
     """
+    from venn_diagram_lab.region_expression import parse_region_expression  # noqa: PLC0415
     from venn_diagram_lab.render.svg import render_venn_svg  # noqa: PLC0415
     resolved = resolve_sample_or_input(input, sample)
     try:
@@ -206,7 +242,36 @@ def cmd_venn(
         result = analyze(ds, model=model)
     except (VennDiagramError, OSError) as e:
         exit_error(str(e))
-    img = render_venn_svg(result, show_names=show_names, show_counts=show_counts)
+
+    # Resolve highlight argument: prefer --highlight-expr if both are given.
+    hl: list[str] | list[int] | None = None
+    if highlight_expr is not None:
+        try:
+            hl = parse_region_expression(
+                highlight_expr, n_sets=len(result.dataset.set_names)
+            )
+        except ValueError as e:
+            exit_error(f"--highlight-expr: {e}")
+    elif highlight is not None:
+        hl = [s.strip() for s in highlight.split(",") if s.strip()]
+
+    item_options = (
+        {
+            "max_items_per_region": max_items_per_region,
+            "truncate_long_names": truncate_long_names,
+        }
+        if show_items
+        else None
+    )
+
+    img = render_venn_svg(
+        result,
+        show_names=show_names,
+        show_counts=show_counts,
+        show_items=show_items,
+        item_options=item_options,
+        highlight=hl,
+    )
     target = resolve_out(out, resolved, "venn", "svg")
     _save_or_stream(img, target, dry_run, "venn")
 
