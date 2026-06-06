@@ -4,22 +4,13 @@
 [![PyPI version](https://img.shields.io/pypi/v/venn-diagram-lab.svg?v=2)](https://pypi.org/project/venn-diagram-lab/)
 [![Python versions](https://img.shields.io/pypi/pyversions/venn-diagram-lab.svg?v=2)](https://pypi.org/project/venn-diagram-lab/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![DOI (Zenodo concept)](https://zenodo.org/badge/DOI/10.5281/zenodo.19510813.svg)](https://doi.org/10.5281/zenodo.19510813)
+[![DOI (Zenodo concept)](http://www.venndiagramlab.org/zenodo.19510813.svg)](https://doi.org/10.5281/zenodo.19510813)
 
-Headless Python companion to the [Venn Diagram Lab web tool](https://www.venndiagramlab.org/).
-Build, render, and statistically analyse Venn / UpSet diagrams from CSV / TSV / GMT / GMX
-inputs — same 44 SVG models, same intersection/Jaccard/hypergeometric statistics, same PDF report
-layout — but in a notebook, a Snakemake rule, or a CI job, with no browser involved.
+Headless Python companion to the [Venn Diagram Lab web tool](https://www.venndiagramlab.org/). Build, render, and statistically analyse Venn / UpSet diagrams from CSV / TSV / GMT / GMX inputs — same 44 SVG models, same intersection/Jaccard/hypergeometric statistics, same PDF report layout — but in a notebook, a Snakemake rule, or a CI job, with no browser involved. You can integrate it in your programatic workflow.
 
-> **Working in R?** The same analysis + rendering pipeline is available as a
-> CRAN package: [`vennDiagramLab`](https://CRAN.R-project.org/package=vennDiagramLab)
-> (`install.packages("vennDiagramLab")`, on CRAN as of 2026-05-18). Source +
-> docs: [`r/`](https://github.com/ZoliQua/Venn-Diagram-Lab/tree/main/r) ·
-> pkgdown site: <https://zoliqua.github.io/Venn-Diagram-Lab/r/>. The three
-> implementations (web tool, Python, R) share the same SVG model library
-> and produce byte-equivalent TSV outputs — see `tests/test_parity_with_webapp.py`.
+> **Working in R?** The same analysis + rendering pipeline is available as a CRAN package: [`vennDiagramLab`](https://CRAN.R-project.org/package=vennDiagramLab) (`install.packages("vennDiagramLab")`). Source + docs: in the project's [`r/`](https://github.com/ZoliQua/Venn-Diagram-Lab/tree/main/r) folder · pkgdown site: <https://zoliqua.github.io/Venn-Diagram-Lab/r/>. The three implementations (web tool, Python, R) share the same SVG model library and produce byte-equivalent TSV outputs — see `tests/test_parity_with_webapp.py`.
 
-## Install
+## 1. Install
 
 ```bash
 pip install venn-diagram-lab
@@ -39,7 +30,7 @@ python python/scripts/sync_data.py        # populates _data/ from the React side
 pip install -e "python/[dev]"
 ```
 
-## Quickstart (30 seconds)
+### 1.1 Quickstart (30 seconds)
 
 ```python
 from venn_diagram_lab import load_sample, analyze
@@ -55,7 +46,7 @@ result.render_venn().save("cancer_drivers.svg")
 result.to_pdf_report("cancer_drivers_report.pdf")
 ```
 
-## Loading your own data
+## 2. Loading your own data
 
 ```python
 from venn_diagram_lab import load_csv, load_tsv, load_gmt, load_gmx, Dataset, analyze
@@ -78,7 +69,7 @@ ds = Dataset.from_dict({
 result = analyze(ds)
 ```
 
-## Visualisations
+## 3. Visualisations
 
 | Method | Output | Best for |
 |---|---|---|
@@ -90,7 +81,7 @@ result = analyze(ds)
 
 All visualisation methods accept the same kwargs as the underlying `render.*` functions — see their docstrings for full reference.
 
-## Statistics
+## 4. Statistics and Charts
 
 ```python
 stats = result.statistics       # lazy compute
@@ -98,9 +89,42 @@ print(stats.jaccard)            # square pandas DataFrame
 print(stats.hypergeometric)     # long-form: pair, intersection, expected, p_value, p_adjusted, ...
 ```
 
-`compute_pairwise` produces 5 metric tables: Jaccard, Sørensen-Dice, Overlap Coefficient, Fold Enrichment, and the hypergeometric long-form (with Benjamini-Hochberg FDR correction).
+`compute_pairwise` produces 5 metric tables: 
+- Jaccard, 
+- Sørensen-Dice, 
+- Overlap Coefficient, 
+- Fold Enrichment, and the 
+- Hypergeometric long-f
 
-### Item Share Distribution + Cluster Heatmap (v2.2.2)
+### 4.1. Enrichment bar + lollipop charts
+
+The webtool's Statistics panel shows the same pairwise data three ways (bar, lollipop, heatmap). Python exposes all three:
+
+```python
+from venn_diagram_lab import analyze, load_sample
+from venn_diagram_lab.render.svg import (
+    render_cluster_heatmap_svg,
+    render_enrichment_bar_svg,
+    render_enrichment_lollipop_svg,
+)
+
+result = analyze(load_sample("dataset_real_cancer_drivers_4"))
+
+render_enrichment_bar_svg(result).save("bar.svg")
+render_enrichment_lollipop_svg(result, metric="foldEnrichment").save("lollipop.svg")
+render_cluster_heatmap_svg(result, linkage="average").save("heatmap.svg")
+```
+
+Both bar and lollipop accept `metric="neglog10fdr"` (default — bar height ∝ `-log10(BH-FDR)`) or `metric="foldEnrichment"` (bar height ∝ fold-enrichment over the universe). Significant pairs (`FDR<0.05`) fill with `#2e7d32`; non-significant with `#888888`. Markers `***`/`**`/`*` mark `FDR<0.001`/`<0.01`/`<0.05` respectively.
+
+CLI:
+
+```bash
+vdl render bar --sample
+vdl render lollipop --sample --metric foldEnrichment
+```
+
+### 4.2. Item Share Distribution + Cluster Heatmap
 
 Two additional statistics surfaces complement the pairwise tables:
 
@@ -132,40 +156,7 @@ print(heatmap.svg[:200])
 
 Both renderers return the same `SvgImage` dataclass as `render_venn_svg`, so `.save("plot.svg" | "plot.png" | "plot.pdf")` works uniformly.
 
-### Enrichment bar + lollipop charts (v2.2.3)
-
-The webtool's Statistics panel shows the same pairwise data three ways
-(bar, lollipop, heatmap). Python now exposes all three:
-
-```python
-from venn_diagram_lab import analyze, load_sample
-from venn_diagram_lab.render.svg import (
-    render_cluster_heatmap_svg,
-    render_enrichment_bar_svg,
-    render_enrichment_lollipop_svg,
-)
-
-result = analyze(load_sample("dataset_real_cancer_drivers_4"))
-
-render_enrichment_bar_svg(result).save("bar.svg")
-render_enrichment_lollipop_svg(result, metric="foldEnrichment").save("lollipop.svg")
-render_cluster_heatmap_svg(result, linkage="average").save("heatmap.svg")
-```
-
-Both bar and lollipop accept `metric="neglog10fdr"` (default — bar
-height ∝ `-log10(BH-FDR)`) or `metric="foldEnrichment"` (bar height ∝
-fold-enrichment over the universe). Significant pairs (`FDR<0.05`)
-fill with `#2e7d32`; non-significant with `#888888`. Markers
-`***`/`**`/`*` mark `FDR<0.001`/`<0.01`/`<0.05` respectively.
-
-CLI:
-
-```bash
-vdl render bar --sample
-vdl render lollipop --sample --metric foldEnrichment
-```
-
-### PDF + ZIP report enhancements (v2.2.3)
+### 4.3. PDF + ZIP report enhancements
 
 The `to_pdf_report` PDF now includes a dedicated Item Share Distribution
 page (matching the webtool's v2.2.2 PDF). Cluster-mode heatmap can be
@@ -180,20 +171,13 @@ result.to_pdf_report("report.pdf", cluster_heatmap=True)
 vdl report pdf --sample --cluster-heatmap
 ```
 
-The `vdl report zip` bundle now also includes an
-`enrichment_statistics_{n}-sets.xlsx` Excel workbook (3 sheets: Jaccard,
-Sørensen-Dice, Intersection Enrichment) and a `README.txt` with
-provenance + the full *About This Report* methodology text — closing
-the parity gap with the webtool's *Download Everything* button.
+The `vdl report zip` bundle now also includes an `enrichment_statistics_{n}-sets.xlsx` Excel workbook (3 sheets: Jaccard, Sørensen-Dice, Intersection Enrichment) and a `README.txt` with provenance + the full *About This Report* methodology text — closing the parity gap with the webtool's *Download Everything* button.
 
-The PDF report's final pages now carry the unified *About This Report*
-appendix — the same 12 structured sections used by the webtool and the
-R companion (intro + Plots + Statistics blocks) — and end with a
-*Credits and Cite* footer listing authors, package URLs, and the
-Zenodo DOI. Titles render in bold; bodies in plain weight; the content
-auto-paginates across as many landscape pages as it needs.
+The PDF report's final pages now carry the unified *About This Report* appendix — the same 12 structured sections used by the webtool and the R companion (intro + Plots + Statistics blocks) — and end with a *Credits and Cite* footer listing authors, package URLs, and the Zenodo DOI. Titles render in bold; bodies in plain weight; the content auto-paginates across as many landscape pages as it needs.
 
-## Export to TSV (matches the web tool byte-for-byte)
+## 5. Export to TSV 
+
+The TSV file matches the web tool's byte-for-byte.
 
 ```python
 result.to_region_summary_tsv("regions.tsv")     # depth-sorted region table
@@ -203,19 +187,14 @@ result.to_statistics_tsv("statistics.tsv")      # pairwise stats with FDR
 
 These match the React web tool's three Export buttons exactly — including float formatting and spreadsheet-formula escaping. The Phase 7 parity tests (`pytest python/tests/test_parity_with_webapp.py`) prove this for all 5 bundled samples.
 
-## Command-line interface
+## 6. Command-line interface
 
-The wheel installs a `vdl` console script with a Typer-based subapp layout
-(commands are listed alphabetically in `vdl --help` and inside each
-subapp). Every subcommand has an extended `--help` page with a *How to
-try it* example block, and every dataset-consuming command accepts a
-`--sample` flag that runs the demo on the bundled
-`dataset_real_cancer_drivers_4` fixture without a positional argument.
+The wheel installs a `vdl` console script with a Typer-based subapp layout (commands are listed alphabetically in `vdl --help` and inside each subapp). Every subcommand has an extended `--help` page with a *How to try it* example block, and every dataset-consuming command accepts a
+`--sample` flag that runs the demo on the bundled `dataset_real_cancer_drivers_4` fixture without a positional argument.
 
-The full tree is discoverable in one shot via `vdl tree`. Below is the
-v2.2.2 catalog grouped by subapp:
+The full tree is discoverable in one shot via `vdl tree`. Below is the v2.2.2 catalog grouped by subapp:
 
-### Top-level shortcuts
+### 6.1. Top-level shortcuts
 
 | Command | Purpose |
 |---|---|
@@ -230,7 +209,7 @@ v2.2.2 catalog grouped by subapp:
 | `vdl analyze ...` | **Deprecated** (removed in v2.3) — Swiss-army analyzer; see migration hints. |
 | `vdl render-sample ...` | **Deprecated** (removed in v2.3) — bundled-sample shortcut for the old `analyze`. |
 
-### `vdl render` — visual outputs
+### 6.2. `vdl render` — visual outputs
 
 Each render command accepts `INPUT` (file path or bundled sample name) or
 `--sample` for demo mode. Format is inferred from the `--out` extension
@@ -247,7 +226,7 @@ Each render command accepts `INPUT` (file path or bundled sample name) or
 | `vdl render venn <input>` | Venn diagram (44 SVG models + area-proportional 2/3-set). |
 | `vdl render all <input> --output-dir D` | One-shot bundle: all five SVGs into one directory. |
 
-### `vdl export` — TSV table writers
+### 6.3. `vdl export` — TSV table writers
 
 Stdout pipe via `--out -` (text format only). All commands route through
 the same `RegionResult` writer methods as the Python API.
@@ -259,14 +238,14 @@ the same `RegionResult` writer methods as the Python API.
 | `vdl export statistics <input>` | Pairwise Jaccard / Dice / OC / FE / hypergeometric / BH-FDR. |
 | `vdl export pairwise <input>` | Alias of `statistics` (common bioinformatics synonym). |
 
-### `vdl report` — multi-page bundles
+### 6.4. `vdl report` — multi-page bundles
 
 | Command | Purpose |
 |---|---|
 | `vdl report pdf <input> [--cluster-heatmap] --out R.pdf` | Multi-page PDF report (mirrors the web tool's *Report PDF*). `--cluster-heatmap` appends the cluster-ordered Jaccard heatmap page. |
 | `vdl report zip <input> --out R.zip` | Full bundle ZIP (4 SVGs + 3 TSVs + 1 XLSX + 1 PDF + README.txt). |
 
-### `vdl data` — data operations
+### 6.5. `vdl data` — data operations
 
 | Command | Purpose |
 |---|---|
@@ -277,7 +256,7 @@ the same `RegionResult` writer methods as the Python API.
 | `vdl data samples` | List bundled sample datasets. |
 | `vdl data validate <input> [--text] [--strict]` | Schema check; JSON by default, `--text` for colourised output. Exit 1 on errors (`--strict` promotes warnings). |
 
-### `vdl model` — model catalog
+### 6.6. `vdl model` — model catalog
 
 | Command | Purpose |
 |---|---|
@@ -285,7 +264,7 @@ the same `RegionResult` writer methods as the Python API.
 | `vdl model info <name>` | Set count, geometry family, display name for one model. |
 | `vdl model svg <name> [--out F]` | Write the raw bundled SVG template (no substitution). |
 
-### `vdl workflow` — project helpers
+### 6.7. `vdl workflow` — project helpers
 
 | Command | Purpose |
 |---|---|
@@ -293,7 +272,7 @@ the same `RegionResult` writer methods as the Python API.
 | `vdl workflow bench <input>` | Per-stage timing (load / analyze / 5 renderers / total). |
 | `vdl workflow run-from <cfg.yaml>` | Execute every step in a YAML config (`outputs: [{kind, out, …}]`). |
 
-### Examples
+### 6.8. Examples
 
 ```bash
 # Demo mode (no input file needed)
@@ -318,7 +297,7 @@ vdl render --help              # subapp help (alphabetical)
 vdl render venn --help         # extended help with "How to try it" examples
 ```
 
-## Notebook gallery
+## 7. Notebook gallery
 
 Eleven executable notebooks live under [`python/examples/`](https://github.com/ZoliQua/Venn-Diagram-Lab/tree/main/python/examples):
 
@@ -338,7 +317,7 @@ Eleven executable notebooks live under [`python/examples/`](https://github.com/Z
 
 Each notebook is built from a `python/scripts/notebooks/_build_NN_*.py` script and executed nightly on CI to prevent bit-rot.
 
-## Bundled sample datasets
+## 8. Bundled sample datasets
 
 | Name | Sets | Items | Source |
 |---|---|---|---|
@@ -354,7 +333,7 @@ list_samples()
 ds = load_sample("dataset_real_cancer_drivers_4")
 ```
 
-## Contributing
+## 9. Contributing
 
 The repo monorepos the React web tool and this Python package. After cloning:
 
@@ -381,19 +360,17 @@ npm run fixtures:parity
 
 Conventional commit prefixes used: `feat(python):`, `fix(python):`, `chore(python):`, `docs(python):`, `test(python):`.
 
-## Versioning
+## 10. Versioning
 
 Strict SemVer. Pre-1.0 minor bumps may include behavior changes; see [`CHANGELOG.md`](CHANGELOG.md).
 
-## License
+## 11. License, Citation and Credits
 
 MIT — see [`LICENSE`](LICENSE).
 
-## Citation
+### 11.1. Citation
 
-If you use this package in research, please cite the software using the
-Zenodo concept (all-versions) DOI — it always resolves to the latest
-archived release, so there is nothing to update per version:
+If you use this package in research, please cite the software using the Zenodo concept (all-versions) DOI — it always resolves to the latest archived release, so there is nothing to update per version:
 
 ```
 Dul Z., Ölbei M., Thomas N. S. B., Si Ammour A., Csikász-Nagy A. (2026).
@@ -409,11 +386,11 @@ The R companion package also has a CRAN-minted DOI:
 
 See [`CITATION.cff`](https://github.com/ZoliQua/Venn-Diagram-Lab/blob/main/CITATION.cff) for machine-readable citation metadata.
 
-## See also
+### 11.2. See also
 
-| Surface | Package / URL | Status |
-|---|---|---|
-| Web tool | <https://www.venndiagramlab.org/> | live |
-| Python (this package) | [`venn-diagram-lab` on PyPI](https://pypi.org/project/venn-diagram-lab/) | live |
-| R (companion) | [`vennDiagramLab` on CRAN](https://CRAN.R-project.org/package=vennDiagramLab) | live (since 2026-05-18) |
-| R (companion, Bioconductor) | [`vennDiagramLab` on Bioconductor](https://bioconductor.org/packages/vennDiagramLab) | submission pending |
+| Language| Platform |  Package / URL | Status |
+|---|---|---|---|
+| Typescript | Web | <https://www.venndiagramlab.org/> | live |
+| Python | PyPi | [`venn-diagram-lab` on PyPI](https://pypi.org/project/venn-diagram-lab/) | live |
+| R | CRAN | [`vennDiagramLab` on CRAN](https://CRAN.R-project.org/package=vennDiagramLab) | live |
+| R | Bioconductor | [`vennDiagramLab` on Bioconductor](https://bioconductor.org/packages/vennDiagramLab) | submission pending |

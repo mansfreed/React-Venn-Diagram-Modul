@@ -6,13 +6,13 @@
 [![R CMD check](https://github.com/ZoliQua/Venn-Diagram-Lab/actions/workflows/r-cmd-check.yml/badge.svg)](https://github.com/ZoliQua/Venn-Diagram-Lab/actions/workflows/r-cmd-check.yml)
 [![Lifecycle: stable](https://img.shields.io/badge/lifecycle-stable-brightgreen.svg)](https://lifecycle.r-lib.org/articles/stages.html#stable)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-[![DOI (Zenodo concept)](https://zenodo.org/badge/DOI/10.5281/zenodo.19510813.svg)](https://doi.org/10.5281/zenodo.19510813)
+[![DOI (Zenodo concept)](http://www.venndiagramlab.org/zenodo.19510813.svg)](https://doi.org/10.5281/zenodo.19510813)
 [![DOI (CRAN)](https://img.shields.io/badge/DOI-10.32614%2FCRAN.package.vennDiagramLab-1F4288.svg)](https://doi.org/10.32614/CRAN.package.vennDiagramLab)
 <!-- badges: end -->
 
 `vennDiagramLab` is the R companion to the [Venn Diagram Lab web tool](https://www.venndiagramlab.org/) and the [Python `venn-diagram-lab` package](https://pypi.org/project/venn-diagram-lab/). It provides headless Venn / UpSet / Network diagram analysis and rendering for bioinformaticians and biostatisticians who work natively in R, with byte-equivalent outputs that match the web tool and the Python package down to the byte.
 
-## Features
+## 1. Features
 
 * **44 SVG diagram models** (2- to 9-set) from a dozen construction methods (Venn 1880, Edwards 1996, Anderson 1988, Grünbaum 1984/1992, Bannier-Bodin 2017, Carroll 2000, Mamakani 2012, SUMO-Venn) — the same library shipped by the web tool.
 * **Area-proportional 2- and 3-set layouts** via analytical (`solve_2set`) and approximate (`solve_3set`) solvers.
@@ -24,9 +24,9 @@
 * **Byte-equivalent TSV exports** tested against the React webapp's golden fixtures — the same region-summary, item-matrix, and statistics files the web tool's "Export" buttons emit.
 * **Cross-implementation parity** verified by 12 byte-equivalence tests against the Python package's golden fixtures (4 sample datasets × 3 export types).
 
-## Install
+## 2. Install
 
-### From CRAN (recommended)
+### 2.1. From CRAN (recommended)
 
 `vennDiagramLab` is on CRAN as of **2026-05-18** (current version: **2.2.2**):
 
@@ -36,7 +36,7 @@ install.packages("vennDiagramLab")
 
 CRAN binaries are built for the three current major Windows / macOS / Linux R versions. Source-only? `install.packages("vennDiagramLab", type = "source")`.
 
-### From Bioconductor (alternate channel once published)
+### 2.2. From Bioconductor (alternate channel once published)
 
 ```r
 if (!require("BiocManager", quietly = TRUE))
@@ -44,7 +44,7 @@ if (!require("BiocManager", quietly = TRUE))
 BiocManager::install("vennDiagramLab")
 ```
 
-### Development version (GitHub)
+### 2.3. Development version (GitHub)
 
 The package source lives in the `r/` subdirectory of the monorepo:
 
@@ -61,7 +61,7 @@ remotes::install_github("ZoliQua/vennDiagramLab")
 
 Both installs produce the same package; the mirror exists purely to satisfy Bioc's submission tooling.
 
-## Quickstart
+## 3. Quickstart
 
 ```r
 library(vennDiagramLab)
@@ -83,7 +83,7 @@ to_pdf_report(result, "cancer_drivers.pdf")
 
 See `vignette("v01_quickstart")` for the full intro and `browseVignettes("vennDiagramLab")` for the complete eight-vignette gallery.
 
-## Statistics surfaces (v2.2.2)
+## 4. Statistics surfaces
 
 Two additional statistics surfaces complement the pairwise tables, matching
 the web tool's Statistics panel and the Python package:
@@ -111,16 +111,16 @@ substr(slot(heatmap, "content"), 1L, 200L)
 Both renderers return an `SvgImage` S4 object (slots: `content`, `width`,
 `height`), the same shape as `render_venn_svg()`.
 
-## PDF report — About + Credits (v2.2.3)
+## 5. PDF report — About + Credits
 
-`to_pdf_report()` now closes with the unified *About This Report* appendix
+`to_pdf_report()` closes with the unified *About This Report* appendix
 shared across the webtool, the Python package, and this companion: 12
 structured sections (intro, Plots, Statistics) followed by a *Credits and
 Cite* footer listing authors, package URLs, and the Zenodo DOI. Section
 titles render in bold, bodies in plain weight, and the content
 auto-paginates across as many landscape pages as needed.
 
-## v2.2.3 additions (Phase 10)
+## 6. Latest additions
 
 Render + PDF + bundle parity with the webtool and Python package:
 
@@ -133,7 +133,7 @@ Render + PDF + bundle parity with the webtool and Python package:
 page, on by default) and `include_cluster = FALSE` (Cluster Heatmap page,
 opt-in) flags.
 
-## Phase 11 additions
+## 7. Phase 11 additions
 
 - `render_venn_svg(result, show_items = TRUE, item_options = list(...))` — Item names inside regions.
 - `render_venn_svg(result, highlight = c("AB", "ABC"))` — Spotlight mode.
@@ -142,7 +142,7 @@ opt-in) flags.
 - `union_items(result, sets)` — Items in any of the named sets.
 - `parse_region_expression(expr, n_sets)` — Boolean DSL to region bitmasks.
 
-## Documentation
+## 8. Documentation
 
 * Full reference site + vignettes: <https://zoliqua.github.io/Venn-Diagram-Lab/r/>
 * Eight RMarkdown vignettes (also accessible via `vignette(package = "vennDiagramLab")`):
@@ -155,7 +155,7 @@ opt-in) flags.
   7. `v07_pdf_reports` — composite multi-page PDF generation.
   8. `v08_custom_styling_and_export` — custom names / colors, `geom_venn()`, multi-format export.
 
-## Related projects
+## 9. Related projects
 
 `vennDiagramLab` is one of three coordinated implementations sharing the same SVG model library, statistics, and byte-equivalent TSV outputs:
 
@@ -163,14 +163,14 @@ opt-in) flags.
 * **Python package** (`venn-diagram-lab` on PyPI): <https://pypi.org/project/venn-diagram-lab/>
 * **R package** (this package — `vennDiagramLab` on CRAN + Bioconductor)
 
-### Source repositories
+### 9. Source repositories
 
 * **Monorepo** (web tool + Python + R, primary development): <https://github.com/ZoliQua/Venn-Diagram-Lab>
 * **R-only mirror** (for Bioconductor Single Package Builder, auto-synced from monorepo `main`): <https://github.com/ZoliQua/vennDiagramLab>
 
 The mirror is read-only — file changes should always be made in the monorepo. A GitHub Action splits the `r/` subtree and force-pushes it (with a Bioc `0.99.z` `Version` override) to the mirror on every push to `main`.
 
-## Citation
+## 10. Citation
 
 If you use `vennDiagramLab` in published work, please cite both the software and the version you used.
 
@@ -182,7 +182,7 @@ citation("vennDiagramLab")
 
 returns a `bibentry` with the correct version + DOI for the installed copy.
 
-### DOIs
+### 10.1. DOIs
 
 Two stable identifiers are available — pick whichever fits your reference style:
 
@@ -191,7 +191,7 @@ Two stable identifiers are available — pick whichever fits your reference styl
 | **`10.32614/CRAN.package.vennDiagramLab`** ([link](https://doi.org/10.32614/CRAN.package.vennDiagramLab)) | The CRAN package page | Citing the package as a CRAN release |
 | **`10.5281/zenodo.19510813`** ([link](https://doi.org/10.5281/zenodo.19510813)) | The Zenodo concept record — always resolves to the latest archived version | Citing the software as an archived artifact ("Cite all versions" — no need to update per release) |
 
-### Plain-text citation
+### 10.2. Plain-text citation
 
 ```
 Dul Z., Ölbei M., Thomas N.S.B., Si Ammour A., Csikász-Nagy A. (2026).
@@ -201,11 +201,11 @@ https://CRAN.R-project.org/package=vennDiagramLab
 DOI: 10.32614/CRAN.package.vennDiagramLab
 ```
 
-## Contributing + bug reports
+## 11. Contributing + bug reports
 
 * Issues: <https://github.com/ZoliQua/Venn-Diagram-Lab/issues>
 * The repository accepts pull requests against `main` in the monorepo. Do not open PRs against the R-only mirror — they will be lost on the next subtree sync.
 
-## License
+## 12. License
 
 MIT — see [LICENSE](LICENSE).
