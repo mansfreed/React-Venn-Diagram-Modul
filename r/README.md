@@ -120,9 +120,9 @@ Cite* footer listing authors, package URLs, and the Zenodo DOI. Section
 titles render in bold, bodies in plain weight, and the content
 auto-paginates across as many landscape pages as needed.
 
-## 6. Latest additions
+## 6. Latest additions (v2.2.3)
 
-Render + PDF + bundle parity with the webtool and Python package:
+### 6.1. Render + PDF + bundle parity
 
 - `render_enrichment_bar(result, metric)` — Pairwise enrichment bar chart SVG.
 - `render_enrichment_lollipop(result, metric)` — Pairwise enrichment lollipop chart SVG.
@@ -133,16 +133,24 @@ Render + PDF + bundle parity with the webtool and Python package:
 page, on by default) and `include_cluster = FALSE` (Cluster Heatmap page,
 opt-in) flags.
 
-## 7. Phase 11 additions
+### 6.2. Item display, Highlight, Region accessors, Boolean DSL
 
-- `render_venn_svg(result, show_items = TRUE, item_options = list(...))` — Item names inside regions.
-- `render_venn_svg(result, highlight = c("AB", "ABC"))` — Spotlight mode.
+- `render_venn_svg(result, show_items = TRUE, item_options = list(...))` — Item names inside regions, with truncation and column layout.
+- `render_venn_svg(result, highlight = c("AB", "ABC"))` — Spotlight mode; desaturates sets that do not contribute to any highlighted region.
 - `intersection_items(result, sets)` — Items in every named set.
 - `exclusive_items(result, sets)` — Items in exactly this combination.
 - `union_items(result, sets)` — Items in any of the named sets.
-- `parse_region_expression(expr, n_sets)` — Boolean DSL to region bitmasks.
+- `parse_region_expression(expr, n_sets)` — Boolean DSL parser returning a sorted integer vector of region bitmasks; composes with `highlight = ...`.
 
-## 8. Documentation
+The four new helpers chain naturally:
+
+```r
+masks <- parse_region_expression("A & B + B & C", n_sets = 4L)
+img   <- render_venn_svg(result, highlight = masks, show_items = TRUE)
+items <- exclusive_items(result, c("A", "B"))
+```
+
+## 7. Documentation
 
 * Full reference site + vignettes: <https://zoliqua.github.io/Venn-Diagram-Lab/r/>
 * Eight RMarkdown vignettes (also accessible via `vignette(package = "vennDiagramLab")`):
@@ -155,7 +163,7 @@ opt-in) flags.
   7. `v07_pdf_reports` — composite multi-page PDF generation.
   8. `v08_custom_styling_and_export` — custom names / colors, `geom_venn()`, multi-format export.
 
-## 9. Related projects
+## 8. Related projects
 
 `vennDiagramLab` is one of three coordinated implementations sharing the same SVG model library, statistics, and byte-equivalent TSV outputs:
 
@@ -170,7 +178,7 @@ opt-in) flags.
 
 The mirror is read-only — file changes should always be made in the monorepo. A GitHub Action splits the `r/` subtree and force-pushes it (with a Bioc `0.99.z` `Version` override) to the mirror on every push to `main`.
 
-## 10. Citation
+## 9. Citation
 
 If you use `vennDiagramLab` in published work, please cite both the software and the version you used.
 
@@ -201,11 +209,11 @@ https://CRAN.R-project.org/package=vennDiagramLab
 DOI: 10.32614/CRAN.package.vennDiagramLab
 ```
 
-## 11. Contributing + bug reports
+## 10. Contributing + bug reports
 
 * Issues: <https://github.com/ZoliQua/Venn-Diagram-Lab/issues>
 * The repository accepts pull requests against `main` in the monorepo. Do not open PRs against the R-only mirror — they will be lost on the next subtree sync.
 
-## 12. License
+## 11. License
 
 MIT — see [LICENSE](LICENSE).

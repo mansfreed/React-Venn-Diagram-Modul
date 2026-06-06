@@ -1,13 +1,15 @@
 # vennDiagramLab — NEWS
 
-## v2.2.3 — 2026-06-02 — Render + PDF + bundle parity with Python
+## v2.2.3 — 2026-06-03 — Render + PDF + bundle parity, Phase 11 item / highlight / DSL surface
 
-Cross-package patch release matching webtool v2.2.3 and Python v2.2.3.
-This is the R companion's Phase-10 catch-up: four new public APIs plus
-two new PDF report pages, all additive (no breaking changes, no removed
-APIs).
+Cross-package patch release matching webtool v2.2.3 and Python v2.2.3,
+delivered in two additive phases (10 + 11). No breaking changes, no
+removed APIs.
 
-### New features
+### Phase 10 — Render + PDF + bundle parity
+
+New rendering and export APIs that bring the R surface in line with the
+webtool and the Python package:
 
 * `render_enrichment_bar(result, metric, width, height)`: pairwise
   enrichment bar chart SVG. Bar height encodes -log10(BH-FDR) or
@@ -21,29 +23,15 @@ APIs).
   Pure-R (uses `openxlsx`).
 * `to_zip_report(result, path, include_share, include_cluster)`: bundles
   PDF + 4 SVGs + 3 TSVs + xlsx + README.txt into a single ZIP archive.
-  Mirrors the webtool's *Download Everything* button and Python's
-  `vdl report zip`.
+  Pure-R (uses `zip`).
+* `to_pdf_report()` gains `include_share = TRUE` (Item Share Distribution
+  page, on by default) and `include_cluster = FALSE` (Cluster Heatmap
+  page, opt-in) flags.
 
-### PDF report (`to_pdf_report`)
+### Phase 11 — Item display, Highlight, Region accessors, Boolean DSL
 
-* `include_share = TRUE` (default): Item Share Distribution page —
-  histogram + per-bin breakdown table + explanatory paragraph.
-* `include_cluster = FALSE` (default, opt-in): Cluster Heatmap page
-  with the cluster-ordered Jaccard heatmap from
-  `render_cluster_heatmap()`.
-
-### Dependencies
-
-* `openxlsx` and `zip` added to `Imports`. Both are pure-R (no Java
-  for `openxlsx`, no system `zip(1)` for `zip`).
-
-## v2.2.3 (unreleased) — Phase 11 — Item display + Highlight + Region accessors + Boolean DSL
-
-Additive feature drop. No version bump (release tag decided after
-smoke test). No breaking changes, no removed APIs, no new hard
-dependencies.
-
-### New features
+Six new public APIs (two `render_venn_svg()` parameters plus four
+exported functions) for inspecting and presenting individual regions.
 
 * `render_venn_svg(result, show_items = TRUE, item_options = list(...))`:
   replaces the per-region count text with the actual item identifiers,
@@ -64,15 +52,19 @@ dependencies.
   for grouping, atoms `A..I`. Returns a sorted integer vector of
   region bitmasks suitable for `highlight = ...`.
 
-### Composability
-
-The four new APIs chain naturally:
+The four new public functions chain naturally with the existing
+renderers:
 
 ```r
 masks <- parse_region_expression("A & B + B & C", n_sets = 4L)
 img   <- render_venn_svg(result, highlight = masks, show_items = TRUE)
 items <- exclusive_items(result, c("A", "B"))
 ```
+
+### Dependencies
+
+* `openxlsx` and `zip` added to `Imports` (both pure-R). No new
+  dependencies in Phase 11.
 
 ## v2.2.2 — 2026-05-31 — Item-share distribution + cluster heatmap (cross-package parity)
 
