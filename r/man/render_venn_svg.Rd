@@ -50,7 +50,7 @@ Unknown keys raise a warning.}
 or an integer vector of region bitmasks (e.g. the output of
 [parse_region_expression()]). When set, only the listed regions keep
 their original fill colour; all other set-shapes are desaturated to
-`#cccccc` at 25% opacity. Default `NULL` (no spotlight).}
+`#cccccc` at 25\% opacity. Default `NULL` (no spotlight).}
 }
 \value{
 A `character` (length 1) with the raw SVG.
