@@ -133,6 +133,15 @@ Render + PDF + bundle parity with the webtool and Python package:
 page, on by default) and `include_cluster = FALSE` (Cluster Heatmap page,
 opt-in) flags.
 
+## Phase 11 additions
+
+- `render_venn_svg(result, show_items = TRUE, item_options = list(...))` — Item names inside regions.
+- `render_venn_svg(result, highlight = c("AB", "ABC"))` — Spotlight mode.
+- `intersection_items(result, sets)` — Items in every named set.
+- `exclusive_items(result, sets)` — Items in exactly this combination.
+- `union_items(result, sets)` — Items in any of the named sets.
+- `parse_region_expression(expr, n_sets)` — Boolean DSL to region bitmasks.
+
 ## Documentation
 
 * Full reference site + vignettes: <https://zoliqua.github.io/Venn-Diagram-Lab/r/>

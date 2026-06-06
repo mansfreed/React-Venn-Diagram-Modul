@@ -57,6 +57,13 @@ reference:
       - item_share_distribution
       - cluster_set_order
 
+  - title: Region accessors and DSL
+    contents:
+    - exclusive_items
+    - intersection_items
+    - parse_region_expression
+    - union_items
+
   - title: TSV exports
     desc: Byte-equivalent TSV writers for region summaries, item-membership matrices, and pairwise statistics tables.
     contents:

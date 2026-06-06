@@ -37,6 +37,43 @@ APIs).
 * `openxlsx` and `zip` added to `Imports`. Both are pure-R (no Java
   for `openxlsx`, no system `zip(1)` for `zip`).
 
+## v2.2.3 (unreleased) — Phase 11 — Item display + Highlight + Region accessors + Boolean DSL
+
+Additive feature drop. No version bump (release tag decided after
+smoke test). No breaking changes, no removed APIs, no new hard
+dependencies.
+
+### New features
+
+* `render_venn_svg(result, show_items = TRUE, item_options = list(...))`:
+  replaces the per-region count text with the actual item identifiers,
+  optionally column-paginated, optionally truncated. `item_options`
+  recognises `max_items_per_region`, `ncol_items`, `truncate_long_names`,
+  `line_height`, `font_size`, `show_counts_with_items`, `ellipsis`.
+* `render_venn_svg(result, highlight = ...)`: spotlight mode. Accepts a
+  character vector of region labels (`"AB"`, `"ABC"`, ...) OR an integer
+  vector of region bitmasks. Sets that do not contribute to any
+  highlighted region get desaturated to `#cccccc` at 25% opacity.
+* `intersection_items(result, sets)`: items appearing in every set in
+  `sets`, regardless of other memberships.
+* `exclusive_items(result, sets)`: items in EXACTLY this combination
+  (not in any other set in the dataset).
+* `union_items(result, sets)`: items in any of the named sets.
+* `parse_region_expression(expr, n_sets)`: Boolean DSL parser. Grammar:
+  `&` intersection, `|`/`+` union, `~`/`!` complement, parentheses
+  for grouping, atoms `A..I`. Returns a sorted integer vector of
+  region bitmasks suitable for `highlight = ...`.
+
+### Composability
+
+The four new APIs chain naturally:
+
+```r
+masks <- parse_region_expression("A & B + B & C", n_sets = 4L)
+img   <- render_venn_svg(result, highlight = masks, show_items = TRUE)
+items <- exclusive_items(result, c("A", "B"))
+```
+
 ## v2.2.2 — 2026-05-31 — Item-share distribution + cluster heatmap (cross-package parity)
 
 Additive feature release matching the webtool v2.2.2 and Python v2.2.2 releases. No breaking changes, no removed APIs, no new hard dependencies.
