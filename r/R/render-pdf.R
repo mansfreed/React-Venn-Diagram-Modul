@@ -201,6 +201,114 @@ NULL
     )
 }
 
+# ---------------------------------------------------------------------------
+# Item Share Distribution page (v2.2.3 cross-package parity with python).
+#
+# Layout: histogram image (left ~58%) + per-bin breakdown table (right ~38%);
+# explanatory paragraph occupies the bottom band. Mirrors python
+# _build_share_distribution_page (render/pdf.py:485-561).
+# ---------------------------------------------------------------------------
+
+.SHARE_RASTER_WIDTH <- 1600L
+.SHARE_EXPLAIN_TEXT <- paste0(
+    "Item Share Distribution\n\n",
+    "Counts how many items are shared by exactly k sets, for k = 1..N. ",
+    "The leftmost bar (k = 1) is the number of items unique to a single set; ",
+    "the rightmost bar (k = N) is the number of items shared by every set. ",
+    "Tall left bars indicate set-specific signal; tall right bars indicate a ",
+    "core shared by all sets. Bars use a tier-coloured gradient from ",
+    "low (orange) to high (purple) membership."
+)
+
+#' @noRd
+# Compose the per-bin breakdown table data.frame for the share page.
+# Mirrors python `_build_share_distribution_page` table_rows.
+.share_breakdown_df <- function(result) {
+    matrix <- .dataset_to_binary_matrix(result@dataset)
+    dist <- item_share_distribution(matrix)
+    total_items <- sum(dist)
+    n <- length(result@dataset@set_names)
+    rows <- list()
+    for (k in seq_len(n)) {
+        count <- as.integer(if (is.null(dist[[as.character(k)]])) 0L else dist[[as.character(k)]])
+        pct <- if (total_items > 0) sprintf("%.1f%%", count / total_items * 100) else "0.0%"
+        label <- if (k == 1L) "1 set" else sprintf("%d sets", k)
+        rows[[length(rows) + 1L]] <- c(label, as.character(count), pct)
+    }
+    df <- as.data.frame(do.call(rbind, rows), stringsAsFactors = FALSE)
+    colnames(df) <- c("Membership", "Items", "%")
+    df
+}
+
+#' @noRd
+.build_share_distribution_page <- function(result) {
+    title_plot <- ggplot2::ggplot() + ggplot2::geom_blank() +
+        ggplot2::ggtitle("Item Share Distribution") + ggplot2::theme_void() +
+        ggplot2::theme(plot.title = ggplot2::element_text(
+            size = 16, face = "bold", hjust = 0.5,
+            margin = ggplot2::margin(t = 8, b = 8)
+        ))
+
+    # Rasterise the share-distribution SVG.
+    sd_img <- render_share_distribution(result@dataset)
+    sd_svg <- slot(sd_img, "content")
+    raster <- rsvg::rsvg_nativeraster(charToRaw(sd_svg),
+                                       width = .SHARE_RASTER_WIDTH)
+    rw <- ncol(raster); rh <- nrow(raster)
+    hist_plot <- ggplot2::ggplot() +
+        ggplot2::annotation_raster(raster, xmin = 0, xmax = rw, ymin = 0, ymax = rh) +
+        ggplot2::coord_fixed(xlim = c(0, rw), ylim = c(0, rh),
+                              expand = FALSE, clip = "off") +
+        ggplot2::theme_void()
+
+    breakdown_df <- .share_breakdown_df(result)
+    table_grob <- gridExtra::tableGrob(
+        breakdown_df, rows = NULL,
+        theme = gridExtra::ttheme_minimal(base_size = 9)
+    )
+    # Caption for the breakdown table. Note that grDevices::pdf renders
+    # ASCII "-" via non-embedded Type1 Helvetica, and poppler
+    # (pdftools::pdf_text) decodes the "hyphen" glyph as U+2212 minus,
+    # so PDF round-trip tests must accept either character class.
+    table_caption <- grid::textGrob(
+        "Per-bin breakdown",
+        gp = grid::gpar(fontsize = 12, fontface = "bold")
+    )
+    table_panel <- patchwork::wrap_plots(
+        patchwork::wrap_elements(table_caption),
+        patchwork::wrap_elements(table_grob),
+        ncol = 1L, heights = c(0.10, 0.90)
+    )
+
+    explain_lines <- .wrap_about_paragraph(.SHARE_EXPLAIN_TEXT, .ABOUT_BODY_WRAP)
+    explain_df <- data.frame(
+        y = -seq_along(explain_lines),
+        text = explain_lines,
+        stringsAsFactors = FALSE
+    )
+    explain_plot <- ggplot2::ggplot() +
+        ggplot2::xlim(c(0, 10)) +
+        ggplot2::ylim(c(-length(explain_lines) - 1L, 1L)) +
+        ggplot2::geom_text(
+            data = explain_df,
+            ggplot2::aes(x = 0, y = .data$y, label = .data$text),
+            fontface = "plain", size = 3, hjust = 0, vjust = 0.5,
+            colour = "#3c3c3c"
+        ) +
+        ggplot2::theme_void()
+
+    top_row <- patchwork::wrap_plots(
+        hist_plot,
+        table_panel,
+        ncol = 2L, widths = c(0.6, 0.4)
+    )
+    patchwork::wrap_plots(
+        title_plot, top_row, explain_plot, patchwork::plot_spacer(),
+        ncol = 1L,
+        heights = c(0.08, 0.55, 0.30, 0.07)
+    )
+}
+
 .SIG_VERY_THRESHOLD <- 0.001
 .SIG_MID_THRESHOLD  <- 0.01
 .SIG_THRESHOLD      <- 0.05
@@ -708,6 +816,10 @@ NULL
 #' @param title Optional title override for the overview page.
 #' @param include_network If `TRUE` (default), include the network page.
 #' @param include_about If `TRUE` (default), include the methodology page.
+#' @param include_share If `TRUE` (default), include the Item Share
+#'   Distribution page.
+#' @param include_cluster If `TRUE`, include the Cluster Heatmap page
+#'   (default `FALSE` — opt-in like Python's `cluster_heatmap=True`).
 #' @return Invisibly returns `NULL`. The PDF is written to `path`.
 #' @export
 #' @examples
@@ -718,13 +830,20 @@ NULL
 #' }
 #' }
 to_pdf_report <- function(result, path, title = NULL,
-                           include_network = TRUE, include_about = TRUE) {
+                           include_network = TRUE, include_about = TRUE,
+                           include_share = TRUE, include_cluster = FALSE) {
     .warn_if_oldrel_complex_upset()
     pages <- list()
     pages[[length(pages) + 1L]] <- .build_overview_page(result, title = title)
     pages[[length(pages) + 1L]] <- .build_venn_upset_page(result)
     stat_pages <- .build_statistics_pages(result)
     for (p in stat_pages) pages[[length(pages) + 1L]] <- p
+    if (isTRUE(include_share)) {
+        pages[[length(pages) + 1L]] <- .build_share_distribution_page(result)
+    }
+    if (isTRUE(include_cluster)) {
+        pages[[length(pages) + 1L]] <- .build_cluster_heatmap_page(result)
+    }
     if (isTRUE(include_network)) {
         pages[[length(pages) + 1L]] <- .build_network_page(result)
     }

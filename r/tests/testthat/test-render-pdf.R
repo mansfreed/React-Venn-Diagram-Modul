@@ -152,6 +152,43 @@ test_that(".build_about_pages returns a non-empty list of ggplots", {
                             logical(1L))))
 })
 
+test_that("to_pdf_report includes the Item Share Distribution page by default", {
+    skip_if_not_installed("pdftools")
+    ds <- methods::new("VennDataset",
+        set_names = c("A", "B", "C"),
+        items = list(A = c("x", "y"), B = c("y", "z"), C = c("z")),
+        item_order = c("x", "y", "z"),
+        universe_size = 10L, source_path = NULL, format = "csv")
+    res <- analyze(ds)
+    out <- tempfile(fileext = ".pdf")
+    suppressWarnings(to_pdf_report(res, path = out))
+    txt <- pdftools::pdf_text(out)
+    expect_true(any(grepl("Item Share Distribution", txt, fixed = TRUE)))
+    # Note: grDevices::pdf uses non-embedded Helvetica, and poppler
+    # (pdftools::pdf_text) decodes the standard "hyphen" glyph at 0x2D
+    # as U+2212 (Unicode minus). So the on-screen caption "Per-bin
+    # breakdown" round-trips as "Per−bin breakdown". The class
+    # [-−] matches either form.
+    expect_true(any(grepl("Per[-−]bin breakdown", txt)))
+})
+
+test_that("to_pdf_report omits Item Share Distribution when include_share = FALSE", {
+    skip_if_not_installed("pdftools")
+    ds <- methods::new("VennDataset",
+        set_names = c("A", "B", "C"),
+        items = list(A = c("x", "y"), B = c("y", "z"), C = c("z")),
+        item_order = c("x", "y", "z"),
+        universe_size = 10L, source_path = NULL, format = "csv")
+    res <- analyze(ds)
+    out <- tempfile(fileext = ".pdf")
+    suppressWarnings(to_pdf_report(res, path = out, include_share = FALSE))
+    txt <- pdftools::pdf_text(out)
+    # The phrase "Per-bin breakdown" (with hyphen or U+2212 minus) is
+    # only on the share page (not on About / Network), so its absence
+    # proves the page was skipped.
+    expect_false(any(grepl("Per[-−]bin breakdown", txt)))
+})
+
 test_that(".ABOUT_SECTIONS includes the v2.2.3 Credits and Cite footer", {
     titles <- vapply(.ABOUT_SECTIONS, function(s) s$title, character(1L))
     expect_true("Credits and Cite" %in% titles)
@@ -239,7 +276,8 @@ test_that("to_pdf_report omits network/about pages when flags are FALSE", {
     res <- analyze(ds)
     tmp <- tempfile(fileext = ".pdf")
     on.exit(unlink(tmp))
-    to_pdf_report(res, tmp, include_network = FALSE, include_about = FALSE)
+    to_pdf_report(res, tmp, include_network = FALSE, include_about = FALSE,
+                  include_share = FALSE)
     info <- pdftools::pdf_info(tmp)
     # overview + venn+upset + statistics = 3 pages
     expect_equal(info$pages, 3L)
