@@ -111,6 +111,16 @@ target-version = "py310"
 select = ["E", "F", "W", "I", "B", "UP", "N", "PL", "RUF"]
 ignore = ["PLR0913"]  # too many arguments in function definition (acceptable for render APIs)
 
+[tool.ruff.lint.per-file-ignores]
+# Notebook builder scripts embed verbatim markdown tables / decision matrices
+# that pre-existed the 100-char line limit; the tables are easier to read at
+# their natural width than wrapped onto continuation strings.
+"scripts/notebooks/_build_*.py" = ["E501"]
+# Notebook subprocess.run() calls demonstrate failure modes by showing both
+# stdout and stderr to the reader, so `check=False` is the intended behaviour
+# (the notebook never aborts on a non-zero CLI exit; it prints and continues).
+"examples/*.ipynb" = ["PLW1510"]
+
 [tool.mypy]
 python_version = "3.10"
 strict = true
