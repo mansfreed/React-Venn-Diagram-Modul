@@ -38,7 +38,7 @@ from venn_diagram_lab import parse_region_expression
         ("A & B & C & ~D", 4, [7]),
         ("A & B & ~C & D", 4, [11]),
         # Parentheses.
-        ("A & (B + C)", 3, [3, 5, 6, 7]),
+        ("A & (B + C)", 3, [3, 5, 7]),
         ("(A | B) & C", 3, [5, 6, 7]),
         # Unsatisfiable.
         ("A & ~A", 3, []),
