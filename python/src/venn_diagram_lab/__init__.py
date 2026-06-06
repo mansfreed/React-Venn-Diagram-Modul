@@ -29,6 +29,11 @@ from venn_diagram_lab.io import (
     load_tsv,
 )
 from venn_diagram_lab.proportional import generate_proportional_svg
+from venn_diagram_lab.region_accessors import (
+    exclusive_items,
+    intersection_items,
+    union_items,
+)
 from venn_diagram_lab.render.image import MplImage
 from venn_diagram_lab.render.network import render_network
 from venn_diagram_lab.render.pdf import render_pdf_report
@@ -52,7 +57,9 @@ __all__ = [
     "VennDiagramError",
     "__version__",
     "analyze",
+    "exclusive_items",
     "generate_proportional_svg",
+    "intersection_items",
     "list_models",
     "list_samples",
     "load_csv",
@@ -64,4 +71,5 @@ __all__ = [
     "render_pdf_report",
     "render_upset",
     "render_venn_svg",
+    "union_items",
 ]
