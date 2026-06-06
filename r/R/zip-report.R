@@ -138,9 +138,11 @@ NULL
 #' @return Invisibly returns `NULL`. The ZIP is written to `path`.
 #' @examples
 #' \donttest{
-#' ds <- load_sample("dataset_real_cancer_drivers_4")
-#' res <- analyze(ds)
-#' to_zip_report(res, tempfile(fileext = ".zip"))
+#' if (getRversion() >= "4.6") {
+#'   ds <- load_sample("dataset_real_cancer_drivers_4")
+#'   res <- analyze(ds)
+#'   to_zip_report(res, tempfile(fileext = ".zip"))
+#' }
 #' }
 #' @export
 to_zip_report <- function(result, path,
