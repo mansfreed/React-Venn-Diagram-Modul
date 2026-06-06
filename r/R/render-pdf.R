@@ -180,24 +180,50 @@ NULL
     )
 }
 
-.PDF_VENN_RASTER_WIDTH <- 800L
+.PDF_VENN_RASTER_WIDTH <- 2400L
 
 #' @noRd
 # Build Page 2: rasterized venn (left) + UpSet ggplot (right).
+#
+# Aspect-preserving Venn: rsvg gives us a nativeRaster whose native size
+# is the SVG's viewBox (typically ~1:1 square for the bundled models). To
+# stop patchwork from squishing that into the column's portrait shape we
+# wrap the raster in a ggplot with `annotation_raster()` + `coord_fixed()`,
+# which clamps x:y to the native ratio and lets patchwork pad the residual
+# space inside the panel.
 .build_venn_upset_page <- function(result) {
     svg <- render_venn_svg(result)
     raster <- rsvg::rsvg_nativeraster(charToRaw(svg), width = .PDF_VENN_RASTER_WIDTH)
-    venn_grob <- grid::rasterGrob(raster, interpolate = TRUE,
-                                   width = grid::unit(1, "npc"),
-                                   height = grid::unit(1, "npc"))
+    venn_w <- ncol(raster)
+    venn_h <- nrow(raster)
+
+    venn_plot <- ggplot2::ggplot() +
+        ggplot2::annotation_raster(
+            raster,
+            xmin = 0, xmax = venn_w,
+            ymin = 0, ymax = venn_h
+        ) +
+        ggplot2::coord_fixed(
+            xlim = c(0, venn_w), ylim = c(0, venn_h),
+            expand = FALSE, clip = "off"
+        ) +
+        ggplot2::theme_void()
 
     upset_plot <- render_upset(result, max_columns = 20L)
 
-    patchwork::wrap_plots(
-        patchwork::wrap_elements(venn_grob),
+    content <- patchwork::wrap_plots(
+        venn_plot,
         upset_plot,
         ncol = 2L,
         widths = c(1, 1)
+    )
+    # Reserve a thin footer-safe band at the bottom so the rotated set-size
+    # axis labels + "Set size" title don't collide with the page footer.
+    patchwork::wrap_plots(
+        content,
+        patchwork::plot_spacer(),
+        ncol = 1L,
+        heights = c(0.94, 0.06)
     )
 }
 
@@ -463,6 +489,77 @@ NULL
 }
 
 #' @noRd
+# Build the right-side "Significant edges (FDR < 0.05)" list as a ggplot
+# (so it can be composed with the network plot via patchwork). Mirrors
+# Python `_build_network_page`'s edges list -- one line per significant
+# edge with intersection / Jaccard / FDR, and an explicit "No significant
+# edges" message when the list is empty.
+.build_significant_edges_plot <- function(result) {
+    stats_res <- statistics(result)
+    edges <- stats_res@hypergeometric
+    edges <- edges[order(edges$p_adjusted), , drop = FALSE]
+    sig_edges <- edges[edges$significant, , drop = FALSE]
+
+    title_text <- "Significant edges (FDR < 0.05)"
+
+    if (nrow(sig_edges) == 0L) {
+        line_texts <- "No significant edges at FDR < 0.05"
+    } else {
+        line_texts <- character(nrow(sig_edges))
+        for (i in seq_len(nrow(sig_edges))) {
+            row <- sig_edges[i, , drop = FALSE]
+            jac <- stats_res@jaccard[row$set_a, row$set_b]
+            line_texts[i] <- sprintf(
+                "%s <-> %s  |  intersection=%d  Jaccard=%.3f  FDR=%s",
+                row$set_a, row$set_b,
+                as.integer(row$intersection),
+                jac,
+                .fmt_pdf_p(as.numeric(row$p_adjusted))
+            )
+        }
+    }
+
+    # Cap the displayed lines so the panel never overflows the page on
+    # high-set-count datasets (n>=7 yields n*(n-1)/2 = 21+ pairs).
+    max_lines <- 18L
+    truncated <- length(line_texts) > max_lines
+    if (truncated) line_texts <- c(line_texts[seq_len(max_lines)], "...")
+
+    df_title <- data.frame(y = 0, text = title_text, stringsAsFactors = FALSE)
+    df_lines <- data.frame(
+        y = -seq_along(line_texts),
+        text = line_texts,
+        stringsAsFactors = FALSE
+    )
+
+    y_floor <- -max(length(line_texts) + 2L, 6L)
+    # `coord_cartesian(clip = "off")` lets long lines spill into the panel
+    # margin instead of being silently truncated mid-word. Combined with a
+    # smaller monospace font, the full "intersection=N  Jaccard=0.xxxx
+    # FDR=x.xxe-y" line fits inside the 40%-wide right column.
+    ggplot2::ggplot() +
+        ggplot2::geom_text(
+            data = df_title,
+            ggplot2::aes(x = 0, y = .data$y, label = .data$text),
+            fontface = "bold", size = 3.4, hjust = 0, vjust = 0.5,
+            colour = "#1f1f50"
+        ) +
+        ggplot2::geom_text(
+            data = df_lines,
+            ggplot2::aes(x = 0, y = .data$y, label = .data$text),
+            fontface = "plain", size = 2.5, hjust = 0, vjust = 0.5,
+            family = "mono",
+            colour = "#3c3c3c"
+        ) +
+        ggplot2::scale_x_continuous(limits = c(0, 10),
+                                     expand = ggplot2::expansion(0, 0)) +
+        ggplot2::scale_y_continuous(limits = c(y_floor, 1),
+                                     expand = ggplot2::expansion(0, 0)) +
+        ggplot2::coord_cartesian(clip = "off") +
+        ggplot2::theme_void()
+}
+
+#' @noRd
 .build_network_page <- function(result) {
     title_plot <- ggplot2::ggplot() + ggplot2::geom_blank() +
         ggplot2::ggtitle("Set relationship network") + ggplot2::theme_void() +
@@ -470,9 +567,38 @@ NULL
             size = 16, face = "bold", hjust = 0.5,
             margin = ggplot2::margin(t = 8, b = 8)
         ))
-    network_plot <- render_network(result)
-    patchwork::wrap_plots(title_plot, network_plot,
-                           ncol = 1L, heights = c(0.08, 0.92))
+    # Network on the left (~52%), significant-edges list on the right (~48%).
+    # Generous top/bottom margins on the network plot keep nodes + labels
+    # inside the panel even with the deterministic `stress` layout pushing
+    # vertices close to the bounding box. We also shrink the node radius
+    # range and add ~25% padding around the layout so node labels never
+    # spill into the page margin (suppress the expected `scale already
+    # present` warnings -- we are intentionally overriding render_network's
+    # defaults for the PDF-embed use case).
+    network_plot <- suppressMessages(
+        render_network(result) +
+            ggplot2::scale_size_continuous(range = c(5, 14)) +
+            ggplot2::scale_x_continuous(
+                expand = ggplot2::expansion(mult = 0.25)
+            ) +
+            ggplot2::scale_y_continuous(
+                expand = ggplot2::expansion(mult = 0.25)
+            ) +
+            ggplot2::theme(plot.margin = ggplot2::margin(
+                t = 20, r = 30, b = 30, l = 30, unit = "pt"
+            ))
+    )
+    edges_plot <- .build_significant_edges_plot(result)
+    content <- patchwork::wrap_plots(
+        network_plot, edges_plot,
+        ncol = 2L, widths = c(0.52, 0.48)
+    )
+    # Reserve a footer band at the bottom so neither panel runs into the
+    # page footer text.
+    patchwork::wrap_plots(
+        title_plot, content, patchwork::plot_spacer(),
+        ncol = 1L, heights = c(0.08, 0.86, 0.06)
+    )
 }
 
 # ---------------------------------------------------------------------------
@@ -678,7 +804,7 @@ NULL
             "Zenodo DOI:  10.5281/zenodo.19510813\n\n",
             "Citation:\n",
             "Dul Z., \u00d6lbei M., Thomas N.S.B., Si Ammour A., ",
-            "Csik\u00e1sz-Nagy A. (2026). Venn Diagram Lab \u2014 ",
+            "Csik\u00e1sz-Nagy A. (2026). Venn Diagram Lab -- ",
             "Headless Venn diagram analysis and rendering. ",
             "https://venndiagramlab.org/  doi:10.5281/zenodo.19510813"
         )
@@ -857,8 +983,26 @@ to_pdf_report <- function(result, path, title = NULL,
     grDevices::pdf(path, width = .PDF_PAGE_WIDTH, height = .PDF_PAGE_HEIGHT)
     on.exit(grDevices::dev.off(), add = TRUE)
 
+    # ComplexUpset 1.3.x still uses the deprecated `size` aesthetic for lines,
+    # which fires a `lifecycle` deprecation warning on every render under
+    # ggplot2 >= 3.4. The warning is upstream-only (issue
+    # https://github.com/krassowski/complex-upset/issues/...) and not actionable
+    # for users of vennDiagramLab, so we swallow it during the print loop.
+    .render_page <- function(p) {
+        withCallingHandlers(
+            print(p),
+            warning = function(w) {
+                msg <- conditionMessage(w)
+                if (grepl("Using `size` aesthetic for lines was deprecated",
+                          msg, fixed = TRUE) ||
+                    grepl("ComplexUpset", msg, fixed = TRUE)) {
+                    invokeRestart("muffleWarning")
+                }
+            }
+        )
+    }
     for (i in seq_along(pages)) {
-        print(pages[[i]])
+        .render_page(pages[[i]])
         # Overlay the footer on the just-rendered page (does NOT trigger a new page).
         grid::grid.text(
             .pdf_footer_text(page_num = i, total_pages = total),
