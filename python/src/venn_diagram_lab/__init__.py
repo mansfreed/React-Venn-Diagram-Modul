@@ -34,6 +34,7 @@ from venn_diagram_lab.region_accessors import (
     intersection_items,
     union_items,
 )
+from venn_diagram_lab.region_expression import parse_region_expression
 from venn_diagram_lab.render.image import MplImage
 from venn_diagram_lab.render.network import render_network
 from venn_diagram_lab.render.pdf import render_pdf_report
@@ -67,6 +68,7 @@ __all__ = [
     "load_gmx",
     "load_sample",
     "load_tsv",
+    "parse_region_expression",
     "render_network",
     "render_pdf_report",
     "render_upset",
