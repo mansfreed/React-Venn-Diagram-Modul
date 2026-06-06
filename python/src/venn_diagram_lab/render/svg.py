@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import re
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from importlib import resources
 from itertools import combinations
@@ -223,6 +223,9 @@ def render_venn_svg(
     title: str | None = None,
     show_names: bool = True,
     show_counts: bool = True,
+    show_items: bool = False,
+    item_options: Mapping[str, Any] | None = None,
+    highlight: Sequence[str] | Sequence[int] | None = None,
 ) -> SvgImage:
     """Render a RegionResult onto its model SVG and return an SvgImage.
 
@@ -238,6 +241,19 @@ def render_venn_svg(
     title : diagram title override. If None, the template default is kept.
     show_names : if False, blank every NameA-I element.
     show_counts : if False, blank every Count_* and CountSUM_* element.
+    show_items : if True, replace each region's count text with the
+        actual item identifiers as multi-line tspans inside the existing
+        Count_* nodes. Default False.
+    item_options : optional mapping of overrides for the item-text
+        engine. Recognised keys: ``max_items_per_region`` (default 20),
+        ``ncol_items`` (default 1), ``truncate_long_names`` (default 12,
+        0 disables), ``line_height`` (default 10), ``font_size`` (default
+        8), ``show_counts_with_items`` (default False), ``ellipsis``
+        (default ``"..."``). Unknown keys raise a UserWarning.
+    highlight : sequence of region labels (e.g. ``["AB", "ABC"]``) or
+        region bitmasks (e.g. ``[3, 7]``). Sets that do not contribute
+        to any highlighted region are desaturated to ``#cccccc`` at 25%
+        opacity. Default None (no spotlight).
     """
     model_name = model if model is not None else result.model
 
@@ -275,6 +291,17 @@ def render_venn_svg(
             _replace_fill_color(root, f"Bullet{letter}", hex_color)
             _replace_fill_color(root, f"Shape{letter}", hex_color)
             _replace_fill_color(root, f"Shape{letter}2", hex_color)  # no-op if absent
+
+    # Feature A -- replace per-region counts with item-name tspans.
+    if show_items:
+        from venn_diagram_lab.render.svg_items import _render_items_in_regions  # noqa: PLC0415
+        _apply_counts(root, result, show=False)
+        _render_items_in_regions(root, result, item_options)
+
+    # Feature B -- desaturate sets not contributing to any highlighted region.
+    if highlight is not None:
+        from venn_diagram_lab.render.svg_items import _apply_highlight  # noqa: PLC0415
+        _apply_highlight(root, result, highlight)
 
     return SvgImage(svg=etree.tostring(root, encoding="unicode"))
 
