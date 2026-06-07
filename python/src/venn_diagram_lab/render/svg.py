@@ -76,6 +76,35 @@ class SvgImage:
         """Jupyter inline-render hook."""
         return self.svg
 
+    def _repr_mimebundle_(
+        self,
+        include: set[str] | None = None,
+        exclude: set[str] | None = None,
+    ) -> dict[str, str]:
+        """Multi-mimetype Jupyter inline-render hook.
+
+        Some front-ends (VS Code's Notebook panel, certain Quarto pipelines,
+        some terminal renderers) pick the mimebundle over the single
+        ``_repr_svg_``. Returning both ensures consistent inline rendering
+        regardless of which hook is queried.
+
+        Parameters
+        ----------
+        include : optional set of mimetypes the front-end is willing to
+            display. When given, mimetypes outside this set are dropped.
+        exclude : optional set of mimetypes the front-end refuses to
+            display. When given, mimetypes inside this set are dropped.
+        """
+        bundle = {
+            "image/svg+xml": self.svg,
+            "text/plain": f"SvgImage(svg=<{len(self.svg)} chars>)",
+        }
+        if include is not None:
+            bundle = {k: v for k, v in bundle.items() if k in include}
+        if exclude is not None:
+            bundle = {k: v for k, v in bundle.items() if k not in exclude}
+        return bundle
+
     def save(self, path: Path | str, *, dpi: int = 96) -> None:
         """Write the SVG to disk.
 
