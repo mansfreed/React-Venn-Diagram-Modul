@@ -35,10 +35,10 @@ from venn_diagram_lab.region_accessors import (
     union_items,
 )
 from venn_diagram_lab.region_expression import parse_region_expression
+from venn_diagram_lab.render.cluster_heatmap_mpl import render_cluster_heatmap_mpl
 from venn_diagram_lab.render.image import MplImage
 from venn_diagram_lab.render.network import render_network
 from venn_diagram_lab.render.pdf import render_pdf_report
-from venn_diagram_lab.render.cluster_heatmap_mpl import render_cluster_heatmap_mpl
 from venn_diagram_lab.render.share_distribution_mpl import (
     render_share_distribution_mpl,
 )
