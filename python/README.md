@@ -87,6 +87,28 @@ All visualisation methods accept the same kwargs as the underlying `render.*` fu
 spotlight mode that desaturates non-matching set shapes. The Region
 accessors and Boolean DSL section below covers these in depth.
 
+### 3.1. Matplotlib backend
+
+Three SVG renderers have parallel matplotlib variants for users who want
+to compose plots into their own subplot grids (paper figures, multi-panel
+dashboards). The SVG variants stay byte-identical to the web tool's
+output; the matplotlib variants return an `MplImage(fig, legend)` wrapper.
+
+| Function | Mirrors | Use when |
+|---|---|---|
+| `render_venn_mpl(result, ax=None)` | `render_venn_svg` | You want a Venn in a `plt.subplots` grid. Supports 2/3/4-set classic + proportional; 5+ raises `IncompatibleModelError`. |
+| `render_share_distribution_mpl(dataset, ax=None)` | `render_share_distribution_svg` | You want axis labels / grid / log scale on the share-distribution histogram. |
+| `render_cluster_heatmap_mpl(result, ax=None, linkage=...)` | `render_cluster_heatmap_svg` | You want a colorbar + dendrograms on the cluster heatmap. |
+
+CLI counterparts: `vdl render venn --backend mpl --out v.png`,
+`vdl render share-dist --backend mpl --out s.png`,
+`vdl render heatmap --backend mpl --cluster --out h.png`. The default
+backend stays `svg`.
+
+`SvgImage` exposes both `_repr_svg_()` and `_repr_mimebundle_()` Jupyter
+hooks, so calling an `SvgImage` object directly in a notebook cell
+renders inline without an explicit `display(SVG(...))` import.
+
 ## 4. Statistics and Charts
 
 ```python
