@@ -108,6 +108,151 @@ _ACCESSORS_Q3_CODE = (
 )
 
 
+_DSL_INTRO_MD = (
+    "## 2. Boolean DSL -- one operator at a time\n\n"
+    "`parse_region_expression(expr, n_sets)` translates a Boolean\n"
+    "expression into a sorted list of region bitmasks. The grammar uses\n"
+    "the standard precedence:\n\n"
+    "| Operator | Meaning | Precedence |\n"
+    "|---|---|---|\n"
+    "| `~` or `!` | Complement (unary) | highest |\n"
+    "| `&` | Intersection | middle |\n"
+    "| `+` or `|` | Union | lowest |\n"
+    "| `(`, `)` | Grouping | -- |\n\n"
+    "Atoms are uppercase letters `A..I`, one per set. For the 4-set\n"
+    "cancer-drivers diagram, A=Vogelstein, B=COSMIC_CGC, C=OncoKB,\n"
+    "D=IntOGen. Returned bitmasks are sorted and use the standard\n"
+    "convention bit 0 = set A.\n"
+)
+
+_DSL_ATOM_MD = "### Atoms -- one letter per set\n"
+
+_DSL_ATOM_CODE = (
+    "print('A   ->', vdl.parse_region_expression('A', n_sets=4))\n"
+    "print('D   ->', vdl.parse_region_expression('D', n_sets=4))\n"
+)
+
+_DSL_AND_MD = (
+    "### Intersection (`&`) -- regions that include both sides\n"
+)
+
+_DSL_AND_CODE = (
+    "print('A & B       ->', vdl.parse_region_expression('A & B', n_sets=4))\n"
+    "print('A & B & C   ->', vdl.parse_region_expression('A & B & C', n_sets=4))\n"
+    "print('A & B & C & D ->', vdl.parse_region_expression('A & B & C & D', n_sets=4))\n"
+)
+
+_DSL_OR_MD = (
+    "### Union (`+` or `|`) -- regions that include either side\n"
+)
+
+_DSL_OR_CODE = (
+    "print('A + B ->', vdl.parse_region_expression('A + B', n_sets=4))\n"
+    "print('A | B ->', vdl.parse_region_expression('A | B', n_sets=4))\n"
+)
+
+_DSL_NOT_MD = (
+    "### Complement (`~` or `!`) -- regions that EXCLUDE the operand\n"
+)
+
+_DSL_NOT_CODE = (
+    "print('~A ->', vdl.parse_region_expression('~A', n_sets=4))\n"
+    "print('!A ->', vdl.parse_region_expression('!A', n_sets=4))\n"
+)
+
+_DSL_PARENS_MD = (
+    "### Parentheses + combined operators\n\n"
+    "`A & (B + C)` -- items in A AND in at least one of B or C. Note that\n"
+    "without parentheses, `A & B + C` would parse as `(A & B) + C` due to\n"
+    "intersection's higher precedence.\n"
+)
+
+_DSL_PARENS_CODE = (
+    "print('A & (B + C)     ->', vdl.parse_region_expression('A & (B + C)', n_sets=4))\n"
+    "print('(A | B) & C     ->', vdl.parse_region_expression('(A | B) & C', n_sets=4))\n"
+    "print('A & ~B & ~C & ~D ->', vdl.parse_region_expression('A & ~B & ~C & ~D', n_sets=4))\n"
+)
+
+_DSL_UNSAT_MD = (
+    "### Unsatisfiable expressions return an empty list\n\n"
+    "Some expressions admit no region. The parser does not raise; it\n"
+    "returns `[]` so the result composes cleanly with downstream code.\n"
+)
+
+_DSL_UNSAT_CODE = (
+    "print('A & ~A ->', vdl.parse_region_expression('A & ~A', n_sets=4))\n"
+)
+
+_SHOW_ITEMS_MD = (
+    "## 3. Drawing item names inside the regions (`show_items=True`)\n\n"
+    "`render_venn_svg(..., show_items=True)` replaces the per-region count\n"
+    "text with the actual item identifiers as multi-line `<tspan>`\n"
+    "content. Tune the layout via `item_options`:\n\n"
+    "| Key | Default | Effect |\n"
+    "|---|---|---|\n"
+    "| `max_items_per_region` | 20 | Cap items shown; the rest collapse to `+N more` |\n"
+    "| `ncol_items` | 1 | Wrap items into multiple columns |\n"
+    "| `truncate_long_names` | 12 | Trim long labels (0 disables) |\n"
+    "| `line_height` | 10 | tspan `dy` for each line |\n"
+    "| `font_size` | 8 | text font size |\n"
+    "| `show_counts_with_items` | False | If True, prepend a bold count |\n"
+    "| `ellipsis` | `'...'` | Suffix on truncated labels |\n\n"
+    "Below: render the cancer-drivers diagram with item names, capped at\n"
+    "6 per region so the dense 4-way intersection stays readable, with\n"
+    "labels truncated to 10 characters.\n"
+)
+
+_SHOW_ITEMS_CODE = (
+    "img = vdl.render_venn_svg(\n"
+    "    res,\n"
+    "    show_items=True,\n"
+    "    item_options={\n"
+    "        'max_items_per_region': 6,\n"
+    "        'truncate_long_names': 10,\n"
+    "        'line_height': 11,\n"
+    "    },\n"
+    ")\n"
+    "display(SVG(img.svg))\n"
+)
+
+_HIGHLIGHT_INTRO_MD = (
+    "## 4. Spotlight mode (`highlight=...`)\n\n"
+    "`render_venn_svg(..., highlight=...)` desaturates every set shape\n"
+    "that does NOT contribute to at least one highlighted region.\n"
+    "Highlighted regions keep their original fill; the rest fade to\n"
+    "`#cccccc` at 25% opacity. The argument accepts EITHER a sequence of\n"
+    "region labels (`'AB'`, `'ABC'`, ...) OR a sequence of region\n"
+    "bitmasks (integers). The two forms are interchangeable -- use\n"
+    "whichever is more convenient.\n"
+)
+
+_HIGHLIGHT_LABEL_MD = (
+    "### Label form -- spell out the regions of interest\n\n"
+    "Below: spotlight the AB and ABC regions of the 4-set diagram. C and\n"
+    "D shapes stay coloured because they contribute to ABC; D shape fades\n"
+    "because it does not contribute to either AB or ABC.\n"
+)
+
+_HIGHLIGHT_LABEL_CODE = (
+    "img = vdl.render_venn_svg(res, highlight=['AB', 'ABC'])\n"
+    "display(SVG(img.svg))\n"
+)
+
+_HIGHLIGHT_MASK_MD = (
+    "### Bitmask form -- use the DSL output directly\n\n"
+    "The Boolean DSL returns a list of integer bitmasks. Pass it straight\n"
+    "into `highlight=`. Below: spotlight every region where A and B BOTH\n"
+    "participate (i.e. masks AB, ABC, ABD, ABCD).\n"
+)
+
+_HIGHLIGHT_MASK_CODE = (
+    "masks = vdl.parse_region_expression('A & B', n_sets=4)\n"
+    "print('Highlighting masks:', masks)\n"
+    "img = vdl.render_venn_svg(res, highlight=masks)\n"
+    "display(SVG(img.svg))\n"
+)
+
+
 # ---------------------------------------------------------------------------
 # Cell list -- extended in subsequent tasks
 # ---------------------------------------------------------------------------
@@ -122,6 +267,26 @@ CELLS = [
     ("code", _ACCESSORS_Q2_CODE),
     ("md", _ACCESSORS_Q3_MD),
     ("code", _ACCESSORS_Q3_CODE),
+    ("md", _DSL_INTRO_MD),
+    ("md", _DSL_ATOM_MD),
+    ("code", _DSL_ATOM_CODE),
+    ("md", _DSL_AND_MD),
+    ("code", _DSL_AND_CODE),
+    ("md", _DSL_OR_MD),
+    ("code", _DSL_OR_CODE),
+    ("md", _DSL_NOT_MD),
+    ("code", _DSL_NOT_CODE),
+    ("md", _DSL_PARENS_MD),
+    ("code", _DSL_PARENS_CODE),
+    ("md", _DSL_UNSAT_MD),
+    ("code", _DSL_UNSAT_CODE),
+    ("md", _SHOW_ITEMS_MD),
+    ("code", _SHOW_ITEMS_CODE),
+    ("md", _HIGHLIGHT_INTRO_MD),
+    ("md", _HIGHLIGHT_LABEL_MD),
+    ("code", _HIGHLIGHT_LABEL_CODE),
+    ("md", _HIGHLIGHT_MASK_MD),
+    ("code", _HIGHLIGHT_MASK_CODE),
 ]
 
 
