@@ -38,6 +38,9 @@ from venn_diagram_lab.region_expression import parse_region_expression
 from venn_diagram_lab.render.image import MplImage
 from venn_diagram_lab.render.network import render_network
 from venn_diagram_lab.render.pdf import render_pdf_report
+from venn_diagram_lab.render.share_distribution_mpl import (
+    render_share_distribution_mpl,
+)
 from venn_diagram_lab.render.svg import SvgImage, render_venn_svg
 from venn_diagram_lab.render.upset import render_upset
 from venn_diagram_lab.render.venn_mpl import render_venn_mpl
@@ -72,6 +75,7 @@ __all__ = [
     "parse_region_expression",
     "render_network",
     "render_pdf_report",
+    "render_share_distribution_mpl",
     "render_upset",
     "render_venn_mpl",
     "render_venn_svg",
