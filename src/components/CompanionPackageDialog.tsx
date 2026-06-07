@@ -119,6 +119,13 @@ const NOTEBOOKS: NotebookEntry[] = [
     length: 'medium',
     description: 'The vdl data subapp: validate (+ strict), describe, lookup, fit-model, convert — data-hygiene workflow.',
   },
+  {
+    num: '12',
+    file: '12_region_accessors_and_dsl.ipynb',
+    title: 'Region Accessors & Boolean DSL',
+    length: 'medium',
+    description: 'Three region-membership accessors, the Boolean DSL parser, spotlight rendering, and a CLI sub-tutorial via subprocess.',
+  },
 ];
 
 function PythonLogo() {
@@ -415,7 +422,7 @@ vdl --help`}</CodeBlock>
       </div>
 
       <div className="companion-callout">
-        <strong>Next:</strong> open the <em>Notebooks</em> tab for eleven
+        <strong>Next:</strong> open the <em>Notebooks</em> tab for twelve
         ready-to-run examples (Quickstart, real cancer driver case study,
         statistics deep-dive, pipeline integration, CLI workflows, plot
         comparison, data validation), or jump to{' '}
@@ -505,10 +512,10 @@ function PythonContent({ activeTab }: { activeTab: TabId }) {
     return (
       <div className="companion-section">
         <p className="companion-paragraph">
-          Eleven self-contained Jupyter notebooks ship in the
+          Twelve self-contained Jupyter notebooks ship in the
           <code>python/examples/</code> directory of the repository. Each is
           fully reproducible — pick the closest match to your task and adapt.
-          All eleven are CI-tested via <code>nbconvert --execute</code> on every
+          All twelve are CI-tested via <code>nbconvert --execute</code> on every
           pull request.
         </p>
         <p className="companion-note">
