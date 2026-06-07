@@ -40,6 +40,7 @@ from venn_diagram_lab.render.network import render_network
 from venn_diagram_lab.render.pdf import render_pdf_report
 from venn_diagram_lab.render.svg import SvgImage, render_venn_svg
 from venn_diagram_lab.render.upset import render_upset
+from venn_diagram_lab.render.venn_mpl import render_venn_mpl
 from venn_diagram_lab.samples import list_samples, load_sample
 from venn_diagram_lab.statistics import StatisticsResult
 from venn_diagram_lab.version import __version__
@@ -72,6 +73,7 @@ __all__ = [
     "render_network",
     "render_pdf_report",
     "render_upset",
+    "render_venn_mpl",
     "render_venn_svg",
     "union_items",
 ]
