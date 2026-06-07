@@ -38,6 +38,7 @@ from venn_diagram_lab.region_expression import parse_region_expression
 from venn_diagram_lab.render.image import MplImage
 from venn_diagram_lab.render.network import render_network
 from venn_diagram_lab.render.pdf import render_pdf_report
+from venn_diagram_lab.render.cluster_heatmap_mpl import render_cluster_heatmap_mpl
 from venn_diagram_lab.render.share_distribution_mpl import (
     render_share_distribution_mpl,
 )
@@ -73,6 +74,7 @@ __all__ = [
     "load_sample",
     "load_tsv",
     "parse_region_expression",
+    "render_cluster_heatmap_mpl",
     "render_network",
     "render_pdf_report",
     "render_share_distribution_mpl",
