@@ -41,8 +41,8 @@ _INTRO = (
 )
 
 _SETUP_CODE = (
-    "import venn_diagram_lab as vdl\n"
     "from IPython.display import SVG, display\n\n"
+    "import venn_diagram_lab as vdl\n\n"
     "ds = vdl.load_sample('dataset_real_cancer_drivers_4')\n"
     "res = vdl.analyze(ds)\n\n"
     "print('Set inclusive sizes (items per source catalog):')\n"
@@ -291,7 +291,8 @@ _CLI_REGIONS_MD = (
 )
 
 _CLI_REGIONS_CODE = (
-    "import subprocess, sys\n"
+    "import subprocess\n"
+    "import sys\n"
     "from pathlib import Path\n\n"
     "VDL = str(Path(sys.executable).parent / 'vdl')\n\n"
     "r = subprocess.run(\n"
