@@ -377,7 +377,7 @@ vdl render venn --help         # extended help with "How to try it" examples
 
 ## 8. Notebook gallery
 
-Eleven executable notebooks live under [`python/examples/`](https://github.com/ZoliQua/Venn-Diagram-Lab/tree/main/python/examples):
+Twelve executable notebooks live under [`python/examples/`](https://github.com/ZoliQua/Venn-Diagram-Lab/tree/main/python/examples):
 
 | # | Notebook | Topic |
 |---|---|---|
@@ -392,6 +392,7 @@ Eleven executable notebooks live under [`python/examples/`](https://github.com/Z
 | 09 | `09_cli_workflows.ipynb` | **New (v2.2.3)** — Drive the `vdl` CLI from Python notebooks via `subprocess`; demo of 6 representative commands + decision table |
 | 10 | `10_enrichment_plots_comparison.ipynb` | **New (v2.2.3)** — Bar / Lollipop / Heatmap / Cluster Heatmap / Item Share Distribution side-by-side comparison + metric switching |
 | 11 | `11_data_validation_and_lookup.ipynb` | **New (v2.2.3)** — Data-hygiene workflow: `vdl data validate` (JSON+text+strict), batch `vdl data lookup` over a gene list, `describe` / `fit-model` / `convert` |
+| 12 | `12_region_accessors_and_dsl.ipynb` | Region accessors + Boolean DSL + spotlight render; composability chain (DSL → mask → highlight) + a CLI sub-tutorial via `subprocess.run` (`vdl data items` / `vdl data regions` / `vdl render venn --highlight-expr`) |
 
 Each notebook is built from a `python/scripts/notebooks/_build_NN_*.py` script and executed nightly on CI to prevent bit-rot.
 
