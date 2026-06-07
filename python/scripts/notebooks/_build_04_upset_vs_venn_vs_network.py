@@ -202,7 +202,7 @@ _VENN_MPL_MD = (
 )
 
 _VENN_MPL_CODE = (
-    "import matplotlib.pyplot as plt\n"
+    "import matplotlib.pyplot as plt\n\n"
     "from venn_diagram_lab import render_venn_mpl\n\n"
     "fig, ax = plt.subplots(1, 2, figsize=(11, 5))\n"
     "render_venn_mpl(r_3, ax=ax[0], title='Classic 3-set (mpl)')\n"
