@@ -497,7 +497,7 @@ function PythonContent({ activeTab }: { activeTab: TabId }) {
         <div className="companion-badges">
           <span className="companion-badge companion-badge-stable">Stable · v2.0.3</span>
           <span className="companion-badge">Python ≥ 3.10</span>
-          <span className="companion-badge">11 example notebooks</span>
+          <span className="companion-badge">12 example notebooks</span>
           <span className="companion-badge">MIT License</span>
         </div>
       </div>
@@ -719,7 +719,7 @@ function PythonContent({ activeTab }: { activeTab: TabId }) {
         <LinkCard
           icon={'\u{1F4D2}'}
           title="Example Notebooks"
-          subtitle="python/examples/ — 11 notebooks"
+          subtitle="python/examples/ — 12 notebooks"
           cta="Browse"
           href={`${REPO_BASE}/tree/main/python/examples`}
         />
