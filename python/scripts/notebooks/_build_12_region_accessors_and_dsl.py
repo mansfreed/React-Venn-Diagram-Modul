@@ -252,6 +252,129 @@ _HIGHLIGHT_MASK_CODE = (
     "display(SVG(img.svg))\n"
 )
 
+_COMPOSE_MD = (
+    "## 5. Composability -- one chain end to end\n\n"
+    "The four pieces compose: write a Boolean expression in the DSL,\n"
+    "get a mask list back, pass it to `highlight=`, and optionally turn\n"
+    "on `show_items=True` to also draw the gene names. The example\n"
+    "below highlights the genes that EITHER all-three Vogelstein + COSMIC\n"
+    "+ OncoKB share OR appear in COSMIC + OncoKB but NOT Vogelstein.\n"
+)
+
+_COMPOSE_CODE = (
+    "expr = 'A & B & C + ~A & B & C'\n"
+    "masks = vdl.parse_region_expression(expr, n_sets=4)\n"
+    "print(f'Expression  : {expr!r}')\n"
+    "print(f'Mask list   : {masks}')\n\n"
+    "img = vdl.render_venn_svg(\n"
+    "    res,\n"
+    "    highlight=masks,\n"
+    "    show_items=True,\n"
+    "    item_options={'max_items_per_region': 5, 'truncate_long_names': 9},\n"
+    ")\n"
+    "display(SVG(img.svg))\n"
+)
+
+_CLI_INTRO_MD = (
+    "## 6. The same operations from the shell (`vdl`)\n\n"
+    "Every Python helper covered above is also a CLI subcommand. This\n"
+    "matters when you want a one-liner in a Snakemake rule, a Make\n"
+    "target, or an interactive shell. The notebook drives the CLI via\n"
+    "`subprocess.run` so the output is reproducible regardless of which\n"
+    "shell you usually use.\n"
+)
+
+_CLI_REGIONS_MD = (
+    "### `vdl data regions` -- resolve a Boolean expression to masks\n\n"
+    "Useful as a debug / validator and as a script-friendly way to get a\n"
+    "comma-separated mask list onto the shell.\n"
+)
+
+_CLI_REGIONS_CODE = (
+    "import subprocess, sys\n"
+    "from pathlib import Path\n\n"
+    "VDL = str(Path(sys.executable).parent / 'vdl')\n\n"
+    "r = subprocess.run(\n"
+    "    [VDL, 'data', 'regions', '--expr', 'A & B + B & C', '--n-sets', '4'],\n"
+    "    capture_output=True, text=True, check=True,\n"
+    ")\n"
+    "print('masks  :', r.stdout.strip())\n\n"
+    "r = subprocess.run(\n"
+    "    [VDL, 'data', 'regions', '--expr', 'A & B + B & C',\n"
+    "          '--n-sets', '4', '--format', 'labels'],\n"
+    "    capture_output=True, text=True, check=True,\n"
+    ")\n"
+    "print('labels :', r.stdout.strip())\n"
+)
+
+_CLI_ITEMS_MD = (
+    "### `vdl data items` -- list items by set combination\n\n"
+    "Three modes -- `intersection`, `exclusive`, `union` -- mirror the\n"
+    "Python accessors. Output is one item per line; use `--out -` for\n"
+    "stdout or `--out path.txt` for a file.\n"
+)
+
+_CLI_ITEMS_CODE = (
+    "r = subprocess.run(\n"
+    "    [VDL, 'data', 'items', 'dataset_real_cancer_drivers_4',\n"
+    "          '--mode', 'exclusive', '--sets', 'A,B', '--out', '-'],\n"
+    "    capture_output=True, text=True, check=True,\n"
+    ")\n"
+    "items = r.stdout.splitlines()\n"
+    "print(f'Items exclusively in A and B (not in C or D): {len(items)}')\n"
+    "print('First 10:', items[:10])\n"
+)
+
+_CLI_RENDER_MD = (
+    "### `vdl render venn --highlight-expr` -- spotlight render to file\n\n"
+    "Combines the DSL parsing and the spotlight render into one\n"
+    "command. The `--highlight-expr` flag is preferred over comma-list\n"
+    "`--highlight` when the expression is more complex than two or three\n"
+    "labels.\n"
+)
+
+_CLI_RENDER_CODE = (
+    "import tempfile\n\n"
+    "with tempfile.TemporaryDirectory() as tmp:\n"
+    "    out_path = Path(tmp) / 'spotlight.svg'\n"
+    "    r = subprocess.run(\n"
+    "        [VDL, 'render', 'venn', 'dataset_real_cancer_drivers_4',\n"
+    "              '--show-items', '--max-items-per-region', '6',\n"
+    "              '--truncate-long-names', '10',\n"
+    "              '--highlight-expr', 'A & B & ~C & ~D',\n"
+    "              '--out', str(out_path)],\n"
+    "        capture_output=True, text=True, check=True,\n"
+    "    )\n"
+    "    svg_text = out_path.read_text()\n"
+    "    print(f'Wrote {len(svg_text)} chars to {out_path.name}')\n"
+    "    display(SVG(svg_text))\n"
+)
+
+_DECISION_MD = (
+    "## 7. Which pattern when?\n\n"
+    "| Use this | When |\n"
+    "|---|---|\n"
+    "| `intersection_items(res, [...])` | You want every item shared by a group, and you don't care whether items also appear in other sets. |\n"
+    "| `exclusive_items(res, [...])` | You want items ONLY in this exact combination. Equivalent to looking up one region. |\n"
+    "| `union_items(res, [...])` | You want a deduplicated candidate pool across a group. |\n"
+    "| `parse_region_expression(expr, n_sets)` | You want the mask vector for a non-trivial Boolean combination (with negation or unions). |\n"
+    "| `render_venn_svg(..., show_items=True)` | You want item names inside the regions for a paper figure or slide. |\n"
+    "| `render_venn_svg(..., highlight=[...])` | You want a spotlight on a subset of regions; other sets fade. |\n"
+    "| `vdl data items ... --out -` | Shell pipeline that needs the items (e.g. piped into another tool). |\n"
+    "| `vdl data regions --expr ...` | Debug / sanity-check a DSL expression without writing Python. |\n"
+    "| `vdl render venn --highlight-expr ...` | One-shot CLI render with a DSL spotlight, e.g. in a Makefile. |\n"
+)
+
+_FURTHER_READING_MD = (
+    "## Further reading\n\n"
+    "- [`02_real_cancer_drivers.ipynb`](02_real_cancer_drivers.ipynb)"
+    " -- the same dataset with the full analysis + report pipeline.\n"
+    "- [`05_statistics_deep_dive.ipynb`](05_statistics_deep_dive.ipynb)"
+    " -- the statistics underlying which intersections are enriched.\n"
+    "- [`07_pdf_reports.ipynb`](07_pdf_reports.ipynb)"
+    " -- bundle a spotlight render into a multi-page PDF report.\n"
+)
+
 
 # ---------------------------------------------------------------------------
 # Cell list -- extended in subsequent tasks
@@ -287,6 +410,17 @@ CELLS = [
     ("code", _HIGHLIGHT_LABEL_CODE),
     ("md", _HIGHLIGHT_MASK_MD),
     ("code", _HIGHLIGHT_MASK_CODE),
+    ("md", _COMPOSE_MD),
+    ("code", _COMPOSE_CODE),
+    ("md", _CLI_INTRO_MD),
+    ("md", _CLI_REGIONS_MD),
+    ("code", _CLI_REGIONS_CODE),
+    ("md", _CLI_ITEMS_MD),
+    ("code", _CLI_ITEMS_CODE),
+    ("md", _CLI_RENDER_MD),
+    ("code", _CLI_RENDER_CODE),
+    ("md", _DECISION_MD),
+    ("md", _FURTHER_READING_MD),
 ]
 
 
