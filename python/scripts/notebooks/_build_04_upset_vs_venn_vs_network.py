@@ -191,6 +191,28 @@ _FINAL_DECISION_MD = (
     "support the narrative.\n"
 )
 
+_VENN_MPL_MD = (
+    "## Matplotlib-native Venn (for paper-figure composition)\n\n"
+    "When you want a Venn inside your own matplotlib subplot grid (e.g.\n"
+    "the leftmost panel of a 4-panel figure), `render_venn_mpl(result, ax=...)`\n"
+    "draws directly into the provided Axes and returns an `MplImage`.\n"
+    "Supports 2/3/4-set classic Venns and area-proportional 2/3-set\n"
+    "layouts. Higher set counts raise `IncompatibleModelError` -- use\n"
+    "`render_venn_svg` for those.\n"
+)
+
+_VENN_MPL_CODE = (
+    "import matplotlib.pyplot as plt\n"
+    "from venn_diagram_lab import render_venn_mpl\n\n"
+    "fig, ax = plt.subplots(1, 2, figsize=(11, 5))\n"
+    "render_venn_mpl(r_3, ax=ax[0], title='Classic 3-set (mpl)')\n"
+    "render_venn_mpl(r_3, ax=ax[1], colors={'A': '#9b59b6', 'B': '#3498db',\n"
+    "                                       'C': '#e67e22'},\n"
+    "                title='Custom palette')\n"
+    "fig.tight_layout()\n"
+    "fig\n"
+)
+
 _NEXT_STEPS_MD = (
     "## Next steps\n\n"
     "- [`05_statistics_deep_dive.ipynb`](05_statistics_deep_dive.ipynb)"
@@ -242,6 +264,9 @@ CELLS = [
     # 17b. Cluster heatmap (v2.2.3)
     ("md", _CLUSTER_HEADER_MD),
     ("code", _CLUSTER_CODE),
+    # 17b'. Matplotlib-native Venn
+    ("md", _VENN_MPL_MD),
+    ("code", _VENN_MPL_CODE),
     # 17c. Final decision table covering all 4 plot families
     ("md", _FINAL_DECISION_MD),
     # 18. Next steps

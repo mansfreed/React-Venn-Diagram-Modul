@@ -302,6 +302,23 @@ _SEED_CODE = (
     "net_seed7  # displays inline in Jupyter"
 )
 
+_CLUSTER_MPL_MD = (
+    "## Cluster heatmap as a matplotlib panel\n\n"
+    "`render_cluster_heatmap_mpl(result, ax=None, linkage='average')`\n"
+    "returns an `MplImage` with scipy-driven dendrograms + a colorbar\n"
+    "in a standalone figure, OR draws the heatmap into a supplied Axes\n"
+    "(dendrograms suppressed -- caller controls layout). Useful for\n"
+    "embedding into a multi-panel figure or for applying a custom\n"
+    "matplotlib style.\n"
+)
+
+_CLUSTER_MPL_CODE = (
+    "from venn_diagram_lab import render_cluster_heatmap_mpl\n\n"
+    "# Standalone figure with side dendrograms + colorbar:\n"
+    "img = render_cluster_heatmap_mpl(result, linkage='average', cmap='viridis')\n"
+    "img\n"
+)
+
 _WRAP_UP_MD = (
     "## Wrap-up -- all 8 notebooks\n\n"
     "You have reached the end of the `venn-diagram-lab` example series.\n"
@@ -388,6 +405,9 @@ CELLS = [
     ("md", _SEED_EXPLAIN_MD),
     # 28. render_network with seed=7
     ("code", _SEED_CODE),
+    # 28b. Cluster heatmap matplotlib variant
+    ("md", _CLUSTER_MPL_MD),
+    ("code", _CLUSTER_MPL_CODE),
     # 29. Wrap-up table of all 8 notebooks
     ("md", _WRAP_UP_MD),
 ]
