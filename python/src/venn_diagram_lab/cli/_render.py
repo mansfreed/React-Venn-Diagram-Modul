@@ -224,6 +224,13 @@ def cmd_venn(
             help="Boolean DSL (e.g. 'A & B + B & C') resolving to region masks to spotlight.",
         ),
     ] = None,
+    backend: Annotated[
+        str,
+        typer.Option(
+            "--backend",
+            help="Render backend: 'svg' (default, template) or 'mpl' (matplotlib, 2/3/4-set).",
+        ),
+    ] = "svg",
     dry_run: Annotated[bool, typer.Option("--dry-run")] = False,
 ) -> None:
     """Render the Venn diagram SVG, PNG, or PDF.
@@ -264,16 +271,32 @@ def cmd_venn(
         else None
     )
 
-    img = render_venn_svg(
-        result,
-        show_names=show_names,
-        show_counts=show_counts,
-        show_items=show_items,
-        item_options=item_options,
-        highlight=hl,
-    )
-    target = resolve_out(out, resolved, "venn", "svg")
-    _save_or_stream(img, target, dry_run, "venn")
+    if backend not in ("svg", "mpl"):
+        exit_error(f"--backend must be 'svg' or 'mpl' (got {backend!r}).")
+
+    if backend == "svg":
+        img = render_venn_svg(
+            result,
+            show_names=show_names,
+            show_counts=show_counts,
+            show_items=show_items,
+            item_options=item_options,
+            highlight=hl,
+        )
+        target = resolve_out(out, resolved, "venn", "svg")
+        _save_or_stream(img, target, dry_run, "venn")
+    else:
+        from venn_diagram_lab.render.venn_mpl import render_venn_mpl  # noqa: PLC0415
+        img_mpl = render_venn_mpl(
+            result,
+            model=model,
+            set_names=None,
+            colors=None,
+            show_names=show_names,
+            show_counts=show_counts,
+        )
+        target = resolve_out(out, resolved, "venn", "png")
+        _save_or_stream(img_mpl, target, dry_run, "venn")
 
 
 # ---- upset -----------------------------------------------------------------
@@ -413,6 +436,13 @@ def cmd_heatmap(
     dendrogram_fraction: Annotated[
         float, typer.Option(help="Dendrogram band width as fraction (0..1)")
     ] = 0.12,
+    backend: Annotated[
+        str,
+        typer.Option(
+            "--backend",
+            help="Render backend: 'svg' (default, byte-stable) or 'mpl' (matplotlib axes).",
+        ),
+    ] = "svg",
     dry_run: Annotated[bool, typer.Option("--dry-run")] = False,
 ) -> None:
     """Render the pairwise statistics heatmap, optionally cluster-reordered.
@@ -430,25 +460,40 @@ def cmd_heatmap(
         result = analyze(ds, model=model)
     except (VennDiagramError, OSError) as e:
         exit_error(str(e))
-    if cluster:
-        img = render_cluster_heatmap_svg(
-            result,
-            linkage=linkage,
-            show_row_dendrogram=show_row_dendrogram,
-            show_col_dendrogram=show_col_dendrogram,
-            dendrogram_fraction=dendrogram_fraction,
-        )
+    if backend not in ("svg", "mpl"):
+        exit_error(f"--backend must be 'svg' or 'mpl' (got {backend!r}).")
+
+    if backend == "svg":
+        if cluster:
+            img = render_cluster_heatmap_svg(
+                result,
+                linkage=linkage,
+                show_row_dendrogram=show_row_dendrogram,
+                show_col_dendrogram=show_col_dendrogram,
+                dendrogram_fraction=dendrogram_fraction,
+            )
+        else:
+            img = render_cluster_heatmap_svg(
+                result,
+                linkage=linkage,
+                show_row_dendrogram=False,
+                show_col_dendrogram=False,
+                dendrogram_fraction=dendrogram_fraction,
+            )
+        target = resolve_out(out, resolved, "heatmap", "svg")
+        _save_or_stream(img, target, dry_run, "heatmap")
     else:
-        # Original mode: render with dendrograms suppressed.
-        img = render_cluster_heatmap_svg(
+        from venn_diagram_lab.render.cluster_heatmap_mpl import (  # noqa: PLC0415
+            render_cluster_heatmap_mpl,
+        )
+        img_mpl = render_cluster_heatmap_mpl(
             result,
             linkage=linkage,
-            show_row_dendrogram=False,
-            show_col_dendrogram=False,
-            dendrogram_fraction=dendrogram_fraction,
+            show_row_dendrogram=show_row_dendrogram and cluster,
+            show_col_dendrogram=show_col_dendrogram and cluster,
         )
-    target = resolve_out(out, resolved, "heatmap", "svg")
-    _save_or_stream(img, target, dry_run, "heatmap")
+        target = resolve_out(out, resolved, "heatmap", "png")
+        _save_or_stream(img_mpl, target, dry_run, "heatmap")
 
 
 # ---- share-dist ------------------------------------------------------------
@@ -478,6 +523,13 @@ def cmd_share_dist(
         ),
     ] = False,
     out: Annotated[Path | None, typer.Option("--out", "-o")] = None,
+    backend: Annotated[
+        str,
+        typer.Option(
+            "--backend",
+            help="Render backend: 'svg' (default, byte-stable) or 'mpl' (matplotlib axes).",
+        ),
+    ] = "svg",
     dry_run: Annotated[bool, typer.Option("--dry-run")] = False,
 ) -> None:
     """Render the Item Share Distribution histogram.
@@ -493,9 +545,19 @@ def cmd_share_dist(
         ds = load_input(resolved)
     except (VennDiagramError, OSError) as e:
         exit_error(str(e))
-    img = render_share_distribution_svg(ds)
-    target = resolve_out(out, resolved, "share-dist", "svg")
-    _save_or_stream(img, target, dry_run, "share-dist")
+    if backend not in ("svg", "mpl"):
+        exit_error(f"--backend must be 'svg' or 'mpl' (got {backend!r}).")
+    if backend == "svg":
+        img = render_share_distribution_svg(ds)
+        target = resolve_out(out, resolved, "share-dist", "svg")
+        _save_or_stream(img, target, dry_run, "share-dist")
+    else:
+        from venn_diagram_lab.render.share_distribution_mpl import (  # noqa: PLC0415
+            render_share_distribution_mpl,
+        )
+        img_mpl = render_share_distribution_mpl(ds)
+        target = resolve_out(out, resolved, "share-dist", "png")
+        _save_or_stream(img_mpl, target, dry_run, "share-dist")
 
 
 # ---- all -------------------------------------------------------------------
