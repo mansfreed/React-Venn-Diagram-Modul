@@ -4,7 +4,7 @@ Interactive viewer and editor for Venn diagrams — from 2-set to 9-set, coverin
 
 [![Version](https://img.shields.io/badge/version-2.2.2-blue.svg)](CHANGELOG.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![DOI (Zenodo concept)](https://zenodo.org/badge/DOI/10.5281/zenodo.19510813.svg)](https://doi.org/10.5281/zenodo.19510813)
+[![DOI (Zenodo concept)](http://www.venndiagramlab.org/zenodo.19510813.svg)](https://doi.org/10.5281/zenodo.19510813)
 [![Models](https://img.shields.io/badge/models-44_SVG_+_proportional-green.svg)](#diagram-models)
 [![React](https://img.shields.io/badge/React-19-61dafb.svg?logo=react&logoColor=white)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178c6.svg?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
@@ -14,9 +14,9 @@ Interactive viewer and editor for Venn diagrams — from 2-set to 9-set, coverin
 [![Python versions](https://img.shields.io/pypi/pyversions/venn-diagram-lab.svg?v=2)](https://pypi.org/project/venn-diagram-lab/)
 [![CRAN status](https://www.r-pkg.org/badges/version/vennDiagramLab)](https://CRAN.R-project.org/package=vennDiagramLab)
 
-<img width="1728" height="962" alt="Main page" src="https://github.com/user-attachments/assets/e6153bf1-b399-41e3-b6c8-b464626e32a7" />
+<img width="1728" height="964" alt="Venn Diagram Lab - Home View" src="https://www.venndiagramlab.org/screenshots/screenshot_vdl_1_home.png" />
 
-## Headless companion packages
+## Headless companion Python and R packages
 
 For headless analysis without a browser, two officially-published packages
 share the web tool's 44 SVG models, statistics, and byte-equivalent TSV
@@ -25,7 +25,7 @@ exports:
 | Surface | Install | Status |
 |---|---|---|
 | Python (PyPI) | `pip install venn-diagram-lab` | live |
-| R (CRAN) | `install.packages("vennDiagramLab")` | live (since 2026-05-18) |
+| R (CRAN) | `install.packages("vennDiagramLab")` | live |
 | R (Bioconductor) | `BiocManager::install("vennDiagramLab")` | submission pending |
 
 See [`python/README.md`](python/README.md) and [`r/README.md`](r/README.md) for
@@ -33,23 +33,14 @@ each package's quickstart, notebook / vignette galleries, and CLI reference.
 Cross-implementation parity (byte-equivalent TSV exports across web / Python /
 R) is verified by ~30 fixture-based tests on every release.
 
-## Features
-
-**v2.2.2 — Statistics additions + CLI expansion.** Two new analytical surfaces:
-*Item Share Distribution* histogram and *Cluster Heatmap* (UPGMA reorder +
-dendrograms on the existing pairwise Jaccard heatmap) — available in the web
-tool's Statistics panel + PDF report, in the Python package as
-`item_share_distribution()` / `cluster_set_order()` /
-`render_share_distribution_svg()` / `render_cluster_heatmap_svg()`, and in the
-R package as `item_share_distribution()` / `cluster_set_order()` /
-`render_share_distribution()` / `render_cluster_heatmap()`.
-
-The Python `vdl` CLI was also expanded from 5 commands to 30+ commands across
+The Python `vdl` CLI contains 5 commands to 30+ commands across
 6 subapps (`render`, `export`, `report`, `data`, `model`, `workflow`) plus
 discovery / about / credits / tree top-level commands. Every dataset-consuming
 command accepts a `--sample` flag for one-line demo runs on the bundled
 cancer-drivers fixture. See [`python/README.md`](python/README.md) for the
 full catalog.
+
+## Features
 
 ### Four Modes
 
@@ -67,7 +58,7 @@ full catalog.
 - Right panel shows: region label, involved sets with colors, intersection expression
 - Left panel shows: collapsible region list grouped by depth (Single, 2-way, 3-way, ...)
 
-<img width="1728" height="964" alt="Venn Diagram Lab - Layer View" src="https://github.com/user-attachments/assets/13a2e2be-c50e-4bd9-b146-873d1c006b22" />
+<img width="1728" height="963" alt="Venn Diagram Lab - Layer View" src="https://www.venndiagramlab.org/screenshots/screenshot_vdl_2a_layer_view.png" />
 
 ### View Mode — Cut View
 - Renders **pre-computed intersection region paths** (generated via Shapely Boolean operations)
@@ -75,7 +66,7 @@ full catalog.
 - Hover highlights the region, dims others, shows white outline and centered label
 - Two color modes: **Depth** (dark-to-warm by intersection depth) and **Heatmap** (RdBu diverging scale by count values)
 
-<img width="1726" height="963" alt="Venn Diagram Lab - Cut View" src="https://github.com/user-attachments/assets/9defe099-cbe4-4e8d-9f65-fe265d359ace" />
+<img width="1728" height="963" alt="Venn Diagram Lab - Cut View" src="https://www.venndiagramlab.org/screenshots/screenshot_vdl_2b_cut_view.png" />
 
 ### View Mode — UpSet Plot
 - **UpSet plot** visualization showing intersection sizes as vertical bars above a dot matrix
@@ -86,7 +77,7 @@ full catalog.
 - Color modes: **Depth** (blue-to-red by member count), **Heatmap**, or **Custom** single color
 - Adjustable minimum count threshold filter
 
-<img width="1726" height="963" alt="Venn Diagram Lab - UpSet Plot" src="https://github.com/user-attachments/assets/ff37ff12-cca9-4560-82e9-fffb407f51d5" />
+<img width="1726" height="964" alt="Venn Diagram Lab - UpSet Plot" src="https://www.venndiagramlab.org/screenshots/screenshot_vdl_2c_upset_plot.png" />
 
 ### View Mode — Network Diagram
 - **Force-directed network graph** of pairwise set relationships
@@ -97,7 +88,7 @@ full catalog.
 - Filters: significant edges only, minimum weight threshold
 - Dark/White background toggle
 
-<img width="1728" height="964" alt="Venn Diagram Lab - Network mode" src="https://github.com/user-attachments/assets/00e4ca7d-5b82-410b-87c7-b7aef415e055" />
+<img width="1728" height="965" alt="Venn Diagram Lab - Network mode" src="https://www.venndiagramlab.org/screenshots/screenshot_vdl_2d_network.png" />
 
 ### Edit Mode
 - Open/Save SVG files
@@ -126,6 +117,10 @@ full catalog.
 - **Find Item** search: global cross-region search with match highlighting and region navigation
 - **In-region filter**: filter items within a selected region with highlighted matches
 - **Copy region items to clipboard** (alongside Export); single-letter regions get separate buttons for Exclusive and All Items incl. intersections
+
+<img width="1400" height="1000" alt="Venn Diagram Lab - Plots" src="https://www.venndiagramlab.org/screenshots/screenshot_vdl_2e_plots.png" />
+
+
 - UpSet Plot sub-mode available after calculation (max 20 intersections in print export)
 - **Enrichment Plots**: collapsible section with Bar, Lollipop, and Heatmap plots of the pairwise hypergeometric results; metric toggle (−log₁₀(FDR) vs Fold Enrichment); per-plot SVG export
 - **Plot editor**: click any enrichment plot thumbnail to open a dedicated editor in the left sidebar (colours, fonts, background, visibility toggles). Per-plot style state; Back to Diagram returns to the previous view
@@ -263,6 +258,7 @@ full catalog.
 ├── VENN-DIAGRAM-SVG-SPECIFICATION.md  SVG format specification
 ├── VENN-DIGARAM-PROJECT-STRUCTURE.md  Standard color mapping & project info
 └── package.json               Node.js project
+```
 
 ## SVG Format
 
@@ -294,6 +290,8 @@ All 44 models use a standardized SVG structure. See [VENN-DIAGRAM-SVG-SPECIFICAT
 
 ## Diagram Models
 
+<img width="1528" height="1458" alt="Venn Diagram Lab - Plots" src="https://www.venndiagramlab.org/screenshots/screenshot_vdl_3a_venns.png" />
+
 ### 2-Set (3 regions)
 | File | Type | Source |
 |------|------|--------|
@@ -322,6 +320,8 @@ All 44 models use a standardized SVG structure. See [VENN-DIAGRAM-SVG-SPECIFICAT
 | `venn-4e-set-rectangle.svg` | Rectangle layout | Generated (no external source) |
 | `venn-4e-set-carroll-triangle.svg` | Carroll triangle | Carroll, 2000 |
 | `venn-4f-set.svg` | Original Venn construction | Venn, 1880 |
+
+<img width="1496" height="1694" alt="Venn Diagram Lab - Plots" src="https://www.venndiagramlab.org/screenshots/screenshot_vdl_3b_venns.png" />
 
 ### 5-Set (31 regions)
 | File | Type | Source |
@@ -357,6 +357,8 @@ All 44 models use a standardized SVG structure. See [VENN-DIAGRAM-SVG-SPECIFICAT
 | `venn-7e-set-massey.svg` | Massey variant | Edwards, 1996; Mamakani et al., 2012 |
 | `venn-7e-set-palmerston-north.svg` | Palmerston North variant | Edwards, 1996; Mamakani et al., 2012 |
 | `venn-7e-set-victoria.svg` | Victoria variant | Edwards, 1996; Mamakani et al., 2012 |
+
+<img width="1462" height="754" alt="Venn Diagram Lab - Plots" src="https://www.venndiagramlab.org/screenshots/screenshot_vdl_3c_venns.png" />
 
 ### 8-Set (255 regions)
 | File | Type | Source |
@@ -450,7 +452,7 @@ npm run test:watch # Watch mode
 npm run lint       # ESLint
 ```
 
-### Python module (development)
+### Python module
 
 The repo also hosts the `venn-diagram-lab` PyPI package under `python/`. To work
 on it locally:
@@ -489,7 +491,7 @@ Requires Python 3 with `shapely` installed.
 | Zip / Excel export | jszip + exceljs (lazy-loaded) |
 | Region computation | Python + Shapely |
 | Python module | `venn-diagram-lab` on PyPI — see [`python/README.md`](python/README.md) |
-| R package | `vennDiagramLab` on CRAN (since 2026-05-18) — see [`r/README.md`](r/README.md) |
+| R package | `vennDiagramLab` on CRAN — see [`r/README.md`](r/README.md) |
 
 No external UI libraries — pure React + custom CSS. Heavy export libraries (jsPDF, jszip, exceljs) are lazy-loaded on demand so the main bundle stays lean.
 
