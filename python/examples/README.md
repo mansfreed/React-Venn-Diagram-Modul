@@ -1,6 +1,6 @@
 # venn-diagram-lab — Example Notebooks
 
-Eleven Jupyter notebooks demonstrating common use cases. Each is fully
+Twelve Jupyter notebooks demonstrating common use cases. Each is fully
 self-contained: pick the closest match to your task and adapt.
 
 | # | Notebook | Length | Topics |
@@ -16,6 +16,7 @@ self-contained: pick the closest match to your task and adapt.
 | 09 | `09_cli_workflows.ipynb` | medium | `vdl` CLI from Python via `subprocess` (tree, help, render, export, validate, workflow, zip) |
 | 10 | `10_enrichment_plots_comparison.ipynb` | medium | All 5 enrichment plot families side-by-side: bar / lollipop / heatmap / cluster heatmap / share distribution |
 | 11 | `11_data_validation_and_lookup.ipynb` | medium | `vdl data` subapp: validate (+ strict), describe, lookup, fit-model, convert |
+| 12 | `12_region_accessors_and_dsl.ipynb` | medium | Region accessors + Boolean DSL + spotlight render + CLI sub-tutorial (`vdl data items` / `vdl data regions` / `vdl render venn --highlight-expr`) |
 
 ## Building / re-running
 
@@ -27,5 +28,5 @@ python python/scripts/notebooks/_build_01_quickstart.py
 jupyter nbconvert --to notebook --execute --inplace python/examples/01_quickstart.ipynb
 ```
 
-The CI workflow `.github/workflows/python-notebook-test.yml` runs all 11
+The CI workflow `.github/workflows/python-notebook-test.yml` runs all 12
 notebooks via `nbconvert --execute` on every PR.
