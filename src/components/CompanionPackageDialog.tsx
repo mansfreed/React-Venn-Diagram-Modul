@@ -1,9 +1,15 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import {
+  COMPANION_CARD_PANELS,
+  COMPANION_DETAIL_PANELS,
+  type CompanionKind,
+  type DetailPanel,
+} from './companionDetailPanels.ts';
 
 interface CompanionPackageDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  kind: 'python' | 'r';
+  kind: CompanionKind;
 }
 
 type TabId = 'overview' | 'install' | 'notebooks' | 'features' | 'links';
@@ -265,6 +271,166 @@ function CodeBlock({ label, children }: { label?: string; children: React.ReactN
   );
 }
 
+type OpenPanel = (panel: DetailPanel) => void;
+
+/** Clickable Overview-tab feature cell that opens its code panel. */
+function FeatureCellButton({
+  category,
+  panel,
+  icon,
+  title,
+  children,
+  onOpen,
+}: {
+  category: string;
+  panel: DetailPanel;
+  icon: string;
+  title: React.ReactNode;
+  children: React.ReactNode;
+  onOpen: OpenPanel;
+}) {
+  return (
+    <button
+      type="button"
+      className="companion-feature-cell companion-feature-cell-button"
+      data-category={category}
+      onClick={() => onOpen(panel)}
+    >
+      <div className="companion-feature-cell-icon" aria-hidden="true">{icon}</div>
+      <div className="companion-feature-cell-text">
+        <div className="companion-feature-cell-title">{title}</div>
+        <div className="companion-feature-cell-desc">{children}</div>
+      </div>
+      <span className="companion-feature-cell-cta" aria-hidden="true">{'</>'}</span>
+    </button>
+  );
+}
+
+/**
+ * Features-tab group header. When `panel` is given it renders as a button that
+ * opens the category-level code panel; otherwise it stays a plain header
+ * (used for "Documentation & QA", whose header has no category panel — its
+ * individual cards are still clickable).
+ */
+function FeatureGroupHeader({
+  title,
+  count,
+  panel,
+  onOpen,
+}: {
+  title: string;
+  count: string;
+  panel?: DetailPanel;
+  onOpen: OpenPanel;
+}) {
+  const inner = (
+    <>
+      <span className="companion-feature-group-marker" aria-hidden="true" />
+      <span className="companion-feature-group-title">{title}</span>
+      <span className="companion-feature-group-count">{count}</span>
+      {panel && (
+        <span className="companion-feature-group-cta" aria-hidden="true">{'</> code'}</span>
+      )}
+    </>
+  );
+
+  if (!panel) {
+    return <div className="companion-feature-group-header">{inner}</div>;
+  }
+
+  return (
+    <button
+      type="button"
+      className="companion-feature-group-header companion-feature-group-header-button"
+      onClick={() => onOpen(panel)}
+    >
+      {inner}
+    </button>
+  );
+}
+
+/**
+ * Features-tab feature card. When `panel` is given the whole card is a button
+ * that opens its own per-card code panel; otherwise it renders as a plain card.
+ */
+function FeatureCard({
+  panel,
+  icon,
+  title,
+  desc,
+  wide,
+  onOpen,
+}: {
+  panel?: DetailPanel;
+  icon: React.ReactNode;
+  title: React.ReactNode;
+  desc: React.ReactNode;
+  wide?: boolean;
+  onOpen: OpenPanel;
+}) {
+  const cls = `companion-feature-card${wide ? ' companion-feature-card-wide' : ''}`;
+  const body = (
+    <>
+      <div className="companion-feature-card-icon">{icon}</div>
+      <div className="companion-feature-card-body">
+        <div className="companion-feature-card-title">{title}</div>
+        <div className="companion-feature-card-desc">{desc}</div>
+      </div>
+    </>
+  );
+
+  if (!panel) {
+    return <div className={cls}>{body}</div>;
+  }
+
+  return (
+    <button type="button" className={`${cls} companion-feature-card-button`} onClick={() => onOpen(panel)}>
+      {body}
+      <span className="companion-feature-card-cta" aria-hidden="true">{'</>'}</span>
+    </button>
+  );
+}
+
+/** Focused modal showing runnable snippets for one feature card or category. */
+function CompanionDetailModal({ panel, onClose }: { panel: DetailPanel; onClose: () => void }) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
+  const paragraphs = panel.blurb.split('\n\n');
+
+  return (
+    <div className="companion-detail-overlay" onClick={onClose}>
+      <div
+        className="companion-detail-panel"
+        role="dialog"
+        aria-modal="true"
+        aria-label={`${panel.title} — code examples`}
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="companion-detail-header">
+          <h2 className="companion-detail-title">{panel.title}</h2>
+          <button className="companion-detail-close" onClick={onClose} aria-label="Close code panel">
+            {'×'}
+          </button>
+        </div>
+        <div className="companion-detail-blurb">
+          {paragraphs.map((para, i) => <p key={i}>{para}</p>)}
+        </div>
+        <div className="companion-detail-blocks">
+          {panel.blocks.map((block, i) => (
+            <CodeBlock key={i} label={block.label}>{block.code}</CodeBlock>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function InstallQuickstartTab() {
   const [os, setOs] = useState<OS>('macos');
 
@@ -433,7 +599,10 @@ vdl --help`}</CodeBlock>
   );
 }
 
-function PythonContent({ activeTab }: { activeTab: TabId }) {
+function PythonContent({ activeTab, onOpen }: { activeTab: TabId; onOpen: OpenPanel }) {
+  const CAT = COMPANION_DETAIL_PANELS.python;
+  const CARD = COMPANION_CARD_PANELS.python;
+
   if (activeTab === 'overview') {
     return (
       <div className="companion-section">
@@ -454,44 +623,20 @@ function PythonContent({ activeTab }: { activeTab: TabId }) {
           browser produce the same files.
         </p>
 
-        <h3 className="companion-h3">What you get</h3>
+        <h3 className="companion-h3">What you get <span className="companion-h3-hint">— click a card for code</span></h3>
         <div className="companion-feature-grid">
-          <div className="companion-feature-cell" data-category="analysis">
-            <div className="companion-feature-cell-icon" aria-hidden="true">{'\u{1F4C2}'}</div>
-            <div className="companion-feature-cell-text">
-              <div className="companion-feature-cell-title">Analysis</div>
-              <div className="companion-feature-cell-desc">
-                Load CSV / TSV / GMT / GMX. Compute set sizes, all 2<sup>n</sup>−1 intersections.
-              </div>
-            </div>
-          </div>
-          <div className="companion-feature-cell" data-category="stats">
-            <div className="companion-feature-cell-icon" aria-hidden="true">{'\u{1F9EE}'}</div>
-            <div className="companion-feature-cell-text">
-              <div className="companion-feature-cell-title">Statistics</div>
-              <div className="companion-feature-cell-desc">
-                Jaccard, Sørensen-Dice, hypergeometric enrichment, BH-FDR correction.
-              </div>
-            </div>
-          </div>
-          <div className="companion-feature-cell" data-category="viz">
-            <div className="companion-feature-cell-icon" aria-hidden="true">{'\u{1F3A8}'}</div>
-            <div className="companion-feature-cell-text">
-              <div className="companion-feature-cell-title">Visualization</div>
-              <div className="companion-feature-cell-desc">
-                44 SVG templates, area-proportional 2/3-set, UpSet, force-directed network.
-              </div>
-            </div>
-          </div>
-          <div className="companion-feature-cell" data-category="export">
-            <div className="companion-feature-cell-icon" aria-hidden="true">{'\u{1F4C4}'}</div>
-            <div className="companion-feature-cell-text">
-              <div className="companion-feature-cell-title">Reports &amp; Export</div>
-              <div className="companion-feature-cell-desc">
-                Multi-page PDF report; SVG / PNG / TSV exports (parity-tested vs. webapp).
-              </div>
-            </div>
-          </div>
+          <FeatureCellButton category="analysis" panel={CAT.analysis} icon={'\u{1F4C2}'} title="Analysis" onOpen={onOpen}>
+            Load CSV / TSV / GMT / GMX. Compute set sizes, all 2<sup>n</sup>−1 intersections.
+          </FeatureCellButton>
+          <FeatureCellButton category="stats" panel={CAT.stats} icon={'\u{1F9EE}'} title="Statistics" onOpen={onOpen}>
+            Jaccard, Sørensen-Dice, hypergeometric enrichment, BH-FDR correction.
+          </FeatureCellButton>
+          <FeatureCellButton category="viz" panel={CAT.viz} icon={'\u{1F3A8}'} title="Visualization" onOpen={onOpen}>
+            44 SVG templates, area-proportional 2/3-set, UpSet, force-directed network, matplotlib backend.
+          </FeatureCellButton>
+          <FeatureCellButton category="export" panel={CAT.export} icon={'\u{1F4C4}'} title={<>Reports &amp; Export</>} onOpen={onOpen}>
+            Multi-page PDF report; SVG / PNG / TSV exports (parity-tested vs. webapp).
+          </FeatureCellButton>
         </div>
 
         <div className="companion-badges">
@@ -551,124 +696,57 @@ function PythonContent({ activeTab }: { activeTab: TabId }) {
         <div className="companion-feature-board">
 
           <div className="companion-feature-group" data-category="viz">
-            <div className="companion-feature-group-header">
-              <span className="companion-feature-group-marker" aria-hidden="true" />
-              <span className="companion-feature-group-title">Visualization</span>
-              <span className="companion-feature-group-count">4 modes</span>
-            </div>
+            <FeatureGroupHeader title="Visualization" count="5 modes" panel={CAT.viz} onOpen={onOpen} />
             <div className="companion-feature-cards">
-              <div className="companion-feature-card">
-                <div className="companion-feature-card-icon">{'\u{1F3A8}'}</div>
-                <div className="companion-feature-card-body">
-                  <div className="companion-feature-card-title">44 SVG templates</div>
-                  <div className="companion-feature-card-desc">Every model from the web tool, 2-set to 9-set, bundled in the wheel.</div>
-                </div>
-              </div>
-              <div className="companion-feature-card">
-                <div className="companion-feature-card-icon">{'\u{2696}\u{FE0F}'}</div>
-                <div className="companion-feature-card-body">
-                  <div className="companion-feature-card-title">Area-proportional</div>
-                  <div className="companion-feature-card-desc">Analytical 2-set bisection + Wilkinson 2012-style 3-set triangulation.</div>
-                </div>
-              </div>
-              <div className="companion-feature-card">
-                <div className="companion-feature-card-icon">{'\u{1F4CA}'}</div>
-                <div className="companion-feature-card-body">
-                  <div className="companion-feature-card-title">UpSet plots</div>
-                  <div className="companion-feature-card-desc">matplotlib backend with configurable column ordering and pagination.</div>
-                </div>
-              </div>
-              <div className="companion-feature-card">
-                <div className="companion-feature-card-icon">{'\u{1F578}\u{FE0F}'}</div>
-                <div className="companion-feature-card-body">
-                  <div className="companion-feature-card-title">Force-directed network</div>
-                  <div className="companion-feature-card-desc">NetworkX layout with pairwise edge weighting (count / Jaccard / FE / OC).</div>
-                </div>
-              </div>
+              <FeatureCard panel={CARD['py-viz-templates']} icon={'\u{1F3A8}'} title="44 SVG templates"
+                desc="Every model from the web tool, 2-set to 9-set, bundled in the wheel." onOpen={onOpen} />
+              <FeatureCard panel={CARD['py-viz-proportional']} icon={'\u{2696}\u{FE0F}'} title="Area-proportional"
+                desc="Analytical 2-set bisection + Wilkinson 2012-style 3-set triangulation." onOpen={onOpen} />
+              <FeatureCard panel={CARD['py-viz-upset']} icon={'\u{1F4CA}'} title="UpSet plots"
+                desc="matplotlib backend with configurable column ordering and pagination." onOpen={onOpen} />
+              <FeatureCard panel={CARD['py-viz-network']} icon={'\u{1F578}\u{FE0F}'} title="Force-directed network"
+                desc="NetworkX layout with pairwise edge weighting (count / Jaccard / FE / OC)." onOpen={onOpen} />
+              <FeatureCard panel={CARD['py-viz-matplotlib']} icon={'\u{1F4D0}'} title="Matplotlib backend"
+                desc="render_venn_mpl / render_share_distribution_mpl / render_cluster_heatmap_mpl + vdl --backend {svg,mpl}." onOpen={onOpen} />
             </div>
           </div>
 
           <div className="companion-feature-group" data-category="stats">
-            <div className="companion-feature-group-header">
-              <span className="companion-feature-group-marker" aria-hidden="true" />
-              <span className="companion-feature-group-title">Analysis</span>
-              <span className="companion-feature-group-count">parity-tested</span>
-            </div>
+            <FeatureGroupHeader title="Analysis" count="parity-tested" panel={CAT.stats} onOpen={onOpen} />
             <div className="companion-feature-cards companion-feature-cards-single">
-              <div className="companion-feature-card companion-feature-card-wide">
-                <div className="companion-feature-card-icon">{'\u{1F9EE}'}</div>
-                <div className="companion-feature-card-body">
-                  <div className="companion-feature-card-title">Statistical methods</div>
-                  <div className="companion-feature-card-desc">
+              <FeatureCard panel={CARD['py-stats-methods']} wide icon={'\u{1F9EE}'} title="Statistical methods"
+                desc={(
+                  <>
                     Set sizes, all 2<sup>n</sup>−1 intersections, Jaccard,
                     Sørensen-Dice, Simpson overlap, hypergeometric enrichment with
                     Benjamini-Hochberg FDR correction. Same algorithms and
                     rounding as the web tool.
-                  </div>
-                </div>
-              </div>
+                  </>
+                )} onOpen={onOpen} />
             </div>
           </div>
 
           <div className="companion-feature-group" data-category="export">
-            <div className="companion-feature-group-header">
-              <span className="companion-feature-group-marker" aria-hidden="true" />
-              <span className="companion-feature-group-title">Reports &amp; Export</span>
-              <span className="companion-feature-group-count">3 formats</span>
-            </div>
+            <FeatureGroupHeader title="Reports & Export" count="3 formats" panel={CAT.export} onOpen={onOpen} />
             <div className="companion-feature-cards">
-              <div className="companion-feature-card">
-                <div className="companion-feature-card-icon">{'\u{1F4C4}'}</div>
-                <div className="companion-feature-card-body">
-                  <div className="companion-feature-card-title">Multi-page PDF report</div>
-                  <div className="companion-feature-card-desc">Same layout as the web tool's exporter — overview, diagrams, statistics, methodology.</div>
-                </div>
-              </div>
-              <div className="companion-feature-card">
-                <div className="companion-feature-card-icon">{'\u{1F4CB}'}</div>
-                <div className="companion-feature-card-body">
-                  <div className="companion-feature-card-title">Byte-equivalent TSV</div>
-                  <div className="companion-feature-card-desc">Region summary + item matrix writers, parity-tested against the React app.</div>
-                </div>
-              </div>
-              <div className="companion-feature-card">
-                <div className="companion-feature-card-icon">{'\u{1F5BC}\u{FE0F}'}</div>
-                <div className="companion-feature-card-body">
-                  <div className="companion-feature-card-title">SVG &amp; PNG output</div>
-                  <div className="companion-feature-card-desc">Vector SVG via the bundled templates; PNG via cairosvg for raster pipelines.</div>
-                </div>
-              </div>
+              <FeatureCard panel={CARD['py-export-pdf']} icon={'\u{1F4C4}'} title="Multi-page PDF report"
+                desc="Same layout as the web tool's exporter — overview, diagrams, statistics, methodology." onOpen={onOpen} />
+              <FeatureCard panel={CARD['py-export-tsv']} icon={'\u{1F4CB}'} title="Byte-equivalent TSV"
+                desc="Region summary + item matrix writers, parity-tested against the React app." onOpen={onOpen} />
+              <FeatureCard panel={CARD['py-export-image']} icon={'\u{1F5BC}\u{FE0F}'} title={<>SVG &amp; PNG output</>}
+                desc="Vector SVG via the bundled templates; PNG via cairosvg for raster pipelines." onOpen={onOpen} />
             </div>
           </div>
 
           <div className="companion-feature-group" data-category="tooling">
-            <div className="companion-feature-group-header">
-              <span className="companion-feature-group-marker" aria-hidden="true" />
-              <span className="companion-feature-group-title">Developer Tooling</span>
-              <span className="companion-feature-group-count">3 surfaces</span>
-            </div>
+            <FeatureGroupHeader title="Developer Tooling" count="3 surfaces" panel={CAT.tooling} onOpen={onOpen} />
             <div className="companion-feature-cards">
-              <div className="companion-feature-card">
-                <div className="companion-feature-card-icon">{'\u{2328}\u{FE0F}'}</div>
-                <div className="companion-feature-card-body">
-                  <div className="companion-feature-card-title">Typer CLI <code>vdl</code></div>
-                  <div className="companion-feature-card-desc">One-shot analyses on the command line; built with Typer + Rich.</div>
-                </div>
-              </div>
-              <div className="companion-feature-card">
-                <div className="companion-feature-card-icon">{'\u{1F4D3}'}</div>
-                <div className="companion-feature-card-body">
-                  <div className="companion-feature-card-title">8 tested notebooks</div>
-                  <div className="companion-feature-card-desc">Quickstart, case studies, stats deep-dive, pipeline integration; CI-executed.</div>
-                </div>
-              </div>
-              <div className="companion-feature-card">
-                <div className="companion-feature-card-icon">{'\u{2705}'}</div>
-                <div className="companion-feature-card-body">
-                  <div className="companion-feature-card-title">Multi-OS CI</div>
-                  <div className="companion-feature-card-desc">Linux · macOS · Windows × Python 3.10 / 3.11 / 3.12 — green on every release.</div>
-                </div>
-              </div>
+              <FeatureCard panel={CARD['py-tool-cli']} icon={'\u{2328}\u{FE0F}'} title={<>Typer CLI <code>vdl</code></>}
+                desc="One-shot analyses on the command line; built with Typer + Rich." onOpen={onOpen} />
+              <FeatureCard panel={CARD['py-tool-notebooks']} icon={'\u{1F4D3}'} title="8 tested notebooks"
+                desc="Quickstart, case studies, stats deep-dive, pipeline integration; CI-executed." onOpen={onOpen} />
+              <FeatureCard panel={CARD['py-tool-ci']} icon={'\u{2705}'} title="Multi-OS CI"
+                desc="Linux · macOS · Windows × Python 3.10 / 3.11 / 3.12 — green on every release." onOpen={onOpen} />
             </div>
           </div>
 
@@ -991,7 +1069,10 @@ augment(result)   # item-level membership matrix`}</CodeBlock>
   );
 }
 
-function RContent({ activeTab }: { activeTab: TabId }) {
+function RContent({ activeTab, onOpen }: { activeTab: TabId; onOpen: OpenPanel }) {
+  const CAT = COMPANION_DETAIL_PANELS.r;
+  const CARD = COMPANION_CARD_PANELS.r;
+
   if (activeTab === 'overview') {
     return (
       <div className="companion-section">
@@ -1017,51 +1098,27 @@ function RContent({ activeTab }: { activeTab: TabId }) {
           and Bioconductor paths.
         </p>
 
-        <h3 className="companion-h3">What you get</h3>
+        <h3 className="companion-h3">What you get <span className="companion-h3-hint">— click a card for code</span></h3>
         <div className="companion-feature-grid">
-          <div className="companion-feature-cell" data-category="analysis">
-            <div className="companion-feature-cell-icon" aria-hidden="true">{'\u{1F4C2}'}</div>
-            <div className="companion-feature-cell-text">
-              <div className="companion-feature-cell-title">Analysis</div>
-              <div className="companion-feature-cell-desc">
-                Load CSV / TSV / GMT / GMX, four S4 classes, <code>analyze()</code>
-                computes set sizes and all 2<sup>n</sup>−1 intersections.
-              </div>
-            </div>
-          </div>
-          <div className="companion-feature-cell" data-category="stats">
-            <div className="companion-feature-cell-icon" aria-hidden="true">{'\u{1F9EE}'}</div>
-            <div className="companion-feature-cell-text">
-              <div className="companion-feature-cell-title">Statistics</div>
-              <div className="companion-feature-cell-desc">
-                Jaccard, Sørensen-Dice, overlap coefficient, hypergeometric
-                p-values, fold enrichment, BH-FDR — JS-style float parity with
-                the web tool.
-              </div>
-            </div>
-          </div>
-          <div className="companion-feature-cell" data-category="viz">
-            <div className="companion-feature-cell-icon" aria-hidden="true">{'\u{1F3A8}'}</div>
-            <div className="companion-feature-cell-text">
-              <div className="companion-feature-cell-title">Visualization</div>
-              <div className="companion-feature-cell-desc">
-                44 SVG templates via xml2, area-proportional 2/3-set, UpSet
-                via ComplexUpset, force-directed network via ggraph + tidygraph,
-                ggplot2 <code>geom_venn()</code> layer.
-              </div>
-            </div>
-          </div>
-          <div className="companion-feature-cell" data-category="export">
-            <div className="companion-feature-cell-icon" aria-hidden="true">{'\u{1F4C4}'}</div>
-            <div className="companion-feature-cell-text">
-              <div className="companion-feature-cell-title">Reports &amp; Export</div>
-              <div className="companion-feature-cell-desc">
-                Multi-page PDF report via <code>grDevices::pdf</code> +
-                patchwork; byte-equivalent TSV writers (region summary, item
-                matrix, statistics) parity-tested against the web tool.
-              </div>
-            </div>
-          </div>
+          <FeatureCellButton category="analysis" panel={CAT.analysis} icon={'\u{1F4C2}'} title="Analysis" onOpen={onOpen}>
+            Load CSV / TSV / GMT / GMX, four S4 classes, <code>analyze()</code>
+            computes set sizes and all 2<sup>n</sup>−1 intersections.
+          </FeatureCellButton>
+          <FeatureCellButton category="stats" panel={CAT.stats} icon={'\u{1F9EE}'} title="Statistics" onOpen={onOpen}>
+            Jaccard, Sørensen-Dice, overlap coefficient, hypergeometric
+            p-values, fold enrichment, BH-FDR — JS-style float parity with
+            the web tool.
+          </FeatureCellButton>
+          <FeatureCellButton category="viz" panel={CAT.viz} icon={'\u{1F3A8}'} title="Visualization" onOpen={onOpen}>
+            44 SVG templates via xml2, area-proportional 2/3-set, UpSet
+            via ComplexUpset, force-directed network via ggraph + tidygraph,
+            ggplot2 <code>geom_venn()</code> layer.
+          </FeatureCellButton>
+          <FeatureCellButton category="export" panel={CAT.export} icon={'\u{1F4C4}'} title={<>Reports &amp; Export</>} onOpen={onOpen}>
+            Multi-page PDF report via <code>grDevices::pdf</code> +
+            patchwork; byte-equivalent TSV writers (region summary, item
+            matrix, statistics) parity-tested against the web tool.
+          </FeatureCellButton>
         </div>
 
         <div className="companion-badges">
@@ -1086,55 +1143,25 @@ function RContent({ activeTab }: { activeTab: TabId }) {
         <div className="companion-feature-board">
 
           <div className="companion-feature-group" data-category="viz">
-            <div className="companion-feature-group-header">
-              <span className="companion-feature-group-marker" aria-hidden="true" />
-              <span className="companion-feature-group-title">Visualization</span>
-              <span className="companion-feature-group-count">4 modes</span>
-            </div>
+            <FeatureGroupHeader title="Visualization" count="4 modes" panel={CAT.viz} onOpen={onOpen} />
             <div className="companion-feature-cards">
-              <div className="companion-feature-card">
-                <div className="companion-feature-card-icon">{'\u{1F3A8}'}</div>
-                <div className="companion-feature-card-body">
-                  <div className="companion-feature-card-title">44 SVG templates</div>
-                  <div className="companion-feature-card-desc">Every model from the web tool, 2-set to 9-set, bundled in the CRAN tarball. <code>render_venn_svg()</code> templates them via <code>xml2</code>.</div>
-                </div>
-              </div>
-              <div className="companion-feature-card">
-                <div className="companion-feature-card-icon">{'\u{2696}\u{FE0F}'}</div>
-                <div className="companion-feature-card-body">
-                  <div className="companion-feature-card-title">Area-proportional</div>
-                  <div className="companion-feature-card-desc">Analytical 2-set + approximate 3-set via <code>solve_2set()</code> / <code>solve_3set()</code> / <code>generate_proportional_svg()</code>.</div>
-                </div>
-              </div>
-              <div className="companion-feature-card">
-                <div className="companion-feature-card-icon">{'\u{1F4CA}'}</div>
-                <div className="companion-feature-card-body">
-                  <div className="companion-feature-card-title">UpSet plots</div>
-                  <div className="companion-feature-card-desc"><code>render_upset()</code> via <code>ComplexUpset</code>; depth / heatmap / custom color modes; size / degree sort; threshold cutoffs.</div>
-                </div>
-              </div>
-              <div className="companion-feature-card">
-                <div className="companion-feature-card-icon">{'\u{1F578}\u{FE0F}'}</div>
-                <div className="companion-feature-card-body">
-                  <div className="companion-feature-card-title">Force-directed network</div>
-                  <div className="companion-feature-card-desc"><code>render_network()</code> via <code>ggraph</code> + <code>tidygraph</code>; 4 edge metrics (intersection / Jaccard / fold enrichment / overlap coefficient).</div>
-                </div>
-              </div>
+              <FeatureCard panel={CARD['r-viz-templates']} icon={'\u{1F3A8}'} title="44 SVG templates"
+                desc={<>Every model from the web tool, 2-set to 9-set, bundled in the CRAN tarball. <code>render_venn_svg()</code> templates them via <code>xml2</code>.</>} onOpen={onOpen} />
+              <FeatureCard panel={CARD['r-viz-proportional']} icon={'\u{2696}\u{FE0F}'} title="Area-proportional"
+                desc={<>Analytical 2-set + approximate 3-set via <code>solve_2set()</code> / <code>solve_3set()</code> / <code>generate_proportional_svg()</code>.</>} onOpen={onOpen} />
+              <FeatureCard panel={CARD['r-viz-upset']} icon={'\u{1F4CA}'} title="UpSet plots"
+                desc={<><code>render_upset()</code> via <code>ComplexUpset</code>; depth / heatmap / custom color modes; size / degree sort; threshold cutoffs.</>} onOpen={onOpen} />
+              <FeatureCard panel={CARD['r-viz-network']} icon={'\u{1F578}\u{FE0F}'} title="Force-directed network"
+                desc={<><code>render_network()</code> via <code>ggraph</code> + <code>tidygraph</code>; 4 edge metrics (intersection / Jaccard / fold enrichment / overlap coefficient).</>} onOpen={onOpen} />
             </div>
           </div>
 
           <div className="companion-feature-group" data-category="stats">
-            <div className="companion-feature-group-header">
-              <span className="companion-feature-group-marker" aria-hidden="true" />
-              <span className="companion-feature-group-title">Analysis &amp; Statistics</span>
-              <span className="companion-feature-group-count">parity-tested</span>
-            </div>
+            <FeatureGroupHeader title="Analysis & Statistics" count="parity-tested" panel={CAT.stats} onOpen={onOpen} />
             <div className="companion-feature-cards companion-feature-cards-single">
-              <div className="companion-feature-card companion-feature-card-wide">
-                <div className="companion-feature-card-icon">{'\u{1F9EE}'}</div>
-                <div className="companion-feature-card-body">
-                  <div className="companion-feature-card-title">S4 result types + stateless metric helpers</div>
-                  <div className="companion-feature-card-desc">
+              <FeatureCard panel={CARD['r-stats-s4']} wide icon={'\u{1F9EE}'} title="S4 result types + stateless metric helpers"
+                desc={(
+                  <>
                     Four S4 classes (<code>VennDataset</code>,
                     <code>RegionData</code>, <code>RegionResult</code>,
                     <code>StatisticsResult</code>) carry the input, the
@@ -1146,95 +1173,42 @@ function RContent({ activeTab }: { activeTab: TabId }) {
                     <code>hypergeometric_p_value()</code>, <code>bh_fdr()</code>,
                     <code>compute_pairwise()</code> — produce the same
                     numbers as the web tool (JS-style float parity).
-                  </div>
-                </div>
-              </div>
+                  </>
+                )} onOpen={onOpen} />
             </div>
           </div>
 
           <div className="companion-feature-group" data-category="export">
-            <div className="companion-feature-group-header">
-              <span className="companion-feature-group-marker" aria-hidden="true" />
-              <span className="companion-feature-group-title">Reports &amp; Export</span>
-              <span className="companion-feature-group-count">3 formats</span>
-            </div>
+            <FeatureGroupHeader title="Reports & Export" count="3 formats" panel={CAT.export} onOpen={onOpen} />
             <div className="companion-feature-cards">
-              <div className="companion-feature-card">
-                <div className="companion-feature-card-icon">{'\u{1F4C4}'}</div>
-                <div className="companion-feature-card-body">
-                  <div className="companion-feature-card-title">Multi-page PDF report</div>
-                  <div className="companion-feature-card-desc"><code>to_pdf_report()</code> via <code>grDevices::pdf</code> + <code>patchwork</code> — same layout as the web tool's exporter (overview · venn + UpSet · statistics · network · methodology).</div>
-                </div>
-              </div>
-              <div className="companion-feature-card">
-                <div className="companion-feature-card-icon">{'\u{1F4CB}'}</div>
-                <div className="companion-feature-card-body">
-                  <div className="companion-feature-card-title">Byte-equivalent TSV</div>
-                  <div className="companion-feature-card-desc"><code>to_region_summary_tsv()</code> · <code>to_matrix_tsv()</code> · <code>to_statistics_tsv()</code> — 12 byte-parity tests against shared Python golden fixtures.</div>
-                </div>
-              </div>
-              <div className="companion-feature-card">
-                <div className="companion-feature-card-icon">{'\u{1F5BC}\u{FE0F}'}</div>
-                <div className="companion-feature-card-body">
-                  <div className="companion-feature-card-title">SVG &amp; PNG output</div>
-                  <div className="companion-feature-card-desc">Vector SVG via the bundled templates; PNG via <code>rsvg</code> + <code>ggsave()</code> for raster pipelines.</div>
-                </div>
-              </div>
+              <FeatureCard panel={CARD['r-export-pdf']} icon={'\u{1F4C4}'} title="Multi-page PDF report"
+                desc={<><code>to_pdf_report()</code> via <code>grDevices::pdf</code> + <code>patchwork</code> — same layout as the web tool's exporter (overview · venn + UpSet · statistics · network · methodology).</>} onOpen={onOpen} />
+              <FeatureCard panel={CARD['r-export-tsv']} icon={'\u{1F4CB}'} title="Byte-equivalent TSV"
+                desc={<><code>to_region_summary_tsv()</code> · <code>to_matrix_tsv()</code> · <code>to_statistics_tsv()</code> — 12 byte-parity tests against shared Python golden fixtures.</>} onOpen={onOpen} />
+              <FeatureCard panel={CARD['r-export-image']} icon={'\u{1F5BC}\u{FE0F}'} title={<>SVG &amp; PNG output</>}
+                desc={<>Vector SVG via the bundled templates; PNG via <code>rsvg</code> + <code>ggsave()</code> for raster pipelines.</>} onOpen={onOpen} />
             </div>
           </div>
 
           <div className="companion-feature-group" data-category="tooling">
-            <div className="companion-feature-group-header">
-              <span className="companion-feature-group-marker" aria-hidden="true" />
-              <span className="companion-feature-group-title">Tidyverse &amp; Pipelines</span>
-              <span className="companion-feature-group-count">2 integrations</span>
-            </div>
+            <FeatureGroupHeader title="Tidyverse & Pipelines" count="2 integrations" panel={CAT.tidyverse} onOpen={onOpen} />
             <div className="companion-feature-cards">
-              <div className="companion-feature-card">
-                <div className="companion-feature-card-icon">{'\u{1F4DC}'}</div>
-                <div className="companion-feature-card-body">
-                  <div className="companion-feature-card-title">ggplot2 layer</div>
-                  <div className="companion-feature-card-desc"><code>geom_venn()</code> drops a venn straight into a <code>ggplot</code> stack. Compose with themes, titles, and other layers.</div>
-                </div>
-              </div>
-              <div className="companion-feature-card">
-                <div className="companion-feature-card-icon">{'\u{1F9F9}'}</div>
-                <div className="companion-feature-card-body">
-                  <div className="companion-feature-card-title">broom S3 methods</div>
-                  <div className="companion-feature-card-desc"><code>tidy()</code> / <code>glance()</code> / <code>augment()</code> on <code>RegionResult</code> return tibbles ready for <code>dplyr</code> / <code>targets</code> / <code>drake</code> pipelines.</div>
-                </div>
-              </div>
+              <FeatureCard panel={CARD['r-tid-ggplot']} icon={'\u{1F4DC}'} title="ggplot2 layer"
+                desc={<><code>geom_venn()</code> drops a venn straight into a <code>ggplot</code> stack. Compose with themes, titles, and other layers.</>} onOpen={onOpen} />
+              <FeatureCard panel={CARD['r-tid-broom']} icon={'\u{1F9F9}'} title="broom S3 methods"
+                desc={<><code>tidy()</code> / <code>glance()</code> / <code>augment()</code> on <code>RegionResult</code> return tibbles ready for <code>dplyr</code> / <code>targets</code> / <code>drake</code> pipelines.</>} onOpen={onOpen} />
             </div>
           </div>
 
           <div className="companion-feature-group" data-category="tooling">
-            <div className="companion-feature-group-header">
-              <span className="companion-feature-group-marker" aria-hidden="true" />
-              <span className="companion-feature-group-title">Documentation &amp; QA</span>
-              <span className="companion-feature-group-count">3 surfaces</span>
-            </div>
+            <FeatureGroupHeader title="Documentation & QA" count="3 surfaces" onOpen={onOpen} />
             <div className="companion-feature-cards">
-              <div className="companion-feature-card">
-                <div className="companion-feature-card-icon">{'\u{1F4D3}'}</div>
-                <div className="companion-feature-card-body">
-                  <div className="companion-feature-card-title">8 vignettes</div>
-                  <div className="companion-feature-card-desc">Quickstart, real cancer drivers, proportional, UpSet vs. venn vs. network, statistics deep-dive, broom + dplyr + targets, PDF reports, custom styling. Open via <code>browseVignettes(&quot;vennDiagramLab&quot;)</code>.</div>
-                </div>
-              </div>
-              <div className="companion-feature-card">
-                <div className="companion-feature-card-icon">{'\u{1F4DA}'}</div>
-                <div className="companion-feature-card-body">
-                  <div className="companion-feature-card-title">pkgdown reference site</div>
-                  <div className="companion-feature-card-desc">Full function reference + rendered vignette gallery at <a href="https://zoliqua.github.io/Venn-Diagram-Lab/r/" target="_blank" rel="noopener noreferrer" className="companion-link">zoliqua.github.io/Venn-Diagram-Lab/r/</a>.</div>
-                </div>
-              </div>
-              <div className="companion-feature-card">
-                <div className="companion-feature-card-icon">{'\u{2705}'}</div>
-                <div className="companion-feature-card-body">
-                  <div className="companion-feature-card-title">Multi-OS CI · 590+ tests</div>
-                  <div className="companion-feature-card-desc">R CMD check matrix: Linux release / devel / oldrel × macOS × Windows. BiocCheck WARNING-clean. Vignettes executed on every push.</div>
-                </div>
-              </div>
+              <FeatureCard panel={CARD['r-doc-vignettes']} icon={'\u{1F4D3}'} title="8 vignettes"
+                desc={<>Quickstart, real cancer drivers, proportional, UpSet vs. venn vs. network, statistics deep-dive, broom + dplyr + targets, PDF reports, custom styling. Open via <code>browseVignettes()</code>.</>} onOpen={onOpen} />
+              <FeatureCard panel={CARD['r-doc-pkgdown']} icon={'\u{1F4DA}'} title="pkgdown reference site"
+                desc="Full function reference + rendered vignette gallery, published with pkgdown." onOpen={onOpen} />
+              <FeatureCard panel={CARD['r-doc-ci']} icon={'\u{2705}'} title="Multi-OS CI · 590+ tests"
+                desc="R CMD check matrix: Linux release / devel / oldrel × macOS × Windows. BiocCheck WARNING-clean. Vignettes executed on every push." onOpen={onOpen} />
             </div>
           </div>
 
@@ -1326,6 +1300,7 @@ function RContent({ activeTab }: { activeTab: TabId }) {
 export function CompanionPackageDialog({ isOpen, onClose, kind }: CompanionPackageDialogProps) {
   const tabs = kind === 'python' ? PYTHON_TABS : R_TABS;
   const [activeTab, setActiveTab] = useState<TabId>('overview');
+  const [detailPanel, setDetailPanel] = useState<DetailPanel | null>(null);
 
   if (!isOpen) return null;
 
@@ -1356,7 +1331,7 @@ export function CompanionPackageDialog({ isOpen, onClose, kind }: CompanionPacka
               role="tab"
               aria-selected={tab.id === activeTab}
               className={`companion-tab ${tab.id === activeTab ? 'companion-tab-active' : ''}`}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => { setActiveTab(tab.id); setDetailPanel(null); }}
             >
               {tab.label}
             </button>
@@ -1365,9 +1340,13 @@ export function CompanionPackageDialog({ isOpen, onClose, kind }: CompanionPacka
 
         <div className="companion-body">
           {kind === 'python'
-            ? <PythonContent activeTab={activeTab} />
-            : <RContent activeTab={activeTab} />}
+            ? <PythonContent activeTab={activeTab} onOpen={setDetailPanel} />
+            : <RContent activeTab={activeTab} onOpen={setDetailPanel} />}
         </div>
+
+        {detailPanel && (
+          <CompanionDetailModal panel={detailPanel} onClose={() => setDetailPanel(null)} />
+        )}
       </div>
     </div>
   );
