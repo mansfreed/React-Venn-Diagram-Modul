@@ -4422,6 +4422,192 @@ html, body, #root {
   color: var(--text-secondary);
 }
 
+/* Clickable Overview cells + Features headers (open a code panel) */
+.companion-h3-hint {
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--text-secondary);
+  opacity: 0.85;
+}
+
+.companion-feature-cell-button {
+  width: 100%;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.companion-feature-cell-button:focus-visible {
+  outline: 2px solid var(--cat-color);
+  outline-offset: 2px;
+}
+
+.companion-feature-cell-cta {
+  flex-shrink: 0;
+  align-self: flex-start;
+  font-family: 'SF Mono', Menlo, Consolas, monospace;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--cat-color);
+  opacity: 0.5;
+  transition: opacity 0.15s;
+}
+
+.companion-feature-cell-button:hover .companion-feature-cell-cta,
+.companion-feature-cell-button:focus-visible .companion-feature-cell-cta {
+  opacity: 1;
+}
+
+.companion-feature-group-header-button {
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.companion-feature-group-header-button:hover {
+  border-bottom-color: var(--cat-color);
+}
+
+.companion-feature-group-header-button:focus-visible {
+  outline: 2px solid var(--cat-color);
+  outline-offset: 2px;
+}
+
+.companion-feature-group-cta {
+  margin-left: 10px;
+  font-family: 'SF Mono', Menlo, Consolas, monospace;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--cat-color);
+  opacity: 0.55;
+  transition: opacity 0.15s;
+}
+
+.companion-feature-group-header-button:hover .companion-feature-group-cta,
+.companion-feature-group-header-button:focus-visible .companion-feature-group-cta {
+  opacity: 1;
+}
+
+/* Clickable Features-tab cards (each opens its own code panel) */
+.companion-feature-card-button {
+  width: 100%;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.companion-feature-card-button:focus-visible {
+  outline: 2px solid var(--cat-color);
+  outline-offset: 2px;
+}
+
+.companion-feature-card-cta {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  font-family: 'SF Mono', Menlo, Consolas, monospace;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--cat-color);
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.companion-feature-card-button:hover .companion-feature-card-cta,
+.companion-feature-card-button:focus-visible .companion-feature-card-cta {
+  opacity: 0.9;
+}
+
+.companion-detail-blurb p {
+  margin: 0 0 8px;
+}
+
+.companion-detail-blurb p:last-child {
+  margin-bottom: 0;
+}
+
+/* Focused code panel modal (nested above the companion dialog) */
+.companion-detail-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1100;
+  padding: 24px;
+}
+
+.companion-detail-panel {
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+  width: min(680px, 100%);
+  max-height: 84vh;
+  display: flex;
+  flex-direction: column;
+  padding: 18px 20px 20px;
+  text-align: left;
+}
+
+.companion-detail-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+
+.companion-detail-title {
+  flex: 1;
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.companion-detail-close {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.companion-detail-close:hover {
+  color: var(--text-primary);
+  border-color: var(--accent);
+}
+
+.companion-detail-blurb {
+  margin: 0 0 12px;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--text-secondary);
+}
+
+.companion-detail-blocks {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
 /* Categorized Feature Board (Python Features tab — 4 colour groups) */
 .companion-feature-board {
   display: flex;
