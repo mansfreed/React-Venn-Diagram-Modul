@@ -2,7 +2,7 @@
 title: "venn-diagram-lab — Python Package"
 subtitle: "User Guide"
 author: "Zoltán Dul, Márton Ölbei, N. Shaun B. Thomas, Azeddine Si Ammour, Attila Csikász-Nagy"
-date: "v2.4.0 — 2026-06-09"
+date: "v2.4.1 — 2026-06-09"
 ---
 
 # Overview
@@ -42,7 +42,7 @@ pip install "venn-diagram-lab[dev]"   # pytest, ruff, mypy, ipykernel, nbconvert
 Verify:
 
 ```bash
-vdl version          # prints "2.4.0"
+vdl version          # prints "2.4.1"
 python -c "import venn_diagram_lab as v; print(v.__version__)"
 ```
 
@@ -621,7 +621,7 @@ vdl --help          # short summary of every command
 vdl tree            # tree view of every command + short-help
 vdl about           # abbreviated "About Venn Diagrams"
 vdl credits         # authors + citation + links
-vdl version         # 2.4.0
+vdl version         # 2.4.1
 ```
 
 ## Top-level shortcuts
@@ -849,5 +849,5 @@ backends (matplotlib vs grDevices vs browser SVG).
 ## Citation
 
 Dul Z., Ölbei M., Thomas N.S.B., Si Ammour A., Csikász-Nagy A. (2026). *Venn Diagram Lab
-— Headless Venn diagram analysis and rendering.* Python package version 2.4.0.
+— Headless Venn diagram analysis and rendering.* Python package version 2.4.1.
 <https://venndiagramlab.org/>  doi:10.5281/zenodo.19510813

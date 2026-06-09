@@ -7,6 +7,20 @@ summarises the Python-only changes.
 
 [root]: https://github.com/ZoliQua/Venn-Diagram-Lab/blob/main/CHANGELOG.md
 
+## v2.4.1 — 2026-06-09 — PyPI metadata + README link fixes
+
+Patch release. No library / CLI behaviour change.
+
+- **Author metadata:** the contact email moved to `[project.maintainers]` so
+  all five authors (Zoltán Dul first) appear in PyPI's *Author* field. Before,
+  PEP 621 routed the only email-bearing author into `Author-email` and left
+  just the email-less co-authors in `Author`, so the first author was hidden.
+- **README:** the remaining repo-relative links (CHANGELOG, USER_GUIDE
+  `.md` / `.pdf`, LICENSE) are now absolute
+  `https://github.com/ZoliQua/Venn-Diagram-Lab/blob/main/python/…` URLs so they
+  resolve on the PyPI project page (which has no repository-relative context).
+- **USER_GUIDE:** version markers bumped to 2.4.1; PDF regenerated.
+
 ## v2.4.0 — 2026-06-09 — Matplotlib render backend + Jupyter mimebundle; cross-package version sync
 
 Version jumps `2.2.3 → 2.4.0` (no `2.3.x` Python line) to keep the Python,

@@ -10,11 +10,14 @@ readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
 authors = [
-    { name = "Zoltán Dul", email = "ssdbtc@gmail.com" },
+    { name = "Zoltán Dul" },
     { name = "Márton Ölbei" },
     { name = "N. Shaun B. Thomas" },
     { name = "Azeddine Si Ammour" },
     { name = "Attila Csikász-Nagy" },
+]
+maintainers = [
+    { name = "Zoltán Dul", email = "ssdbtc@gmail.com" },
 ]
 keywords = ["venn", "diagram", "set", "intersection", "bioinformatics", "visualization", "upset"]
 classifiers = [

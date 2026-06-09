@@ -18,7 +18,7 @@ pip install venn-diagram-lab
 
 That's it — all bundled SVG templates, sample datasets, and the `vdl` CLI ship with the wheel.
 
-**System deps (cairosvg):** the PDF/PNG render path uses [cairosvg](https://cairosvg.org/), which needs the cairo native library. On Linux the wheel works out of the box once you have `libcairo2`. On macOS run `brew install cairo pango`. On Windows install the [GTK3 runtime](https://github.com/tschoonj/GTK-for-Windows-Runtime-Environment-Installer) (cairo bundled). CI is currently Linux-only for this reason — see [`CHANGELOG.md`](CHANGELOG.md) "Known limitations".
+**System deps (cairosvg):** the PDF/PNG render path uses [cairosvg](https://cairosvg.org/), which needs the cairo native library. On Linux the wheel works out of the box once you have `libcairo2`. On macOS run `brew install cairo pango`. On Windows install the [GTK3 runtime](https://github.com/tschoonj/GTK-for-Windows-Runtime-Environment-Installer) (cairo bundled). CI is currently Linux-only for this reason — see [`CHANGELOG.md`](https://github.com/ZoliQua/Venn-Diagram-Lab/blob/main/python/CHANGELOG.md) "Known limitations".
 
 For development (clone + editable):
 
@@ -48,7 +48,7 @@ result.to_pdf_report("cancer_drivers_report.pdf")
 
 ### 1.2 Complete User Guide
 
-You can reach the complete [`USER GUIDE`](docs/USER_GUIDE.md) here in markdown format or downlad it as a [`PDF File`](docs/USER_GUIDE.pdf).
+You can reach the complete [`USER GUIDE`](https://github.com/ZoliQua/Venn-Diagram-Lab/blob/main/python/docs/USER_GUIDE.md) here in markdown format or downlad it as a [`PDF File`](https://github.com/ZoliQua/Venn-Diagram-Lab/blob/main/python/docs/USER_GUIDE.pdf).
 
 ## 2. Loading your own data
 
@@ -467,11 +467,11 @@ Conventional commit prefixes used: `feat(python):`, `fix(python):`, `chore(pytho
 
 ## 11. Versioning
 
-Strict SemVer. Pre-1.0 minor bumps may include behavior changes; see [`CHANGELOG.md`](CHANGELOG.md).
+Strict SemVer. Pre-1.0 minor bumps may include behavior changes; see [`CHANGELOG.md`](https://github.com/ZoliQua/Venn-Diagram-Lab/blob/main/python/CHANGELOG.md).
 
 ## 12. License, Citation and Credits
 
-MIT — see [`LICENSE`](LICENSE).
+MIT — see [`LICENSE`](https://github.com/ZoliQua/Venn-Diagram-Lab/blob/main/python/LICENSE).
 
 ### 12.1. Citation
 
