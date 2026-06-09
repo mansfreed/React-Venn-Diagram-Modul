@@ -39,9 +39,11 @@ test/
 samples/
 models/svg/archive/
 .vercel
-# Root-level scratch docs only (export PDFs, go/, superpowers/, demo SVGs).
-# python/docs/ and r/docs/ (the package USER_GUIDEs) are intentionally tracked.
+# Root-level scratch docs (export PDFs, go/, superpowers/, demo SVGs).
 /docs/
+# r/docs/ is pkgdown's generated output dir — never track it. The R USER_GUIDE
+# lives in r/user-guide/ instead. python/docs/ (the Python USER_GUIDE) IS tracked.
+r/docs/
 
 # R package — synced data files
 # Override the project-level `samples/` rule above for the R package's bundled samples dir.

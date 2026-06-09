@@ -85,7 +85,7 @@ See `vignette("v01_quickstart")` for the full intro and `browseVignettes("vennDi
 
 ### 3.1 Complete User Guide
 
-You can reach the complete [`USER GUIDE`](https://github.com/ZoliQua/Venn-Diagram-Lab/blob/main/r/docs/USER_GUIDE.md) here in markdown format or downlad it as a [`PDF File`](https://github.com/ZoliQua/Venn-Diagram-Lab/blob/main/r/docs/USER_GUIDE.pdf).
+You can reach the complete [`USER GUIDE`](https://github.com/ZoliQua/Venn-Diagram-Lab/blob/main/r/user-guide/USER_GUIDE.md) here in markdown format or downlad it as a [`PDF File`](https://github.com/ZoliQua/Venn-Diagram-Lab/blob/main/r/user-guide/USER_GUIDE.pdf).
 
 ## 4. Statistics surfaces
 
