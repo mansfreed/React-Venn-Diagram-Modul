@@ -2,6 +2,52 @@
 
 All notable changes to the Venn Diagram Lab project.
 
+## v2.4.0 — 2026-06-06 — Per-card code panels on the companion Features tab
+
+### Web tool
+
+- **Every Features-tab card is now individually clickable** in the Python and
+  R companion package dialogs, in addition to the group headers. Each card
+  opens its own modal with a longer two-paragraph explanation and a
+  self-contained, runnable snippet that shows the exact function calls (or, for
+  the CLI / notebooks / CI cards, the shell commands). Python contributes 11
+  card panels, R contributes 13 (including the *Documentation & QA* cards,
+  whose header stays non-clickable but whose cards now open snippets).
+- All snippets are verified against the real package sources — `__all__` /
+  `NAMESPACE` exports, class methods, and the actual `vdl` CLI command/flag
+  names (e.g. `vdl render venn … --out`, `vdl data lookup <input> <item>`).
+- New per-card content lives in `COMPANION_CARD_PANELS`
+  (`src/components/companionDetailPanels.ts`); the modal now renders
+  multi-paragraph blurbs. Tests extended in
+  `src/__tests__/companionDetailContent.test.ts` (card-id coverage, no orphans,
+  headline-function grounding).
+- **Python Matplotlib backend surfaced** in the companion dialog: the
+  Visualization group header now reads *5 modes* and a new **Matplotlib
+  backend** card opens a panel documenting `render_venn_mpl`,
+  `render_share_distribution_mpl`, `render_cluster_heatmap_mpl`, the
+  `vdl render … --backend {svg,mpl}` flag, and the
+  `SvgImage._repr_mimebundle_` Jupyter hook. The main *Visualization* category
+  panel gains a third code block showing how to compose all three matplotlib
+  renderers into one `plt.subplots(1, 3)` figure; the *Typer CLI · vdl* card's
+  shell snippet now includes the `--backend mpl` examples too.
+
+## v2.3.0 — 2026-06-06 — Interactive code panels in the companion package dialogs
+
+### Web tool
+
+- **Clickable feature cards → code panels** in the Python and R companion
+  package dialogs (`CompanionPackageDialog`). On the **Overview** tab the four
+  "What you get" cards (Analysis, Statistics, Visualization, Reports & Export)
+  are now buttons; on the **Features** tab each feature group header is
+  clickable too (except *Documentation & QA*, which has no panel). Clicking one
+  opens a focused modal with runnable, copy-ready snippets showing how to call
+  the matching functions.
+- Snippet content lives in a new, unit-tested module
+  (`src/components/companionDetailPanels.ts`); every symbol used is a real
+  public export verified against the package sources (`__all__` / `NAMESPACE`).
+  New test: `src/__tests__/companionDetailContent.test.ts`.
+- Modal closes on overlay click, the × button, or `Escape`.
+
 ## v2.2.3 — 2026-06-01 — Cross-package version sync; Python CLI feature parity + PDF/ZIP report enhancements
 
 Coordinated patch release across webtool, Python, and R companion packages.
