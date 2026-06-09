@@ -12,10 +12,11 @@ preserved.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import matplotlib.pyplot as plt
 import numpy as np
+import numpy.typing as npt
 from scipy.cluster.hierarchy import dendrogram
 from scipy.cluster.hierarchy import linkage as _scipy_linkage
 from scipy.spatial.distance import squareform
@@ -35,7 +36,7 @@ _HEAT_TEXT_DARK_THRESHOLD = 0.55
 
 def _draw_single_panel(
     ax: Axes,
-    jaccard_arr: np.ndarray,
+    jaccard_arr: npt.NDArray[Any],
     set_names: list[str],
     letters: list[str],
     cmap: str,
@@ -65,8 +66,8 @@ def _draw_single_panel(
 
 
 def _draw_multi_panel(
-    linkage_z: np.ndarray,
-    jaccard_arr: np.ndarray,
+    linkage_z: npt.NDArray[Any],
+    jaccard_arr: npt.NDArray[Any],
     set_names: list[str],
     letters: list[str],
     cmap: str,
