@@ -39,7 +39,9 @@ test/
 samples/
 models/svg/archive/
 .vercel
-docs/
+# Root-level scratch docs only (export PDFs, go/, superpowers/, demo SVGs).
+# python/docs/ and r/docs/ (the package USER_GUIDEs) are intentionally tracked.
+/docs/
 
 # R package — synced data files
 # Override the project-level `samples/` rule above for the R package's bundled samples dir.

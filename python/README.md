@@ -1,4 +1,4 @@
-# venn-diagram-lab
+# venn-diagram-lab - Python package
 
 [![CI](https://github.com/ZoliQua/Venn-Diagram-Lab/actions/workflows/python-test.yml/badge.svg)](https://github.com/ZoliQua/Venn-Diagram-Lab/actions/workflows/python-test.yml)
 [![PyPI version](https://img.shields.io/pypi/v/venn-diagram-lab.svg?v=2)](https://pypi.org/project/venn-diagram-lab/)
@@ -45,6 +45,10 @@ result.render_venn().save("cancer_drivers.svg")
 # Or a full multi-page PDF report
 result.to_pdf_report("cancer_drivers_report.pdf")
 ```
+
+### 1.2 Complete User Guide
+
+You can reach the complete [`USER GUIDE`](docs/USER_GUIDE.md) here in markdown format or downlad it as a [`PDF File`](docs/USER_GUIDE.pdf).
 
 ## 2. Loading your own data
 
@@ -480,7 +484,7 @@ https://www.venndiagramlab.org/
 DOI: 10.5281/zenodo.19510813 (concept, all versions)
 ```
 
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.19510813.svg)](https://doi.org/10.5281/zenodo.19510813)
+[![DOI](http://www.venndiagramlab.org/zenodo.19510813.svg)](https://doi.org/10.5281/zenodo.19510813)
 
 The R companion package also has a CRAN-minted DOI:
 [`10.32614/CRAN.package.vennDiagramLab`](https://doi.org/10.32614/CRAN.package.vennDiagramLab).

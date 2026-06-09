@@ -7,6 +7,48 @@ summarises the Python-only changes.
 
 [root]: https://github.com/ZoliQua/Venn-Diagram-Lab/blob/main/CHANGELOG.md
 
+## v2.4.0 — 2026-06-09 — Matplotlib render backend + Jupyter mimebundle; cross-package version sync
+
+Version jumps `2.2.3 → 2.4.0` (no `2.3.x` Python line) to keep the Python,
+R, and web-tool version lines in lock-step (the web tool is on `2.4.0`).
+
+### Matplotlib backend
+
+- Three new `*_mpl` renderers that draw onto a matplotlib `Axes` and return
+  an `MplImage`, so figures can be composed into your own subplot grids
+  (each accepts an optional `ax=`; when omitted a standalone figure is made):
+  - `render_venn_mpl(result, *, ax=None, ...)` — classic 2/3/4-set models plus
+    the analytical `proportional` model (2/3-set). Higher set counts or
+    template-only models (Edwards, Anderson, Mamakani, …) raise
+    `IncompatibleModelError` pointing at `render_venn_svg`.
+  - `render_share_distribution_mpl(dataset, *, ax=None, ...)` — matplotlib
+    variant of the Item Share Distribution bar chart.
+  - `render_cluster_heatmap_mpl(result, *, ax=None, linkage="average", ...)` —
+    cluster-ordered Jaccard heatmap with optional row/column dendrograms
+    (scipy linkage + `imshow`).
+- All three are exported from the package top level (`venn_diagram_lab`).
+- The existing SVG renderers remain the byte-stable default; the `_mpl`
+  variants are an additive, paper-figure-composition path and are not part
+  of the byte-equivalence parity contract.
+
+### CLI
+
+- `--backend {svg,mpl}` flag added to `vdl render venn`, `vdl render share-dist`
+  and `vdl render heatmap`. Default `svg` (template, byte-stable); `mpl`
+  routes through the new matplotlib renderers.
+
+### Jupyter
+
+- `SvgImage` gains `_repr_mimebundle_` (alongside `_repr_svg_`) so notebook
+  front-ends that prefer a multi-mimetype bundle (VS Code Notebooks, some
+  Quarto pipelines) render the diagram inline consistently.
+
+### Docs
+
+- README: new *Matplotlib backend* section documenting the `_mpl` variants.
+- Example notebooks 04 (UpSet vs. Venn vs. Network) and 08 (Custom Styling &
+  Export) gain matplotlib-renderer cells.
+
 ## v2.2.3 — 2026-05-31 — Enrichment bar + lollipop + data lookup + PDF/ZIP report parity
 
 - New `render_enrichment_bar_svg(result, metric=...)` and
