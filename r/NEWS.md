@@ -1,12 +1,12 @@
 # vennDiagramLab — NEWS
 
-## v2.4.0 — 2026-06-09 — Cross-package version sync (no functional R changes)
+## v2.4.1 — 2026-06-10 — Cross-package version sync (no functional R changes)
 
-Version-only release: bumps `vennDiagramLab` from 2.2.3 to 2.4.0 to keep the
-R, Python, and web-tool version lines in lockstep (the web tool and the Python
-companion `venn-diagram-lab` are on 2.4.x). No new exports, no API or behaviour
-changes, and no new dependencies relative to 2.2.3 — the test suite, vignettes,
-and documentation are unchanged apart from the version string.
+Version-only release: bumps `vennDiagramLab` from 2.2.3 to 2.4.1 to keep the
+R, Python, and web-tool version lines in lockstep with the Python companion
+`venn-diagram-lab` 2.4.1 on PyPI and the web tool. No new exports, no API or
+behaviour changes, and no new dependencies relative to 2.2.3 — the test suite,
+vignettes, and documentation are unchanged apart from the version string.
 
 ## v2.2.3 — 2026-06-03 — Render + PDF + bundle parity, Phase 11 item / highlight / DSL surface
 

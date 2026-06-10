@@ -1,6 +1,6 @@
 % vennDiagramLab — R Package
 % Zoltán Dul, Márton Ölbei, N. Shaun B. Thomas, Azeddine Si Ammour, Attila Csikász-Nagy
-% v2.4.0 — 2026-06-09
+% v2.4.1 — 2026-06-10
 
 # Overview
 
@@ -54,8 +54,8 @@ Verify:
 
 ```r
 library(vennDiagramLab)
-packageVersion("vennDiagramLab")    # ‘2.4.0’
-vdl_version()                       # "2.4.0"
+packageVersion("vennDiagramLab")    # ‘2.4.1’
+vdl_version()                       # "2.4.1"
 ```
 
 Hard requirements (pulled in automatically): `methods`, `stats`, `utils`, `jsonlite`,
@@ -742,5 +742,5 @@ backends (grDevices vs matplotlib vs browser SVG).
 ## Citation
 
 Dul Z., Ölbei M., Thomas N.S.B., Si Ammour A., Csikász-Nagy A. (2026). *Venn Diagram Lab
--- Headless Venn diagram analysis and rendering.* R package version 2.4.0.
+-- Headless Venn diagram analysis and rendering.* R package version 2.4.1.
 <https://venndiagramlab.org/>  doi:10.5281/zenodo.19510813
