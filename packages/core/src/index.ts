@@ -1,2 +1,3 @@
-// Barrel — real exports added in Task 3.
-export const CORE_PLACEHOLDER = true;
+export * from './csvParser.ts';
+export * from './statistics.ts';
+export * from './exportData.ts';

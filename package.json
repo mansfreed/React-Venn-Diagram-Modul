@@ -14,6 +14,7 @@
     "fixtures:parity": "tsx scripts/generate-parity-fixtures.mts"
   },
   "dependencies": {
+    "@venn-diagram-lab/core": "*",
     "exceljs": "^4.4.0",
     "jspdf": "^4.2.1",
     "jszip": "^3.10.1",

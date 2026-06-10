@@ -64,6 +64,11 @@ function copyModelsPlugin() {
 export default defineConfig({
   plugins: [react(), copyModelsPlugin()],
   base: './',
+  resolve: {
+    alias: {
+      '@venn-diagram-lab/core': resolve(__dirname, 'packages/core/src/index.ts'),
+    },
+  },
   server: {
     fs: {
       allow: ['.']
