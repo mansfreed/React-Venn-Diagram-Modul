@@ -1,0 +1,3 @@
+# Un-ignore package-local directories that are excluded by the root .gitignore
+!test/
+!assets/samples/
