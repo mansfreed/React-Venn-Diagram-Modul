@@ -22,7 +22,8 @@
     "noUnusedParameters": true,
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true,
-    "noUncheckedSideEffectImports": true
+    "noUncheckedSideEffectImports": true,
+    "paths": { "@venn-diagram-lab/core": ["./packages/core/src/index.ts"] }
   },
   "include": ["src"],
   "exclude": ["src/__tests__"]
