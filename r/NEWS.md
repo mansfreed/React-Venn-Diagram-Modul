@@ -1,5 +1,27 @@
 # vennDiagramLab — NEWS
 
+## v2.4.2 — 2026-06-10 — CRAN checktime fix (faster delimited-file loader)
+
+Maintenance release addressing the CRAN incoming-pretest checktime NOTE
+(`Overall checktime > 10 min` on r-devel-windows). No API, output, or
+dependency changes — every public function behaves byte-identically.
+
+* **`load_csv()` / `load_tsv()` are now ~10x faster on large files.** The
+  internal delimited-file parser (`.split_line`, `.binary_columns_to_dataset`,
+  `.aggregated_columns_to_dataset`) was quadratic in the number of rows
+  because it grew result vectors one element at a time and trimmed cells
+  character-by-character. It is now vectorised: unquoted lines split with a
+  single `strsplit()`, and membership / trim / lower-case run over a
+  character matrix. Loading the bundled 20,000-row
+  `dataset_real_cancer_drivers_4` sample dropped from ~6.5s to ~0.5s.
+  Parsing results (item sets, item order, universe size, error conditions)
+  are unchanged — verified by the byte-parity fixtures and the
+  `.split_line` / converter unit tests.
+* `skip_on_cran()` added to the remaining heavy PDF-rendering integration
+  tests (`to_pdf_report` share / cluster pages, `to_zip_report`) so the
+  on-CRAN test pass stays light; these still run on CI and under
+  `devtools::check()`.
+
 ## v2.4.1 — 2026-06-10 — Cross-package version sync (no functional R changes)
 
 Version-only release: bumps `vennDiagramLab` from 2.2.3 to 2.4.1 to keep the

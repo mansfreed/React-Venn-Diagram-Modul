@@ -28,7 +28,7 @@
 
 ### 2.1. From CRAN (recommended)
 
-`vennDiagramLab` is on CRAN (current version: **2.4.1**):
+`vennDiagramLab` is on CRAN (current version: **2.4.2**):
 
 ```r
 install.packages("vennDiagramLab")

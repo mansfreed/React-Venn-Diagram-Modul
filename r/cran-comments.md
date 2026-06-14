@@ -1,8 +1,28 @@
-## Submission — v2.4.1
+## Resubmission — v2.4.2
+
+The previous submission (v2.4.1) passed the Windows and Debian pretests with
+`Status: OK` but was auto-rejected for a checktime NOTE on
+r-devel-windows-x86_64: `Overall checktime 23 min > 10 min`.
+
+This resubmission fixes that. The root cause was a quadratic internal
+delimited-file parser: loading the bundled 20,000-row
+`dataset_real_cancer_drivers_4` sample took ~6.5s, and ~19 examples plus
+several tests each loaded it. The parser is now vectorised (single
+`strsplit()` for unquoted lines; trim / lower-case / membership over a
+character matrix instead of element-by-element vector growth), cutting that
+load from ~6.5s to ~0.5s. `skip_on_cran()` was also added to the remaining
+heavy PDF-rendering integration tests. Parsing results are byte-identical
+(guarded by the parity fixtures and parser unit tests); there are no API,
+output, or dependency changes relative to 2.4.1.
+
+Local `R CMD check --as-cran --run-donttest` example + test time fell from
+~230s to well under that — see the timing note below.
+
+### Original 2.4.1 submission notes (still applicable)
 
 This is an update of the CRAN package `vennDiagramLab` (current CRAN
 version 2.0.5). It rolls up the additive feature work released as 2.2.2
-and 2.2.3 on GitHub, plus a version-sync bump to 2.4.1 so that the R,
+and 2.2.3 on GitHub, plus a version-sync bump (2.4.x) so that the R,
 Python, and web-tool components share a single version line (the Python
 companion `venn-diagram-lab` 2.4.1 is on PyPI and the web tool is on 2.4.x).
 
@@ -61,10 +81,10 @@ synchronisation release.
 including the local `--as-cran` run (the CRAN incoming-feasibility sub-check
 also reports OK).
 
-The version number deliberately jumps from the CRAN 2.0.5 to 2.4.1; the
-intermediate 2.2.x / 2.4.0 versions were published on GitHub only and are
-folded into this submission. The rationale (cross-package version lockstep) is
-described above.
+The version number deliberately jumps from the CRAN 2.0.5 to 2.4.2; the
+intermediate 2.2.x / 2.4.0 / 2.4.1 versions were published on GitHub only (2.4.1
+was the rejected pretest submission) and are folded into this submission. The
+rationale (cross-package version lockstep) is described above.
 
 ### Downstream dependencies
 
