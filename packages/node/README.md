@@ -20,8 +20,12 @@ console.log(toRegionSummaryTsv(result));
 
 ## CLI
 ```bash
-vdl analyze genes.tsv --region-summary summary.tsv
+vdl analyze genes.tsv \
+  --region-summary summary.tsv \
+  --matrix matrix.tsv \
+  --statistics stats.tsv
 ```
 
-Phase 1 covers analysis + Region Summary TSV. Matrix/Statistics exports, SVG/UpSet/Network
-rendering, and PDF reports land in later releases.
+Covers analysis + byte-equivalent **Region Summary / Item Matrix / Statistics** TSV exports
+(parity-tested against the web tool / Python / R goldens across 4-, 5-, and 8-set samples).
+SVG/UpSet/Network rendering and PDF reports land in later releases.
