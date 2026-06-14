@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import type { VennResult } from '../utils/csvParser.ts';
 import { pairwiseStatistics } from '../utils/statistics.ts';
-import { downloadFile } from '../utils/exportData.ts';
+import { downloadFile, exportStatisticsTsv, sigLabel } from '../utils/exportData.ts';
 import { EnrichmentPlots } from './EnrichmentPlots.tsx';
 import type { EnrichmentMetric } from '../utils/enrichmentPlotSvg.ts';
 import type { EnrichmentPlotSettings, EnrichmentPlotType } from '../utils/enrichmentPlotStyle.ts';
@@ -26,13 +26,6 @@ interface DataSummaryPanelProps {
 function formatP(p: number): string {
   if (p < 0.001) return p.toExponential(1);
   return p.toFixed(4);
-}
-
-function sigLabel(fdr: number): string {
-  if (fdr < 0.001) return '***';
-  if (fdr < 0.01) return '**';
-  if (fdr < 0.05) return '*';
-  return 'ns';
 }
 
 function fdrBgColor(fdr: number): string | undefined {
@@ -95,21 +88,7 @@ export function DataSummaryPanel({
 
   // Export all statistics as TSV
   const handleExportStats = () => {
-    const header = [
-      'Set_A', 'Set_B', 'Name_A', 'Name_B', 'Size_A', 'Size_B',
-      'Intersection', 'Union', 'Jaccard', 'Overlap_Coeff', 'Dice',
-      'Expected', 'Fold_Enrichment', 'P_value', 'FDR', 'Significant'
-    ].join('\t');
-    const rows = pairStats.map(s => [
-      s.a, s.b, s.nameA, s.nameB, s.sizeA, s.sizeB,
-      s.intersection, s.union,
-      s.jaccard.toFixed(4), s.overlapCoeff.toFixed(4), s.dice.toFixed(4),
-      s.expected.toFixed(2), s.foldEnrichment.toFixed(3),
-      s.pValue < 0.001 ? s.pValue.toExponential(2) : s.pValue.toFixed(6),
-      s.fdr < 0.001 ? s.fdr.toExponential(2) : s.fdr.toFixed(6),
-      sigLabel(s.fdr),
-    ].join('\t'));
-    downloadFile([header, ...rows].join('\n'), `venn_${n}set_statistics.tsv`);
+    downloadFile(exportStatisticsTsv(vennResult, n, totalItems, setNames), `venn_${n}set_statistics.tsv`);
   };
 
   return (

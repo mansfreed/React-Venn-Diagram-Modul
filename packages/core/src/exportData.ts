@@ -1,4 +1,5 @@
 import type { VennResult } from './csvParser.ts';
+import { pairwiseStatistics } from './statistics.ts';
 
 const FORMULA_PREFIX_RE = /^[\t\r ]*[=+\-@]/;
 
@@ -72,5 +73,42 @@ export function exportMatrixTsv(
     }
   }
 
+  return [header, ...rows].join('\n');
+}
+
+/** Significance stars from an FDR value (web tool convention). */
+export function sigLabel(fdr: number): string {
+  if (fdr < 0.001) return '***';
+  if (fdr < 0.01) return '**';
+  if (fdr < 0.05) return '*';
+  return 'ns';
+}
+
+/**
+ * FORMAT C: pairwise Statistics TSV — byte-identical to the web tool's
+ * "Export -> Statistics" (DataSummaryPanel.handleExportStats). This format
+ * intentionally does NOT escape cells (mirror the web app exactly).
+ */
+export function exportStatisticsTsv(
+  vennResult: VennResult,
+  n: number,
+  totalItems: number,
+  setNames: string[],
+): string {
+  const pairStats = pairwiseStatistics(vennResult, n, totalItems, setNames);
+  const header = [
+    'Set_A', 'Set_B', 'Name_A', 'Name_B', 'Size_A', 'Size_B',
+    'Intersection', 'Union', 'Jaccard', 'Overlap_Coeff', 'Dice',
+    'Expected', 'Fold_Enrichment', 'P_value', 'FDR', 'Significant',
+  ].join('\t');
+  const rows = pairStats.map(s => [
+    s.a, s.b, s.nameA, s.nameB, s.sizeA, s.sizeB,
+    s.intersection, s.union,
+    s.jaccard.toFixed(4), s.overlapCoeff.toFixed(4), s.dice.toFixed(4),
+    s.expected.toFixed(2), s.foldEnrichment.toFixed(3),
+    s.pValue < 0.001 ? s.pValue.toExponential(2) : s.pValue.toFixed(6),
+    s.fdr < 0.001 ? s.fdr.toExponential(2) : s.fdr.toFixed(6),
+    sigLabel(s.fdr),
+  ].join('\t'));
   return [header, ...rows].join('\n');
 }
