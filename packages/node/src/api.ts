@@ -1,7 +1,9 @@
 import {
   calculateVennCounts,
   detectDelimiter,
+  exportMatrixTsv,
   exportRegionSummaryTsv,
+  exportStatisticsTsv,
   getBinaryColumns,
   parseCsvWithDelimiter,
   type CsvData,
@@ -32,5 +34,20 @@ export function toRegionSummaryTsv(result: AnalyzeResult): string {
     result.columns.length,
     result.setNames,
     result.venn.totalUniqueItems,
+  );
+}
+
+/** Item Matrix TSV — byte-identical to the web tool's "Export -> Item Matrix". */
+export function toMatrixTsv(result: AnalyzeResult): string {
+  return exportMatrixTsv(result.venn, result.columns.length, result.setNames);
+}
+
+/** Pairwise Statistics TSV — byte-identical to the web tool's "Export -> Statistics". */
+export function toStatisticsTsv(result: AnalyzeResult): string {
+  return exportStatisticsTsv(
+    result.venn,
+    result.columns.length,
+    result.venn.totalUniqueItems,
+    result.setNames,
   );
 }
