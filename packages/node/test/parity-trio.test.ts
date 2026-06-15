@@ -13,6 +13,7 @@ const CASES = [
   { sample: 'dataset_real_msigdb_cancer_pathways', model: 'venn-5-set-grunbaum' },
   { sample: 'dataset_real_msigdb_immune_pathways', model: 'venn-4-set' },
   { sample: 'dataset_mock_streaming_platforms', model: 'venn-8-set' },
+  { sample: 'dataset_mock_gene_sets', model: 'venn-6-set' },
 ] as const;
 
 const EXPORTERS = {
