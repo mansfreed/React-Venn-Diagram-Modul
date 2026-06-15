@@ -1,5 +1,6 @@
 import {
   calculateVennCounts,
+  calculateVennCountsFromAggregated,
   detectDelimiter,
   exportMatrixTsv,
   exportRegionSummaryTsv,
@@ -17,14 +18,23 @@ export interface AnalyzeResult {
   venn: VennResult;
 }
 
-/** Parse raw CSV/TSV text, auto-detect the binary set columns, and compute Venn counts. */
+/** Analyse an already-parsed CsvData, auto-detecting binary vs aggregated mode. */
+export function analyzeCsv(csv: CsvData): AnalyzeResult {
+  const binaryColumns = getBinaryColumns(csv);
+  if (binaryColumns.length >= 2) {
+    const setNames = binaryColumns.map(i => csv.headers[i]);
+    return { csv, columns: binaryColumns, setNames, venn: calculateVennCounts(csv, binaryColumns) };
+  }
+  // Aggregated: every column is a set, cells hold the items.
+  const columns = csv.headers.map((_, i) => i);
+  const setNames = columns.map(i => csv.headers[i]);
+  return { csv, columns, setNames, venn: calculateVennCountsFromAggregated(csv, columns) };
+}
+
+/** Parse raw CSV/TSV text and analyse it (auto binary vs aggregated). */
 export function analyzeCsvText(text: string): AnalyzeResult {
   const delimiter = detectDelimiter(text);
-  const csv = parseCsvWithDelimiter(text, delimiter, true);
-  const columns = getBinaryColumns(csv);
-  const setNames = columns.map(i => csv.headers[i]);
-  const venn = calculateVennCounts(csv, columns);
-  return { csv, columns, setNames, venn };
+  return analyzeCsv(parseCsvWithDelimiter(text, delimiter, true));
 }
 
 /** Region Summary TSV — byte-identical to the web tool's "Export → Region Summary". */

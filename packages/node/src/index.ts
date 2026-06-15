@@ -1,2 +1,2 @@
-export { analyzeCsvText, toMatrixTsv, toRegionSummaryTsv, toStatisticsTsv, type AnalyzeResult } from './api.ts';
+export { analyzeCsv, analyzeCsvText, toMatrixTsv, toRegionSummaryTsv, toStatisticsTsv, type AnalyzeResult } from './api.ts';
 export { listSamples, loadSampleText } from './samples.ts';
