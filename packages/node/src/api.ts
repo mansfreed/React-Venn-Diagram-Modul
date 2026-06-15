@@ -7,6 +7,8 @@ import {
   exportStatisticsTsv,
   getBinaryColumns,
   parseCsvWithDelimiter,
+  parseGmt,
+  parseGmx,
   type CsvData,
   type VennResult,
 } from '@venn-diagram-lab/core';
@@ -60,4 +62,14 @@ export function toStatisticsTsv(result: AnalyzeResult): string {
     result.venn.totalUniqueItems,
     result.setNames,
   );
+}
+
+/** Analyse a GMT (Gene Matrix Transposed) gene-set file. */
+export function analyzeGmtText(text: string): AnalyzeResult {
+  return analyzeCsv(parseGmt(text).csv);
+}
+
+/** Analyse a GMX (column-oriented gene-set) file. */
+export function analyzeGmxText(text: string): AnalyzeResult {
+  return analyzeCsv(parseGmx(text).csv);
 }

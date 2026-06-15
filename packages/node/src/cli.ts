@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 import { readFileSync, writeFileSync } from 'node:fs';
 import { Command } from 'commander';
-import { analyzeCsvText, toMatrixTsv, toRegionSummaryTsv, toStatisticsTsv } from './api.ts';
+import { detectGeneSetFormat } from '@venn-diagram-lab/core';
+import { analyzeGmtText, analyzeGmxText, analyzeCsvText, toMatrixTsv, toRegionSummaryTsv, toStatisticsTsv } from './api.ts';
 
 const program = new Command();
 
@@ -18,7 +19,12 @@ program
   .option('--matrix <path>', 'write the Item Matrix TSV to this path')
   .option('--statistics <path>', 'write the pairwise Statistics TSV to this path')
   .action((input: string, opts: { regionSummary?: string; matrix?: string; statistics?: string }) => {
-    const result = analyzeCsvText(readFileSync(input, 'utf8'));
+    const text = readFileSync(input, 'utf8');
+    const fmt = detectGeneSetFormat(input);
+    const result =
+      fmt === 'gmt' ? analyzeGmtText(text) :
+      fmt === 'gmx' ? analyzeGmxText(text) :
+      analyzeCsvText(text);
     let wroteFile = false;
     if (opts.regionSummary) { writeFileSync(opts.regionSummary, toRegionSummaryTsv(result), 'utf8'); wroteFile = true; }
     if (opts.matrix) { writeFileSync(opts.matrix, toMatrixTsv(result), 'utf8'); wroteFile = true; }
