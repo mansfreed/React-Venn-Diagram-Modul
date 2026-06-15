@@ -18,6 +18,18 @@ const result = analyzeCsvText(loadSampleText('dataset_real_cancer_drivers_4'));
 console.log(toRegionSummaryTsv(result));
 ```
 
+### Input formats
+
+```ts
+import { analyzeCsvText, analyzeGmtText, analyzeGmxText, loadSampleText } from 'venn-diagram-lab';
+
+analyzeCsvText(csvText);   // binary 0/1 matrix OR aggregated (one set per column) — auto-detected
+analyzeGmtText(gmtText);   // Broad GMT gene-set file
+analyzeGmxText(gmxText);   // Broad GMX gene-set file
+```
+
+The CLI auto-detects `.gmt` / `.gmx` by extension; everything else is treated as CSV/TSV.
+
 ## CLI
 ```bash
 vdl analyze genes.tsv \
@@ -26,6 +38,7 @@ vdl analyze genes.tsv \
   --statistics stats.tsv
 ```
 
-Covers analysis + byte-equivalent **Region Summary / Item Matrix / Statistics** TSV exports
-(parity-tested against the web tool / Python / R goldens across 4-, 5-, and 8-set samples).
-SVG/UpSet/Network rendering and PDF reports land in later releases.
+Covers analysis of **binary, aggregated, and GMT/GMX** inputs + byte-equivalent **Region Summary /
+Item Matrix / Statistics** TSV exports (parity-tested against the web tool / Python / R goldens
+across all five bundled samples, 4- to 8-set). SVG/UpSet/Network rendering and PDF reports land in
+later releases.
