@@ -1,4 +1,6 @@
 import {
+  buildEnrichmentBarSvg,
+  buildEnrichmentLollipopSvg,
   buildNetworkData,
   buildNetworkSvgString,
   buildShareDistributionSvg,
@@ -10,11 +12,13 @@ import {
   exportStatisticsTsv,
   getBinaryColumns,
   itemShareDistribution,
+  pairwiseStatistics,
   parseCsvWithDelimiter,
   parseGmt,
   parseGmx,
   type CsvData,
   type EdgeWeightMetric,
+  type EnrichmentMetric,
   type VennResult,
 } from '@venn-diagram-lab/core';
 
@@ -106,4 +110,18 @@ function binaryMatrix(result: AnalyzeResult): number[][] {
 export function toShareDistributionSvg(result: AnalyzeResult): string {
   const dist = itemShareDistribution(binaryMatrix(result), result.columns.length);
   return buildShareDistributionSvg(dist);
+}
+
+function pairStats(result: AnalyzeResult) {
+  return pairwiseStatistics(result.venn, result.columns.length, result.venn.totalUniqueItems, result.setNames);
+}
+
+/** Pairwise-enrichment bar chart SVG. metric: 'neglog10fdr' (default) | 'foldEnrichment'. */
+export function toEnrichmentBarSvg(result: AnalyzeResult, metric: EnrichmentMetric = 'neglog10fdr'): string {
+  return buildEnrichmentBarSvg(pairStats(result), { metric });
+}
+
+/** Pairwise-enrichment lollipop chart SVG. */
+export function toEnrichmentLollipopSvg(result: AnalyzeResult, metric: EnrichmentMetric = 'neglog10fdr'): string {
+  return buildEnrichmentLollipopSvg(pairStats(result), { metric });
 }
