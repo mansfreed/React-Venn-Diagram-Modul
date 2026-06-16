@@ -2,7 +2,11 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { Command } from 'commander';
 import { detectGeneSetFormat } from '@venn-diagram-lab/core';
-import { analyzeGmtText, analyzeGmxText, analyzeCsvText, toMatrixTsv, toRegionSummaryTsv, toStatisticsTsv } from './api.ts';
+import {
+  analyzeGmtText, analyzeGmxText, analyzeCsvText,
+  toMatrixTsv, toRegionSummaryTsv, toStatisticsTsv,
+  toNetworkSvg, toShareDistributionSvg, toEnrichmentBarSvg, toEnrichmentLollipopSvg,
+} from './api.ts';
 
 const program = new Command();
 
@@ -30,6 +34,35 @@ program
     if (opts.matrix) { writeFileSync(opts.matrix, toMatrixTsv(result), 'utf8'); wroteFile = true; }
     if (opts.statistics) { writeFileSync(opts.statistics, toStatisticsTsv(result), 'utf8'); wroteFile = true; }
     if (!wroteFile) { process.stdout.write(toRegionSummaryTsv(result) + '\n'); }
+  });
+
+program
+  .command('render')
+  .description('Render an SVG figure (network | share-dist | enrichment-bar | enrichment-lollipop).')
+  .argument('<kind>', 'network | share-dist | enrichment-bar | enrichment-lollipop')
+  .argument('<input>', 'input CSV/TSV/GMT/GMX path')
+  .option('--out <path>', 'write the SVG here (default: stdout)')
+  .option('--metric <metric>', 'edge/enrichment metric')
+  .action((kind: string, input: string, opts: { out?: string; metric?: string }) => {
+    const text = readFileSync(input, 'utf8');
+    const fmt = detectGeneSetFormat(input);
+    const result =
+      fmt === 'gmt' ? analyzeGmtText(text) :
+      fmt === 'gmx' ? analyzeGmxText(text) :
+      analyzeCsvText(text);
+    let svg: string;
+    switch (kind) {
+      case 'network': svg = opts.metric ? toNetworkSvg(result, opts.metric as never) : toNetworkSvg(result); break;
+      case 'share-dist': svg = toShareDistributionSvg(result); break;
+      case 'enrichment-bar': svg = opts.metric ? toEnrichmentBarSvg(result, opts.metric as never) : toEnrichmentBarSvg(result); break;
+      case 'enrichment-lollipop': svg = opts.metric ? toEnrichmentLollipopSvg(result, opts.metric as never) : toEnrichmentLollipopSvg(result); break;
+      default:
+        process.stderr.write(`Unknown render kind: ${kind}\n`);
+        process.exitCode = 1;
+        return;
+    }
+    if (opts.out) writeFileSync(opts.out, svg, 'utf8');
+    else process.stdout.write(svg + '\n');
   });
 
 program.parse();

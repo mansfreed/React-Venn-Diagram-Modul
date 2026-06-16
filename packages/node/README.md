@@ -40,5 +40,17 @@ vdl analyze genes.tsv \
 
 Covers analysis of **binary, aggregated, and GMT/GMX** inputs + byte-equivalent **Region Summary /
 Item Matrix / Statistics** TSV exports (parity-tested against the web tool / Python / R goldens
-across all five bundled samples, 4- to 8-set). SVG/UpSet/Network rendering and PDF reports land in
-later releases.
+across all five bundled samples, 4- to 8-set).
+
+### Render (SVG)
+
+```bash
+vdl render network            genes.tsv --out network.svg
+vdl render share-dist         genes.tsv --out share.svg
+vdl render enrichment-bar     genes.tsv --out bar.svg --metric foldEnrichment
+vdl render enrichment-lollipop genes.tsv --out lollipop.svg
+```
+
+Network, Item-Share-Distribution, and Enrichment (bar / lollipop) SVGs are byte-identical to the
+web tool's (shared builders). UpSet, the 44 templated Venn models, and PNG/PDF rasterisation land
+in later releases.
