@@ -1,4 +1,6 @@
 import {
+  buildNetworkData,
+  buildNetworkSvgString,
   calculateVennCounts,
   calculateVennCountsFromAggregated,
   detectDelimiter,
@@ -10,6 +12,7 @@ import {
   parseGmt,
   parseGmx,
   type CsvData,
+  type EdgeWeightMetric,
   type VennResult,
 } from '@venn-diagram-lab/core';
 
@@ -72,4 +75,12 @@ export function analyzeGmtText(text: string): AnalyzeResult {
 /** Analyse a GMX (column-oriented gene-set) file. */
 export function analyzeGmxText(text: string): AnalyzeResult {
   return analyzeCsv(parseGmx(text).csv);
+}
+
+/** Force-directed Network SVG of the set relationships. */
+export function toNetworkSvg(result: AnalyzeResult, metric: EdgeWeightMetric = 'intersection'): string {
+  const data = buildNetworkData(
+    result.venn, result.columns.length, result.venn.totalUniqueItems, result.setNames, metric,
+  );
+  return buildNetworkSvgString(data, metric);
 }
