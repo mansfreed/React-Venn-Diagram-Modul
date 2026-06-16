@@ -1,6 +1,7 @@
 import {
   buildNetworkData,
   buildNetworkSvgString,
+  buildShareDistributionSvg,
   calculateVennCounts,
   calculateVennCountsFromAggregated,
   detectDelimiter,
@@ -8,6 +9,7 @@ import {
   exportRegionSummaryTsv,
   exportStatisticsTsv,
   getBinaryColumns,
+  itemShareDistribution,
   parseCsvWithDelimiter,
   parseGmt,
   parseGmx,
@@ -15,6 +17,8 @@ import {
   type EdgeWeightMetric,
   type VennResult,
 } from '@venn-diagram-lab/core';
+
+const LETTERS = 'ABCDEFGHI';
 
 export interface AnalyzeResult {
   csv: CsvData;
@@ -83,4 +87,23 @@ export function toNetworkSvg(result: AnalyzeResult, metric: EdgeWeightMetric = '
     result.venn, result.columns.length, result.venn.totalUniqueItems, result.setNames, metric,
   );
   return buildNetworkSvgString(data, metric);
+}
+
+/** Binary item × set membership matrix from the result's exclusive items. */
+function binaryMatrix(result: AnalyzeResult): number[][] {
+  const letters = LETTERS.slice(0, result.columns.length).split('');
+  const matrix: number[][] = [];
+  for (const [label, items] of result.venn.exclusiveItems) {
+    if (label === '') continue; // items in no set — skip
+    for (let i = 0; i < items.length; i++) {
+      matrix.push(letters.map(l => (label.includes(l) ? 1 : 0)));
+    }
+  }
+  return matrix;
+}
+
+/** Item-Share-Distribution histogram SVG. */
+export function toShareDistributionSvg(result: AnalyzeResult): string {
+  const dist = itemShareDistribution(binaryMatrix(result), result.columns.length);
+  return buildShareDistributionSvg(dist);
 }
