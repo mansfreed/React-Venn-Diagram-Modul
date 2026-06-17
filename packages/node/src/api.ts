@@ -4,6 +4,7 @@ import {
   buildNetworkData,
   buildNetworkSvgString,
   buildShareDistributionSvg,
+  buildUpsetSvgString,
   calculateVennCounts,
   calculateVennCountsFromAggregated,
   detectDelimiter,
@@ -16,6 +17,7 @@ import {
   parseCsvWithDelimiter,
   parseGmt,
   parseGmx,
+  upsetDataFromVennResult,
   type CsvData,
   type EdgeWeightMetric,
   type EnrichmentMetric,
@@ -124,4 +126,10 @@ export function toEnrichmentBarSvg(result: AnalyzeResult, metric: EnrichmentMetr
 /** Pairwise-enrichment lollipop chart SVG. */
 export function toEnrichmentLollipopSvg(result: AnalyzeResult, metric: EnrichmentMetric = 'neglog10fdr'): string {
   return buildEnrichmentLollipopSvg(pairStats(result), { metric });
+}
+
+/** UpSet plot SVG (print-optimised). */
+export function toUpsetSvg(result: AnalyzeResult): string {
+  const data = upsetDataFromVennResult(result.venn, result.columns.length);
+  return buildUpsetSvgString(data, result.setNames);
 }
