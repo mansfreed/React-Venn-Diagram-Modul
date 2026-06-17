@@ -10,7 +10,7 @@ const CLI = join(PKG, 'dist', 'cli.js');
 const SAMPLE = join(PKG, '..', '..', 'data', 'dataset_real_cancer_drivers_4.tsv');
 
 describe('vdl render', () => {
-  for (const kind of ['network', 'share-dist', 'enrichment-bar', 'enrichment-lollipop']) {
+  for (const kind of ['network', 'share-dist', 'enrichment-bar', 'enrichment-lollipop', 'upset']) {
     it(`renders ${kind} to an SVG file`, () => {
       const out = join(mkdtempSync(join(tmpdir(), 'vdl-')), `${kind}.svg`);
       execFileSync('node', [CLI, 'render', kind, SAMPLE, '--out', out], { encoding: 'utf8' });

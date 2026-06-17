@@ -5,7 +5,7 @@ import { detectGeneSetFormat } from '@venn-diagram-lab/core';
 import {
   analyzeGmtText, analyzeGmxText, analyzeCsvText,
   toMatrixTsv, toRegionSummaryTsv, toStatisticsTsv,
-  toNetworkSvg, toShareDistributionSvg, toEnrichmentBarSvg, toEnrichmentLollipopSvg,
+  toNetworkSvg, toShareDistributionSvg, toEnrichmentBarSvg, toEnrichmentLollipopSvg, toUpsetSvg,
 } from './api.ts';
 
 const program = new Command();
@@ -38,8 +38,8 @@ program
 
 program
   .command('render')
-  .description('Render an SVG figure (network | share-dist | enrichment-bar | enrichment-lollipop).')
-  .argument('<kind>', 'network | share-dist | enrichment-bar | enrichment-lollipop')
+  .description('Render an SVG figure (network | share-dist | enrichment-bar | enrichment-lollipop | upset).')
+  .argument('<kind>', 'network | share-dist | enrichment-bar | enrichment-lollipop | upset')
   .argument('<input>', 'input CSV/TSV/GMT/GMX path')
   .option('--out <path>', 'write the SVG here (default: stdout)')
   .option('--metric <metric>', 'edge/enrichment metric')
@@ -56,6 +56,7 @@ program
       case 'share-dist': svg = toShareDistributionSvg(result); break;
       case 'enrichment-bar': svg = opts.metric ? toEnrichmentBarSvg(result, opts.metric as never) : toEnrichmentBarSvg(result); break;
       case 'enrichment-lollipop': svg = opts.metric ? toEnrichmentLollipopSvg(result, opts.metric as never) : toEnrichmentLollipopSvg(result); break;
+      case 'upset': svg = toUpsetSvg(result); break;
       default:
         process.stderr.write(`Unknown render kind: ${kind}\n`);
         process.exitCode = 1;
