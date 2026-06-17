@@ -1,8 +1,5 @@
-export interface ModelEntry {
-  filename: string;
-  label: string;
-  setCount: number;
-}
+import type { RegionData, ModelEntry } from '@venn-diagram-lab/core';
+export type { RegionData, ModelEntry };
 
 export const MODEL_LIST: ModelEntry[] = [
   { filename: 'venn-2-set.svg', label: '2-set (Euler-Venn)', setCount: 2 },
@@ -64,17 +61,6 @@ export async function fetchModel(filename: string): Promise<string> {
   const resp = await fetch(`./models/svg/${filename}`);
   if (!resp.ok) throw new Error(`Failed to load ${filename}: ${resp.status}`);
   return resp.text();
-}
-
-export interface RegionData {
-  name: string;
-  n: number;
-  sets: string[];
-  curves: string[];
-  regions: string[];
-  colors: Record<string, string>;
-  region_labels: Record<string, [number, number]>;
-  set_names: Record<string, string>;
 }
 
 export async function fetchRegionData(filename: string): Promise<RegionData> {

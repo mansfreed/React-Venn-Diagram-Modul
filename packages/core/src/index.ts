@@ -8,3 +8,5 @@ export * from './shareDistributionSvgBuilder.ts';
 export * from './enrichmentPlotStyle.ts';
 export * from './enrichmentPlotSvg.ts';
 export * from './clusterHeatmap.ts';
+export * from './types.ts';
+export * from './models.ts';
