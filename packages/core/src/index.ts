@@ -10,3 +10,5 @@ export * from './enrichmentPlotSvg.ts';
 export * from './clusterHeatmap.ts';
 export * from './types.ts';
 export * from './models.ts';
+export * from './upsetData.ts';
+export * from './upsetSvgBuilder.ts';
