@@ -6,6 +6,7 @@ import {
   analyzeGmtText, analyzeGmxText, analyzeCsvText,
   toMatrixTsv, toRegionSummaryTsv, toStatisticsTsv,
   toNetworkSvg, toShareDistributionSvg, toEnrichmentBarSvg, toEnrichmentLollipopSvg, toUpsetSvg,
+  toProportionalSvg,
 } from './api.ts';
 
 const program = new Command();
@@ -38,8 +39,8 @@ program
 
 program
   .command('render')
-  .description('Render an SVG figure (network | share-dist | enrichment-bar | enrichment-lollipop | upset).')
-  .argument('<kind>', 'network | share-dist | enrichment-bar | enrichment-lollipop | upset')
+  .description('Render an SVG figure (network | share-dist | enrichment-bar | enrichment-lollipop | upset | proportional).')
+  .argument('<kind>', 'network | share-dist | enrichment-bar | enrichment-lollipop | upset | proportional')
   .argument('<input>', 'input CSV/TSV/GMT/GMX path')
   .option('--out <path>', 'write the SVG here (default: stdout)')
   .option('--metric <metric>', 'edge/enrichment metric')
@@ -57,6 +58,7 @@ program
       case 'enrichment-bar': svg = opts.metric ? toEnrichmentBarSvg(result, opts.metric as never) : toEnrichmentBarSvg(result); break;
       case 'enrichment-lollipop': svg = opts.metric ? toEnrichmentLollipopSvg(result, opts.metric as never) : toEnrichmentLollipopSvg(result); break;
       case 'upset': svg = toUpsetSvg(result); break;
+      case 'proportional': svg = toProportionalSvg(result); break;
       default:
         process.stderr.write(`Unknown render kind: ${kind}\n`);
         process.exitCode = 1;

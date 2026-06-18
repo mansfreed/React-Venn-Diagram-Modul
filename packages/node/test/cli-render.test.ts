@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, readFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
@@ -19,4 +19,17 @@ describe('vdl render', () => {
       expect(svg.trimEnd().endsWith('</svg>')).toBe(true);
     });
   }
+});
+
+describe('vdl render proportional', () => {
+  it('renders a 2-set proportional SVG to a file', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'vdl-'));
+    const input = join(dir, 'two.tsv');
+    const out = join(dir, 'prop.svg');
+    writeFileSync(input, 'Gene\tA\tB\ng1\t1\t0\ng2\t1\t1\ng3\t0\t1\n');
+    execFileSync('node', [CLI, 'render', 'proportional', input, '--out', out], { encoding: 'utf8' });
+    const svg = readFileSync(out, 'utf8');
+    expect(svg).toContain('<svg');
+    expect(svg.trimEnd().endsWith('</svg>')).toBe(true);
+  });
 });
