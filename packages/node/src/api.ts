@@ -11,12 +11,16 @@ import {
   exportMatrixTsv,
   exportRegionSummaryTsv,
   exportStatisticsTsv,
+  generateProportionalModel,
   getBinaryColumns,
   itemShareDistribution,
   pairwiseStatistics,
   parseCsvWithDelimiter,
   parseGmt,
   parseGmx,
+  saveSvg,
+  solve2SetLayout,
+  solve3SetLayout,
   upsetDataFromVennResult,
   type CsvData,
   type EdgeWeightMetric,
@@ -132,4 +136,29 @@ export function toEnrichmentLollipopSvg(result: AnalyzeResult, metric: Enrichmen
 export function toUpsetSvg(result: AnalyzeResult): string {
   const data = upsetDataFromVennResult(result.venn, result.columns.length);
   return buildUpsetSvgString(data, result.setNames);
+}
+
+/**
+ * Area-proportional Venn SVG (2 or 3 sets). Mirrors the web tool's proportional
+ * path: solve circle layout at canvasSize 700, generate the model, serialize.
+ * Throws for n < 2 or n > 3.
+ */
+export function toProportionalSvg(result: AnalyzeResult): string {
+  const n = result.columns.length;
+  if (n < 2 || n > 3) {
+    throw new Error(`Area-proportional diagrams support only 2 or 3 sets (got ${n}).`);
+  }
+  const { inclusive, exclusive } = result.venn;
+  const letters = 'ABC'.slice(0, n).split('');
+  const sizes = letters.map(l => inclusive.get(l) ?? 0);
+  const layout = n === 2
+    ? solve2SetLayout(sizes[0], sizes[1], inclusive.get('AB') ?? 0, 700)
+    : solve3SetLayout(
+        sizes as [number, number, number],
+        { AB: inclusive.get('AB') ?? 0, AC: inclusive.get('AC') ?? 0, BC: inclusive.get('BC') ?? 0 },
+        inclusive.get('ABC') ?? 0,
+        700,
+      );
+  const doc = generateProportionalModel(n, result.setNames, exclusive, inclusive, layout);
+  return saveSvg(doc);
 }
