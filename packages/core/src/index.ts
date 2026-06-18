@@ -12,3 +12,6 @@ export * from './types.ts';
 export * from './models.ts';
 export * from './upsetData.ts';
 export * from './upsetSvgBuilder.ts';
+export * from './proportionalLayout.ts';
+export * from './proportionalModel.ts';
+export * from './saveSvg.ts';
